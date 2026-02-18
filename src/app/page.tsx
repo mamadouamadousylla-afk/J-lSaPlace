@@ -77,10 +77,10 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section className="px-6 py-12 bg-gray-50 dark:bg-gray-800/50 rounded-[3rem] mx-4 space-y-10">
+      <section className="px-6 py-12 bg-slate-500 dark:bg-gray-800/80 rounded-[3rem] mx-4 space-y-10">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-poppins font-bold">Comment ça marche ?</h2>
-          <p className="text-gray-500 text-sm">Votre ticket en 3 étapes simples</p>
+          <h2 className="text-2xl font-poppins font-bold text-white">Comment ça marche ?</h2>
+          <p className="text-white text-sm opacity-80">Votre ticket en 3 étapes simples</p>
         </div>
 
         <div className="grid gap-8">
@@ -97,8 +97,8 @@ export default function Home() {
                 <step.icon className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="font-bold">{step.title}</h3>
-                <p className="text-gray-500 text-sm">{step.desc}</p>
+                <h3 className="font-bold text-white">{step.title}</h3>
+                <p className="text-white/70 text-sm">{step.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -107,7 +107,7 @@ export default function Home() {
 
       {/* Featured Wrestlers */}
       <section className="px-6 space-y-6">
-        <h2 className="text-2xl font-poppins font-bold text-center">Les Rois de l&apos;Arène</h2>
+        <h2 className="text-2xl font-poppins font-bold text-center text-white">Les Rois de l&apos;Arène</h2>
         <div className="grid grid-cols-2 gap-4">
           {["Modou Lô", "Siteu", "Balla Gaye 2", "Eumeu Sène"].map((name, idx) => (
             <motion.div

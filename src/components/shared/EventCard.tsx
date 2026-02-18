@@ -49,14 +49,14 @@ export default function EventCard({ id, title, date, location, price, imageUrl, 
                 </div>
 
                 <div className="p-6 space-y-4">
-                    <h3 className="font-poppins font-bold text-lg leading-tight line-clamp-2">{title}</h3>
+                    <h3 className="font-poppins font-bold text-lg text-white leading-tight line-clamp-2">{title}</h3>
 
                     <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-gray-500 text-sm">
+                        <div className="flex items-center gap-2 text-white/70 text-sm">
                             <Calendar className="w-4 h-4 text-primary" />
                             <span>{date}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-gray-500 text-sm">
+                        <div className="flex items-center gap-2 text-white/70 text-sm">
                             <MapPin className="w-4 h-4 text-primary" />
                             <span>{location}</span>
                         </div>
@@ -64,7 +64,7 @@ export default function EventCard({ id, title, date, location, price, imageUrl, 
 
                     <div className="flex items-center justify-between pt-2">
                         <div>
-                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider">À partir de</p>
+                            <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">À partir de</p>
                             <p className="font-poppins font-bold text-primary text-xl">{formatPrice(price)}</p>
                         </div>
                         <div

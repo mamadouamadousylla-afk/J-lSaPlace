@@ -53,10 +53,10 @@ export default function EventsList() {
     )
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50 dark:bg-black p-6 pt-16 pb-32 space-y-8">
+        <div className="flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
             <div className="space-y-2">
-                <h1 className="text-3xl font-poppins font-bold">Événements</h1>
-                <p className="text-gray-500 text-sm">Trouvez les meilleurs combats de la saison.</p>
+                <h1 className="text-3xl font-poppins font-bold text-black">Événements</h1>
+                <p className="text-gray-600 text-sm font-medium">Trouvez les meilleurs combats de la saison.</p>
             </div>
 
             {/* Search Bar */}
@@ -78,7 +78,7 @@ export default function EventsList() {
 
             {/* Categories / Tabs */}
             <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6">
-                {["Tous", "Vanguard", "Espoirs", "Gala", "Lutte Simple"].map((tab, i) => (
+                {["Tous", "Lutte avec frappe", "Gala de lutte", "Lutte simple"].map((tab, i) => (
                     <button
                         key={tab}
                         className={cn(
@@ -100,25 +100,25 @@ export default function EventsList() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.1 }}
                     >
-                        <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] border border-gray-100 dark:border-gray-800 overflow-hidden flex shadow-sm">
+                        <div className="bg-slate-900 rounded-[2.5rem] border border-white/10 overflow-hidden flex shadow-xl">
                             <div className="w-32 h-full min-h-[160px] relative">
                                 <img src={event.imageUrl} className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-primary/10" />
                             </div>
                             <div className="flex-1 p-6 flex flex-col justify-between">
                                 <div className="space-y-1">
-                                    <h3 className="font-bold text-lg leading-tight">{event.title}</h3>
-                                    <div className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase">
+                                    <h3 className="font-bold text-lg leading-tight text-white">{event.title}</h3>
+                                    <div className="flex items-center gap-2 text-[10px] text-white/50 font-bold uppercase">
                                         <Calendar className="w-3 h-3 text-primary" />
                                         {event.date}
                                     </div>
                                 </div>
 
                                 <div className="flex items-center justify-between mt-4">
-                                    <p className="font-poppins font-bold text-primary">{formatPrice(event.price)}</p>
+                                    <p className="font-poppins font-bold text-secondary">{formatPrice(event.price)}</p>
                                     <button
                                         onClick={() => window.location.href = `/evenements/${event.id}`}
-                                        className="px-6 py-2 rounded-full bg-secondary text-secondary-foreground text-xs font-bold"
+                                        className="px-6 py-2 rounded-full bg-secondary text-secondary-foreground text-xs font-bold shadow-lg"
                                     >
                                         Tickets
                                     </button>

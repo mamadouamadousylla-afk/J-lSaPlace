@@ -14,7 +14,8 @@ const allEvents = [
         location: "Arène Nationale, Dakar",
         price: 5000,
         imageUrl: "/hero-combat.png",
-        status: "disponible" as const
+        status: "disponible" as const,
+        category: "Lutte avec frappe"
     },
     {
         id: "2",
@@ -23,7 +24,8 @@ const allEvents = [
         location: "Arène Nationale, Dakar",
         price: 3000,
         imageUrl: "https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&q=80&w=400",
-        status: "presque-complet" as const
+        status: "presque-complet" as const,
+        category: "Lutte avec frappe"
     },
     {
         id: "3",
@@ -32,7 +34,8 @@ const allEvents = [
         location: "Grand Stade de Mbour",
         price: 2500,
         imageUrl: "https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&q=80&w=400",
-        status: "disponible" as const
+        status: "disponible" as const,
+        category: "Gala de lutte"
     },
     {
         id: "4",
@@ -41,16 +44,20 @@ const allEvents = [
         location: "Arène Nationale, Dakar",
         price: 4000,
         imageUrl: "https://images.unsplash.com/photo-1542332213-31f87348057f?auto=format&fit=crop&q=80&w=400",
-        status: "disponible" as const
+        status: "disponible" as const,
+        category: "Lutte simple"
     }
 ]
 
 export default function EventsList() {
     const [search, setSearch] = useState("")
+    const [activeCategory, setActiveCategory] = useState("Tous")
 
-    const filteredEvents = allEvents.filter(e =>
-        e.title.toLowerCase().includes(search.toLowerCase())
-    )
+    const filteredEvents = allEvents.filter(e => {
+        const matchesSearch = e.title.toLowerCase().includes(search.toLowerCase())
+        const matchesCategory = activeCategory === "Tous" || e.category === activeCategory
+        return matchesSearch && matchesCategory
+    })
 
     return (
         <div className="flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
@@ -69,7 +76,7 @@ export default function EventsList() {
                     placeholder="Rechercher un lutteur ou une arène..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
-                    className="w-full pl-16 pr-6 py-5 rounded-[2rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm text-sm"
+                    className="w-full pl-16 pr-6 py-5 rounded-[2rem] bg-slate-900 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-xl text-white placeholder:text-white/40 text-sm"
                 />
                 <button className="absolute inset-y-2 right-2 p-3 rounded-2xl bg-primary text-white">
                     <Filter className="w-5 h-5" />
@@ -78,12 +85,13 @@ export default function EventsList() {
 
             {/* Categories / Tabs */}
             <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6">
-                {["Tous", "Lutte avec frappe", "Gala de lutte", "Lutte simple"].map((tab, i) => (
+                {["Tous", "Lutte avec frappe", "Gala de lutte", "Lutte simple"].map((tab) => (
                     <button
                         key={tab}
+                        onClick={() => setActiveCategory(tab)}
                         className={cn(
                             "px-6 py-3 rounded-full text-sm font-bold whitespace-nowrap transition-all",
-                            i === 0 ? "bg-primary text-white" : "bg-white dark:bg-gray-900 text-gray-400 border border-gray-100 dark:border-gray-800"
+                            activeCategory === tab ? "bg-primary text-white" : "bg-slate-900 text-white/50 border border-white/10"
                         )}
                     >
                         {tab}

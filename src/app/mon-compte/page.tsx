@@ -5,10 +5,10 @@ import { User, Settings, CreditCard, Bell, MapPin, LogOut, ChevronRight, Trophy 
 import Link from "next/link"
 
 const menuItems = [
-    { icon: CreditCard, label: "Historique d'achats", href: "#", color: "text-blue-500", bg: "bg-blue-50" },
-    { icon: Bell, label: "Notifications", href: "#", color: "text-purple-500", bg: "bg-purple-50" },
-    { icon: MapPin, label: "Arènes favorites", href: "#", color: "text-red-500", bg: "bg-red-50" },
-    { icon: Settings, label: "Paramètres", href: "#", color: "text-gray-500", bg: "bg-gray-50" },
+    { icon: CreditCard, label: "Historique d'achats", href: "/mon-compte/tickets", color: "text-blue-500", bg: "bg-blue-50" },
+    { icon: Bell, label: "Notifications", href: "/mon-compte/notifications", color: "text-purple-500", bg: "bg-purple-50" },
+    { icon: MapPin, label: "Arènes favorites", href: "/mon-compte/arenes", color: "text-red-500", bg: "bg-red-50" },
+    { icon: Settings, label: "Paramètres", href: "/mon-compte/parametres", color: "text-gray-500", bg: "bg-gray-50" },
 ]
 
 export default function ProfilePage() {

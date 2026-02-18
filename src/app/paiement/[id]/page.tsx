@@ -7,9 +7,9 @@ import { formatPrice, cn } from "@/lib/utils"
 import { useState } from "react"
 
 const paymentMethods = [
-    { id: "wave", name: "Wave", color: "bg-[#00AEEF]", textColor: "text-white", logo: "https://www.wave.com/static/wave-logo.svg" },
-    { id: "orange", name: "Orange Money", color: "bg-[#FF6600]", textColor: "text-white", logo: "https://upload.wikimedia.org/wikipedia/commons/c/c8/Orange_logo.svg" },
-    { id: "free", name: "Free Money", color: "bg-[#ED1C24]", textColor: "text-white", logo: "https://free.sn/sites/default/files/logo_free_money_0.png" },
+    { id: "wave", name: "Wave", color: "bg-[#00AEEF]", textColor: "text-white", logo: "/wave-logo.png" },
+    { id: "orange", name: "Orange Money", color: "bg-[#FF6600]", textColor: "text-white", logo: "/om-logo.png" },
+    { id: "free", name: "Free Money", color: "bg-[#ED1C24]", textColor: "text-white", logo: "/free-logo.png" },
 ]
 
 export default function PaymentPage() {
@@ -38,31 +38,31 @@ export default function PaymentPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen p-6 pt-16 space-y-8 bg-gray-50 dark:bg-black">
+        <div className="flex flex-col min-h-screen p-6 pt-16 space-y-8 bg-slate-950">
             <div className="flex items-center gap-4">
-                <button onClick={() => router.back()} className="p-2 rounded-full bg-white dark:bg-gray-900 shadow-sm">
+                <button onClick={() => router.back()} className="p-2 rounded-full bg-slate-900 shadow-sm text-white">
                     <ArrowLeft className="w-6 h-6" />
                 </button>
-                <h1 className="text-2xl font-poppins font-bold">Paiement Sécurisé</h1>
+                <h1 className="text-2xl font-poppins font-bold text-white">Paiement Sécurisé</h1>
             </div>
 
             {/* Recap */}
-            <div className="bg-white dark:bg-gray-900 rounded-[2rem] p-6 shadow-sm border border-gray-100 dark:border-gray-800 space-y-4">
+            <div className="bg-slate-900 rounded-[2rem] p-6 shadow-xl border border-white/10 space-y-4">
                 <div className="flex justify-between items-start">
                     <div>
-                        <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Récapitulatif</p>
-                        <h2 className="font-bold text-lg">Modou Lô vs Siteu</h2>
-                        <p className="text-sm text-gray-500">{qty}x Ticket {catId.toUpperCase()}</p>
+                        <p className="text-xs text-white/40 font-bold uppercase tracking-wider">Récapitulatif</p>
+                        <h2 className="font-bold text-lg text-white">Modou Lô vs Sa Thiès</h2>
+                        <p className="text-sm text-white/60">{qty}x Ticket {catId.toUpperCase()}</p>
                     </div>
                     <div className="text-right">
-                        <p className="font-poppins font-bold text-2xl text-primary">{formatPrice(total)}</p>
+                        <p className="font-poppins font-bold text-2xl text-secondary">{formatPrice(total)}</p>
                     </div>
                 </div>
             </div>
 
             {/* Payment Methods */}
             <div className="space-y-4">
-                <h3 className="font-poppins font-bold px-2 flex items-center gap-2">
+                <h3 className="font-poppins font-bold px-2 flex items-center gap-2 text-white">
                     <Smartphone className="w-5 h-5 text-primary" />
                     Mode de paiement
                 </h3>
@@ -74,17 +74,15 @@ export default function PaymentPage() {
                             className={cn(
                                 "flex items-center justify-between p-5 rounded-[2rem] transition-all border-2",
                                 selectedMethod.id === method.id
-                                    ? "border-primary bg-primary/5"
-                                    : "border-white dark:border-gray-900 bg-white dark:bg-gray-900"
+                                    ? "border-primary bg-primary/10"
+                                    : "border-white/5 bg-slate-900"
                             )}
                         >
                             <div className="flex items-center gap-4">
-                                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden p-1 bg-white", method.id === 'wave' && 'bg-blue-50')}>
-                                    <div className={cn("w-full h-full rounded-xl flex items-center justify-center font-bold text-xs", method.color, method.textColor)}>
-                                        {method.name[0]}
-                                    </div>
+                                <div className="w-12 h-12 rounded-2xl flex items-center justify-center overflow-hidden p-2 bg-white">
+                                    <img src={method.logo} alt={method.name} className="w-full h-full object-contain" />
                                 </div>
-                                <span className="font-bold">{method.name}</span>
+                                <span className="font-bold text-white">{method.name}</span>
                             </div>
                             {selectedMethod.id === method.id && (
                                 <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center">
@@ -98,28 +96,28 @@ export default function PaymentPage() {
 
             {/* User Info */}
             <div className="space-y-4">
-                <h3 className="font-poppins font-bold px-2">Vos informations</h3>
+                <h3 className="font-poppins font-bold px-2 text-white">Vos informations</h3>
                 <div className="space-y-3">
                     <input
                         type="text"
                         placeholder="Nom complet"
-                        className="w-full px-6 py-4 rounded-3xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                        className="w-full px-6 py-4 rounded-3xl bg-slate-900 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/20 text-white placeholder:text-white/30"
                     />
                     <div className="flex gap-2">
-                        <div className="w-20 px-4 py-4 rounded-3xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 flex items-center justify-center font-bold text-gray-400">
+                        <div className="w-20 px-4 py-4 rounded-3xl bg-slate-900 border border-white/10 flex items-center justify-center font-bold text-white/40">
                             +221
                         </div>
                         <input
                             type="tel"
                             placeholder="Téléphone"
-                            className="flex-1 px-6 py-4 rounded-3xl bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            className="flex-1 px-6 py-4 rounded-3xl bg-slate-900 border border-white/10 focus:outline-none focus:ring-2 focus:ring-primary/20 text-white placeholder:text-white/30"
                         />
                     </div>
                 </div>
             </div>
 
             {/* Security Disclaimer */}
-            <div className="flex items-center gap-2 justify-center text-gray-400 text-xs">
+            <div className="flex items-center gap-2 justify-center text-white/40 text-xs">
                 <Lock className="w-3 h-3" />
                 Paiement crypté et 100% sécurisé
             </div>

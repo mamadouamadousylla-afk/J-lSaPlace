@@ -37,7 +37,7 @@ export default function EventDetail() {
             {/* Hero Image */}
             <div className="relative h-[40vh] w-full">
                 <img
-                    src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=1200"
+                    src="/hero-combat.png"
                     alt="Combat"
                     className="h-full w-full object-cover"
                 />

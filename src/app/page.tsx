@@ -13,7 +13,7 @@ const upcomingEvents = [
     date: "Dimanche, 24 Novembre",
     location: "Arène Nationale, Dakar",
     price: 5000,
-    imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=400",
+    imageUrl: "/hero-combat.png",
     status: "disponible" as const
   },
   {

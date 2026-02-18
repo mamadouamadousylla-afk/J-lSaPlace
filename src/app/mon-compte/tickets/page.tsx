@@ -32,7 +32,7 @@ export default function TicketsPage() {
                     {/* Ticket Header (Combat Image) */}
                     <div className="h-40 w-full relative">
                         <img
-                            src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=600"
+                            src="/hero-combat.png"
                             className="w-full h-full object-cover"
                             alt="Combat"
                         />

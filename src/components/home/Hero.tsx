@@ -1,20 +1,23 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
-import { ChevronRight } from "lucide-react"
+import { ChevronRight, X } from "lucide-react"
+import { useState } from "react"
 
 export default function Hero() {
+    const [showAffiche, setShowAffiche] = useState(false)
+
     return (
         <div className="relative h-[80vh] w-full overflow-hidden rounded-b-[3rem] bg-primary">
             {/* Fallback pattern if image fails */}
             <div className="absolute inset-0 opacity-20"
                 style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '24px 24px' }} />
 
-            {/* Background Image Placeholder */}
+            {/* Background Image */}
             <div
                 className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: 'url(https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?q=80&w=2040&auto=format&fit=crop)' }}
+                style={{ backgroundImage: 'url(/hero-combat.png)' }}
             />
 
             {/* Gradient Overlay */}
@@ -38,13 +41,16 @@ export default function Hero() {
                     </p>
 
                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                        <Link href="/evenements/modou-lo-vs-siteu">
-                            <button className="button-gnudem bg-secondary text-secondary-foreground px-8 py-4 flex items-center justify-center gap-2 w-full sm:w-auto">
+                        <Link href="/evenements/1" className="w-full sm:w-auto">
+                            <button className="button-gnudem bg-secondary text-secondary-foreground px-8 py-4 flex items-center justify-center gap-2 w-full">
                                 Acheter mes tickets
                                 <ChevronRight className="w-5 h-5" />
                             </button>
                         </Link>
-                        <button className="button-gnudem bg-white/20 backdrop-blur-md text-white border border-white/30 px-8 py-4 w-full sm:w-auto">
+                        <button
+                            onClick={() => setShowAffiche(true)}
+                            className="button-gnudem bg-white/20 backdrop-blur-md text-white border border-white/30 px-8 py-4 w-full sm:w-auto"
+                        >
                             Voir l&apos;affiche
                         </button>
                     </div>
@@ -64,6 +70,32 @@ export default function Hero() {
                 <div className="h-1.5 flex-1 rounded-full bg-white/20" />
                 <div className="h-1.5 flex-1 rounded-full bg-white/20" />
             </div>
+
+            {/* Modal for Affiche */}
+            <AnimatePresence>
+                {showAffiche && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center p-4"
+                    >
+                        <button
+                            onClick={() => setShowAffiche(false)}
+                            className="absolute top-8 right-8 p-3 rounded-full bg-white/10 text-white"
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
+                        <motion.img
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            src="/hero-combat.png"
+                            className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl"
+                            alt="Affiche du combat"
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

@@ -9,8 +9,8 @@ import { cn, formatPrice } from "@/lib/utils"
 const allEvents = [
     {
         id: "1",
-        title: "Modou Lô vs Siteu",
-        date: "24 Nov 2024",
+        title: "Modou Lô vs Sa Thiès",
+        date: "5 Avr 2025",
         location: "Arène Nationale, Dakar",
         price: 5000,
         imageUrl: "/hero-combat.png",

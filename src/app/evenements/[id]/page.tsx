@@ -50,7 +50,7 @@ export default function EventDetail() {
                     <div className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase">
                         Grand Combat Royal
                     </div>
-                    <h1 className="text-3xl font-poppins font-bold leading-tight">Modou Lô vs Siteu</h1>
+                    <h1 className="text-3xl font-poppins font-bold leading-tight">Modou Lô vs Sa Thiès</h1>
 
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3 text-gray-500">
@@ -58,8 +58,8 @@ export default function EventDetail() {
                                 <Calendar className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-foreground">Dimanche, 24 Novembre</p>
-                                <p className="text-xs">16h00 - 20h00</p>
+                                <p className="text-sm font-bold text-foreground">Dimanche, 5 Avril</p>
+                                <p className="text-xs text-foreground/60">16h00 - 20h00</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 text-gray-500">
@@ -68,7 +68,7 @@ export default function EventDetail() {
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-foreground">Arène Nationale de Lutte</p>
-                                <p className="text-xs">Pikine, Dakar</p>
+                                <p className="text-xs text-foreground/60">Pikine, Dakar</p>
                             </div>
                         </div>
                     </div>
@@ -80,7 +80,7 @@ export default function EventDetail() {
                     <div className="grid grid-cols-2 gap-4">
                         {[
                             { name: "Modou Lô", wins: 22, height: "1m85" },
-                            { name: "Siteu", wins: 15, height: "1m80" }
+                            { name: "Sa Thiès", wins: 18, height: "1m82" }
                         ].map((l, i) => (
                             <div key={i} className="bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-100 dark:border-gray-800 text-center space-y-2">
                                 <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto" />

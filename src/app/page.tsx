@@ -9,8 +9,8 @@ import { cn } from "@/lib/utils"
 const upcomingEvents = [
   {
     id: "1",
-    title: "Modou Lô vs Siteu",
-    date: "Dimanche, 24 Novembre",
+    title: "Modou Lô vs Sa Thiès",
+    date: "Dimanche, 5 Avril",
     location: "Arène Nationale, Dakar",
     price: 5000,
     imageUrl: "/hero-combat.png",
@@ -65,8 +65,8 @@ export default function Home() {
       {/* Upcoming Events */}
       <section className="px-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-poppins font-bold">Événements à venir</h2>
-          <button className="text-primary font-bold text-sm">Voir tout</button>
+          <h2 className="text-2xl font-poppins font-bold text-white">Événements à venir</h2>
+          <button className="text-secondary font-bold text-sm">Voir tout</button>
         </div>
 
         <div className="flex gap-6 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
@@ -109,7 +109,7 @@ export default function Home() {
       <section className="px-6 space-y-6">
         <h2 className="text-2xl font-poppins font-bold text-center text-white">Les Rois de l&apos;Arène</h2>
         <div className="grid grid-cols-2 gap-4">
-          {["Modou Lô", "Siteu", "Balla Gaye 2", "Eumeu Sène"].map((name, idx) => (
+          {["Modou Lô", "Sa Thiès", "Balla Gaye 2", "Eumeu Sène"].map((name, idx) => (
             <motion.div
               key={name}
               whileTap={{ scale: 0.95 }}

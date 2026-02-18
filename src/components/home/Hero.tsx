@@ -34,9 +34,9 @@ export default function Hero() {
                         Événement Phare
                     </span>
                     <h1 className="text-4xl md:text-6xl font-poppins font-bold text-white leading-tight">
-                        Modou Lô <span className="text-secondary">VS</span> Siteu
+                        Modou Lô <span className="text-secondary">VS</span> Sa Thiès
                     </h1>
-                    <p className="text-gray-200 text-lg font-medium max-w-md">
+                    <p className="text-white text-lg font-medium max-w-md">
                         Le combat du siècle à l&apos;Arène Nationale. Ne manquez pas votre place dans l&apos;histoire.
                     </p>
 

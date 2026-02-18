@@ -50,11 +50,11 @@ export default function TicketsPage() {
                         <div className="absolute -right-4 top-0 w-8 h-8 rounded-full bg-gray-50 dark:bg-black -translate-y-1/2" />
 
                         <div className="space-y-1">
-                            <h3 className="text-2xl font-poppins font-bold">Modou Lô vs Siteu</h3>
+                            <h3 className="text-2xl font-poppins font-bold">Modou Lô vs Sa Thiès</h3>
                             <div className="flex items-center gap-4 text-gray-500 text-xs mt-2">
                                 <div className="flex items-center gap-1">
                                     <Calendar className="w-3 h-3" />
-                                    <span>24 Nov, 16h</span>
+                                    <span>5 Avr, 16h</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <MapPin className="w-3 h-3" />

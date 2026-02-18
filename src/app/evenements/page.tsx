@@ -19,12 +19,12 @@ const allEvents = [
     },
     {
         id: "2",
-        title: "Balla Gaye 2 vs Eumeu Sène",
-        date: "15 Déc 2024",
+        title: "Eumeu Sène vs Ada Fass",
+        date: "19 Avr 2026",
         location: "Arène Nationale, Dakar",
         price: 3000,
-        imageUrl: "https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&q=80&w=400",
-        status: "presque-complet" as const,
+        imageUrl: "/eumeu-ada.jpg",
+        status: "disponible" as const,
         category: "Lutte avec frappe"
     },
     {

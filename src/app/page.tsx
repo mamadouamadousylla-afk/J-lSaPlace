@@ -18,12 +18,12 @@ const upcomingEvents = [
   },
   {
     id: "2",
-    title: "Balla Gaye 2 vs Eumeu Sène",
-    date: "Dimanche, 15 Décembre",
+    title: "Eumeu Sène vs Ada Fass",
+    date: "Dimanche, 19 Avril 2026",
     location: "Arène Nationale, Dakar",
     price: 3000,
-    imageUrl: "https://images.unsplash.com/photo-1555597673-b21d5c935865?auto=format&fit=crop&q=80&w=400",
-    status: "presque-complet" as const
+    imageUrl: "/eumeu-ada.jpg",
+    status: "disponible" as const
   },
   {
     id: "3",
@@ -71,7 +71,9 @@ export default function Home() {
 
         <div className="flex gap-6 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
           {upcomingEvents.map((event) => (
-            <EventCard key={event.id} {...event} />
+            <div key={event.id} onClick={() => window.location.href = `/evenements/${event.id}`} className="cursor-pointer transition-transform active:scale-95">
+              <EventCard {...event} />
+            </div>
           ))}
         </div>
       </section>

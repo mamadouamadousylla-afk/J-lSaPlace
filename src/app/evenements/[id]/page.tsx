@@ -46,11 +46,11 @@ export default function EventDetail() {
 
             {/* Content */}
             <div className="px-6 -mt-10 relative z-20 space-y-8 pb-32">
-                <div className="bg-white dark:bg-gray-900 rounded-[2.5rem] p-6 shadow-xl border border-gray-100 dark:border-gray-800 space-y-4">
-                    <div className="inline-block px-4 py-1 rounded-full bg-primary/10 text-primary text-[10px] font-bold uppercase">
+                <div className="bg-slate-900 rounded-[2.5rem] p-6 shadow-xl border border-white/10 space-y-4">
+                    <div className="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary-foreground text-[10px] font-bold uppercase">
                         Grand Combat Royal
                     </div>
-                    <h1 className="text-3xl font-poppins font-bold leading-tight">Modou Lô vs Sa Thiès</h1>
+                    <h1 className="text-3xl font-poppins font-bold leading-tight text-white">Modou Lô vs Sa Thiès</h1>
 
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3 text-gray-500">
@@ -58,8 +58,8 @@ export default function EventDetail() {
                                 <Calendar className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-foreground">Dimanche, 5 Avril</p>
-                                <p className="text-xs text-foreground/60">16h00 - 20h00</p>
+                                <p className="text-sm font-bold text-white">Dimanche, 5 Avril</p>
+                                <p className="text-xs text-white/60">16h00 - 20h00</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 text-gray-500">
@@ -67,8 +67,8 @@ export default function EventDetail() {
                                 <MapPin className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-foreground">Arène Nationale de Lutte</p>
-                                <p className="text-xs text-foreground/60">Pikine, Dakar</p>
+                                <p className="text-sm font-bold text-white">Arène Nationale de Lutte</p>
+                                <p className="text-xs text-white/60">Pikine, Dakar</p>
                             </div>
                         </div>
                     </div>
@@ -79,13 +79,15 @@ export default function EventDetail() {
                     <h2 className="text-xl font-poppins font-bold px-2">Les Adversaires</h2>
                     <div className="grid grid-cols-2 gap-4">
                         {[
-                            { name: "Modou Lô", wins: 22, height: "1m85" },
-                            { name: "Sa Thiès", wins: 18, height: "1m82" }
+                            { name: "Modou Lô", wins: 22, height: "1m85", image: "/modou-lo.png" },
+                            { name: "Sa Thiès", wins: 18, height: "1m82", image: "/sa-thies.png" }
                         ].map((l, i) => (
-                            <div key={i} className="bg-white dark:bg-gray-900 p-4 rounded-3xl border border-gray-100 dark:border-gray-800 text-center space-y-2">
-                                <div className="w-20 h-20 bg-gray-200 rounded-full mx-auto" />
-                                <p className="font-bold">{l.name}</p>
-                                <div className="flex justify-center gap-4 text-[10px] font-medium text-gray-400">
+                            <div key={i} className="bg-slate-900 p-4 rounded-3xl border border-white/10 text-center space-y-2">
+                                <div className="w-24 h-24 rounded-full mx-auto overflow-hidden border-2 border-primary/30">
+                                    <img src={l.image} className="w-full h-full object-cover" alt={l.name} />
+                                </div>
+                                <p className="font-bold text-white">{l.name}</p>
+                                <div className="flex justify-center gap-4 text-[10px] font-medium text-white/60">
                                     <span>{l.wins} Victoires</span>
                                     <span>{l.height}</span>
                                 </div>

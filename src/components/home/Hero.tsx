@@ -16,7 +16,7 @@ export default function Hero() {
 
             {/* Background Image */}
             <div
-                className="absolute inset-0 bg-cover bg-center"
+                className="absolute inset-0 bg-cover bg-top"
                 style={{ backgroundImage: 'url(/hero-combat.png)' }}
             />
 
@@ -90,7 +90,7 @@ export default function Hero() {
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             src="/hero-combat.png"
-                            className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl"
+                            className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl object-contain object-center"
                             alt="Affiche du combat"
                         />
                     </motion.div>

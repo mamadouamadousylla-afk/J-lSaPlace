@@ -35,7 +35,7 @@ export default function TicketsPage() {
                     <div className="h-40 w-full relative">
                         <img
                             src="/hero-combat.png"
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover object-top"
                             alt="Combat"
                         />
                         <div className="absolute inset-0 bg-primary/40 mix-blend-multiply" />

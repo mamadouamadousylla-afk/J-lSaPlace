@@ -65,11 +65,11 @@ export default function EventDetail() {
             </div>
 
             {/* Hero Image */}
-            <div className="relative h-[40vh] w-full">
+            <div className="relative h-[50vh] w-full">
                 <img
                     src={event.heroImage}
                     alt={event.title}
-                    className="h-full w-full object-cover"
+                    className="h-full w-full object-cover object-top"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
             </div>

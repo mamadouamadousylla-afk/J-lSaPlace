@@ -35,11 +35,11 @@ export default function EventCard({ id, title, date, location, price, imageUrl, 
                 whileHover={{ y: -5 }}
                 className="inline-block w-72 rounded-[2rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm h-full"
             >
-                <div className="relative h-48 w-full">
+                <div className="relative h-64 w-full">
                     <img
                         src={imageUrl}
                         alt={title}
-                        className="h-full w-full object-cover"
+                        className="h-full w-full object-cover object-top"
                     />
                     <div className="absolute top-4 right-4">
                         <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase", statusColors[status])}>

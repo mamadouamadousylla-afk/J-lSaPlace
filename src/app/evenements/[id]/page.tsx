@@ -12,9 +12,39 @@ const categories = [
     { id: "pelouse", name: "Pelouse", price: 2000, color: "bg-green-300", seats: 500 },
 ]
 
+const EVENT_DATA: Record<string, any> = {
+    "1": {
+        title: "Modou Lô vs Sa Thiès",
+        date: "Dimanche, 5 Avril",
+        time: "16h00 - 20h00",
+        location: "Arène Nationale de Lutte",
+        address: "Pikine, Dakar",
+        heroImage: "/hero-combat.png",
+        fighters: [
+            { name: "Modou Lô", wins: 22, height: "1m85", image: "/modou-lo.png" },
+            { name: "Sa Thiès", wins: 18, height: "1m82", image: "/sa-thies.png" }
+        ]
+    },
+    "2": {
+        title: "Eumeu Sène vs Ada Fass",
+        date: "Dimanche, 19 Avril 2026",
+        time: "17h00 - 21h00",
+        location: "Arène Nationale de Lutte",
+        address: "Pikine, Dakar",
+        heroImage: "/eumeu-ada.jpg",
+        fighters: [
+            { name: "Eumeu Sène", wins: 15, height: "1m80", image: "/eumeu-ada.jpg" },
+            { name: "Ada Fass", wins: 12, height: "1m78", image: "/eumeu-ada.jpg" }
+        ]
+    }
+}
+
 export default function EventDetail() {
     const params = useParams()
     const router = useRouter()
+    const id = params.id as string
+    const event = EVENT_DATA[id] || EVENT_DATA["1"]
+
     const [selectedCategory, setSelectedCategory] = useState(categories[1])
     const [quantity, setQuantity] = useState(1)
 
@@ -37,8 +67,8 @@ export default function EventDetail() {
             {/* Hero Image */}
             <div className="relative h-[40vh] w-full">
                 <img
-                    src="/hero-combat.png"
-                    alt="Combat"
+                    src={event.heroImage}
+                    alt={event.title}
                     className="h-full w-full object-cover"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
@@ -50,7 +80,7 @@ export default function EventDetail() {
                     <div className="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary-foreground text-[10px] font-bold uppercase">
                         Grand Combat Royal
                     </div>
-                    <h1 className="text-3xl font-poppins font-bold leading-tight text-white">Modou Lô vs Sa Thiès</h1>
+                    <h1 className="text-3xl font-poppins font-bold leading-tight text-white">{event.title}</h1>
 
                     <div className="flex flex-col gap-3">
                         <div className="flex items-center gap-3 text-gray-500">
@@ -58,8 +88,8 @@ export default function EventDetail() {
                                 <Calendar className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-white">Dimanche, 5 Avril</p>
-                                <p className="text-xs text-white/60">16h00 - 20h00</p>
+                                <p className="text-sm font-bold text-white">{event.date}</p>
+                                <p className="text-xs text-white/60">{event.time}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 text-gray-500">
@@ -67,8 +97,8 @@ export default function EventDetail() {
                                 <MapPin className="w-5 h-5 text-primary" />
                             </div>
                             <div>
-                                <p className="text-sm font-bold text-white">Arène Nationale de Lutte</p>
-                                <p className="text-xs text-white/60">Pikine, Dakar</p>
+                                <p className="text-sm font-bold text-white">{event.location}</p>
+                                <p className="text-xs text-white/60">{event.address}</p>
                             </div>
                         </div>
                     </div>
@@ -78,10 +108,7 @@ export default function EventDetail() {
                 <section className="space-y-4">
                     <h2 className="text-xl font-poppins font-bold px-2">Les Adversaires</h2>
                     <div className="grid grid-cols-2 gap-4">
-                        {[
-                            { name: "Modou Lô", wins: 22, height: "1m85", image: "/modou-lo.png" },
-                            { name: "Sa Thiès", wins: 18, height: "1m82", image: "/sa-thies.png" }
-                        ].map((l, i) => (
+                        {event.fighters.map((l: any, i: number) => (
                             <div key={i} className="bg-slate-900 p-4 rounded-3xl border border-white/10 text-center space-y-2">
                                 <div className="w-24 h-24 rounded-full mx-auto overflow-hidden border-2 border-primary/30">
                                     <img src={l.image} className="w-full h-full object-cover" alt={l.name} />

@@ -42,10 +42,21 @@ export default function RootLayout({
         className={cn(
           inter.variable,
           poppins.variable,
-          "font-inter antialiased bg-background text-foreground h-full overflow-x-hidden"
+          "font-inter antialiased bg-background text-foreground h-full overflow-x-hidden relative"
         )}
       >
-        <main className="min-h-full pb-20">
+        {/* Background Decor */}
+        <div
+          className="fixed inset-0 pointer-events-none opacity-[0.03] z-[-1]"
+          style={{
+            backgroundImage: "url(/fond-lamb.png)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat"
+          }}
+        />
+
+        <main className="min-h-full pb-20 relative z-10">
           {children}
         </main>
         <BottomNav />

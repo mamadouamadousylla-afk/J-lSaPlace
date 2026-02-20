@@ -3,6 +3,7 @@
 import { motion } from "framer-motion"
 import { User, Settings, CreditCard, Bell, MapPin, LogOut, ChevronRight, Trophy } from "lucide-react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 
 const menuItems = [
     { icon: CreditCard, label: "Historique d'achats", href: "/mon-compte/tickets", color: "text-blue-500", bg: "bg-blue-50" },
@@ -12,6 +13,8 @@ const menuItems = [
 ]
 
 export default function ProfilePage() {
+    const router = useRouter()
+
     return (
         <div className="flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
             <div className="flex items-center justify-between">
@@ -78,14 +81,12 @@ export default function ProfilePage() {
                 <div className="relative z-10 space-y-2">
                     <h4 className="font-poppins font-bold text-lg">Challenge SunuLamb 🏆</h4>
                     <p className="text-white/80 text-sm">As-tu assisté au combat du week-end ? Badge ton badge et gagne des points !</p>
-                    <Link
-                        href="/mon-compte/defis"
-                        className="inline-block"
+                    <button
+                        onClick={() => router.push('/mon-compte/defis')}
+                        className="button-gnudem bg-secondary text-secondary-foreground px-6 py-3 mt-2 text-xs font-bold rounded-full shadow-lg active:scale-95 transition-transform relative z-20"
                     >
-                        <span className="button-gnudem bg-secondary text-secondary-foreground px-6 py-2 mt-2 text-xs font-bold inline-block cursor-pointer">
-                            Voir mes défis
-                        </span>
-                    </Link>
+                        Voir mes défis
+                    </button>
                 </div>
             </div>
 

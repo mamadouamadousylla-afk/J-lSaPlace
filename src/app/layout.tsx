@@ -45,9 +45,9 @@ export default function RootLayout({
           "font-inter antialiased bg-background text-foreground h-full overflow-x-hidden relative"
         )}
       >
-        {/* Background Decor */}
+        {/* Background Watermark - Source: fond-lamb-source.png */}
         <div
-          className="fixed inset-0 pointer-events-none opacity-[0.03] z-[-1]"
+          className="fixed inset-0 pointer-events-none opacity-[0.04] z-[-1]"
           style={{
             backgroundImage: "url(/fond-lamb.png)",
             backgroundSize: "cover",

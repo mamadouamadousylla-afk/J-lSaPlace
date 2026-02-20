@@ -33,7 +33,7 @@ const allEvents = [
         date: "4 Jan 2025",
         location: "Grand Stade de Mbour",
         price: 2500,
-        imageUrl: "https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&q=80&w=400",
+        imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=600",
         status: "disponible" as const,
         category: "Gala de lutte"
     },
@@ -43,7 +43,7 @@ const allEvents = [
         date: "2 Fév 2025",
         location: "Arène Nationale, Dakar",
         price: 4000,
-        imageUrl: "https://images.unsplash.com/photo-1542332213-31f87348057f?auto=format&fit=crop&q=80&w=400",
+        imageUrl: "/hero-combat.png",
         status: "disponible" as const,
         category: "Lutte simple"
     }

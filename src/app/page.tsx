@@ -31,7 +31,7 @@ const upcomingEvents = [
     date: "Samedi, 4 Janvier",
     location: "Grand Stade de Mbour",
     price: 2500,
-    imageUrl: "https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&q=80&w=400",
+    imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=600",
     status: "disponible" as const
   }
 ]

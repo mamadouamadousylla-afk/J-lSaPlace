@@ -33,44 +33,47 @@ export default function EventCard({ id, title, date, location, price, imageUrl, 
         <Link href={`/evenements/${id}`}>
             <motion.div
                 whileHover={{ y: -5 }}
-                className="inline-block w-72 rounded-[2rem] bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 overflow-hidden shadow-sm h-full"
+                className="relative w-72 h-[420px] rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 group"
             >
-                <div className="relative h-64 w-full">
-                    <img
-                        src={imageUrl}
-                        alt={title}
-                        className="h-full w-full object-cover object-top"
-                    />
-                    <div className="absolute top-4 right-4">
-                        <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase", statusColors[status])}>
-                            {statusLabels[status]}
-                        </span>
-                    </div>
+                {/* Full Background Image */}
+                <img
+                    src={imageUrl}
+                    alt={title}
+                    className="absolute inset-0 h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-110"
+                />
+
+                {/* Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
+
+                <div className="absolute top-4 right-4">
+                    <span className={cn("px-3 py-1 rounded-full text-[10px] font-bold uppercase backdrop-blur-md", statusColors[status])}>
+                        {statusLabels[status]}
+                    </span>
                 </div>
 
-                <div className="p-6 space-y-4">
-                    <h3 className="font-poppins font-bold text-lg text-white leading-tight line-clamp-2">{title}</h3>
+                <div className="absolute inset-x-0 bottom-0 p-6 space-y-4">
+                    <h3 className="font-poppins font-bold text-xl text-white leading-tight line-clamp-2 drop-shadow-lg">{title}</h3>
 
                     <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-white/70 text-sm">
-                            <Calendar className="w-4 h-4 text-primary" />
+                        <div className="flex items-center gap-2 text-white/90 text-sm font-medium">
+                            <Calendar className="w-4 h-4 text-secondary" />
                             <span>{date}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-white/70 text-sm">
-                            <MapPin className="w-4 h-4 text-primary" />
+                        <div className="flex items-center gap-2 text-white/80 text-sm">
+                            <MapPin className="w-4 h-4 text-secondary" />
                             <span>{location}</span>
                         </div>
                     </div>
 
                     <div className="flex items-center justify-between pt-2">
-                        <div>
-                            <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">À partir de</p>
-                            <p className="font-poppins font-bold text-primary text-xl">{formatPrice(price)}</p>
+                        <div className="bg-black/30 backdrop-blur-md px-3 py-1 rounded-2xl border border-white/10">
+                            <p className="text-[10px] text-white/60 uppercase font-bold tracking-wider">À partir de</p>
+                            <p className="font-poppins font-bold text-secondary text-xl">{formatPrice(price)}</p>
                         </div>
                         <div
-                            className="flex items-center justify-center w-10 h-10 rounded-full bg-primary/10 text-primary"
+                            className="flex items-center justify-center w-12 h-12 rounded-full bg-secondary text-secondary-foreground shadow-lg transform transition-transform group-hover:rotate-45"
                         >
-                            <ChevronRight className="w-5 h-5" />
+                            <ChevronRight className="w-6 h-6" />
                         </div>
                     </div>
                 </div>

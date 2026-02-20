@@ -100,39 +100,16 @@ export default function EventsList() {
             </div>
 
             {/* Grid */}
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 justify-items-center">
                 {filteredEvents.map((event, idx) => (
                     <motion.div
                         key={event.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: idx * 0.1 }}
+                        className="w-full max-w-[320px]"
                     >
-                        <div className="bg-slate-900 rounded-[2.5rem] border border-white/10 overflow-hidden flex shadow-xl">
-                            <div className="w-32 h-full min-h-[160px] relative">
-                                <img src={event.imageUrl} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-primary/10" />
-                            </div>
-                            <div className="flex-1 p-6 flex flex-col justify-between">
-                                <div className="space-y-1">
-                                    <h3 className="font-bold text-lg leading-tight text-white">{event.title}</h3>
-                                    <div className="flex items-center gap-2 text-[10px] text-white/50 font-bold uppercase">
-                                        <Calendar className="w-3 h-3 text-primary" />
-                                        {event.date}
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between mt-4">
-                                    <p className="font-poppins font-bold text-secondary">{formatPrice(event.price)}</p>
-                                    <button
-                                        onClick={() => window.location.href = `/evenements/${event.id}`}
-                                        className="px-6 py-2 rounded-full bg-secondary text-secondary-foreground text-xs font-bold shadow-lg"
-                                    >
-                                        Tickets
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                        <EventCard {...event} />
                     </motion.div>
                 ))}
             </div>

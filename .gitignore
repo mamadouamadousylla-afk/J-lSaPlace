@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# heavy assets and screenshots
+Capture d’écran *.png
+*.jpg
+*.jpeg
+*.png
+!public/*.png
+!public/*.jpg
+!public/*.jpeg
+!public/*.svg
+!public/*.webp
+!src/**/*.png
+!src/**/*.jpg
+!src/**/*.jpeg
+!src/**/*.svg
+!src/**/*.webp

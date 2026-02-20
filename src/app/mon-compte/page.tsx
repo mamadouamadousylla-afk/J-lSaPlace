@@ -1,4 +1,4 @@
-"use client"
+"use client" // Update: Synchronized with GitHub
 
 import { motion } from "framer-motion"
 import { User, Settings, CreditCard, Bell, MapPin, LogOut, ChevronRight, Trophy } from "lucide-react"

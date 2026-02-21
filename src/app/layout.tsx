@@ -47,12 +47,12 @@ export default function RootLayout({
       >
         {/* Background Watermark - Source: fond-lamb-source.png */}
         <div
-          className="fixed inset-0 pointer-events-none opacity-[0.04] z-[-1]"
+          className="fixed inset-0 pointer-events-none opacity-[0.06] z-[-1]"
           style={{
             backgroundImage: "url(/fond-lamb.png)",
-            backgroundSize: "cover",
+            backgroundSize: "400px 400px",
             backgroundPosition: "center",
-            backgroundRepeat: "no-repeat"
+            backgroundRepeat: "repeat"
           }}
         />
 

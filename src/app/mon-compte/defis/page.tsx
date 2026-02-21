@@ -50,23 +50,23 @@ export default function DefisPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-slate-950 p-6 pt-16 pb-32 space-y-8">
+        <div className="flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
             {/* Header */}
             <div className="flex items-center gap-4">
                 <button
                     onClick={() => router.back()}
-                    className="p-3 rounded-full bg-white/10 text-white"
+                    className="p-3 rounded-full bg-gray-100 text-gray-700"
                 >
                     <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div>
-                    <h1 className="text-2xl font-poppins font-bold text-white">Mes Défis</h1>
-                    <p className="text-white/50 text-xs">Pronostiquez et gagnez des points</p>
+                    <h1 className="text-2xl font-poppins font-bold text-gray-900">Mes Défis</h1>
+                    <p className="text-gray-500 text-xs">Pronostiquez et gagnez des points</p>
                 </div>
             </div>
 
             {/* Stats Card */}
-            <div className="bg-gradient-to-br from-primary to-green-900 rounded-[2.5rem] p-6 text-white flex justify-between items-center shadow-xl border border-white/10">
+            <div className="bg-gradient-to-br from-primary to-green-900 rounded-[2.5rem] p-6 text-white flex justify-between items-center shadow-lg border border-gray-200">
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center">
                         <Trophy className="w-6 h-6 text-secondary" />
@@ -84,7 +84,7 @@ export default function DefisPage() {
 
             {/* Challenges List */}
             <div className="space-y-6">
-                <h2 className="text-lg font-poppins font-bold text-white px-2">Combats à venir</h2>
+                <h2 className="text-lg font-poppins font-bold text-gray-900 px-2">Combats à venir</h2>
 
                 {challenges.map((challenge, idx) => {
                     const isSubmitted = submitted.includes(challenge.id)
@@ -96,20 +96,20 @@ export default function DefisPage() {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.1 }}
-                            className="bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-lg"
+                            className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-lg"
                         >
                             {/* Card Header with Image */}
                             <div className="h-32 w-full relative">
                                 <img src={challenge.imageUrl} className="w-full h-full object-cover object-top opacity-50" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-white to-transparent" />
                                 <div className="absolute top-4 left-6">
                                     <span className="px-3 py-1 rounded-full bg-secondary/20 text-secondary text-[10px] font-bold uppercase backdrop-blur-md border border-secondary/30">
                                         +{challenge.points} Points
                                     </span>
                                 </div>
                                 <div className="absolute bottom-2 left-6 right-6 flex justify-between items-end">
-                                    <h3 className="font-bold text-lg text-white">{challenge.title}</h3>
-                                    <p className="text-[10px] text-white/50 mb-1">{challenge.date}</p>
+                                    <h3 className="font-bold text-lg text-gray-900">{challenge.title}</h3>
+                                    <p className="text-[10px] text-gray-500 mb-1">{challenge.date}</p>
                                 </div>
                             </div>
 
@@ -124,25 +124,25 @@ export default function DefisPage() {
                                                 "flex-1 p-4 rounded-3xl border-2 transition-all flex flex-col items-center gap-2",
                                                 selectedWinner === fighter
                                                     ? "border-primary bg-primary/10"
-                                                    : "border-white/5 bg-white/5",
+                                                    : "border-gray-200 bg-gray-50",
                                                 isSubmitted && selectedWinner !== fighter && "opacity-50 grayscale"
                                             )}
                                         >
                                             <div className={cn(
                                                 "w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm",
-                                                selectedWinner === fighter ? "bg-primary text-white" : "bg-white/10 text-white/50"
+                                                selectedWinner === fighter ? "bg-primary text-white" : "bg-gray-100 text-gray-500"
                                             )}>
                                                 {fighter[0]}
                                             </div>
                                             <span className={cn(
                                                 "text-xs font-bold",
-                                                selectedWinner === fighter ? "text-primary" : "text-white/70"
+                                                selectedWinner === fighter ? "text-primary" : "text-gray-600"
                                             )}>{fighter}</span>
                                         </button>
                                     ))}
                                     <div className="absolute left-1/2 -translate-x-1/2 mt-[-40px]">
-                                        <div className="bg-slate-950 p-2 rounded-full border border-white/10">
-                                            <Swords className="w-4 h-4 text-white/20" />
+                                        <div className="bg-white p-2 rounded-full border border-gray-200">
+                                            <Swords className="w-4 h-4 text-gray-300" />
                                         </div>
                                     </div>
                                 </div>
@@ -160,7 +160,7 @@ export default function DefisPage() {
                                                 "w-full py-4 rounded-full font-bold text-sm transition-all",
                                                 selectedWinner
                                                     ? "bg-secondary text-secondary-foreground shadow-lg"
-                                                    : "bg-white/5 text-white/20 border border-white/5 cursor-not-allowed"
+                                                    : "bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed"
                                             )}
                                         >
                                             Valider mon pronostic
@@ -184,12 +184,12 @@ export default function DefisPage() {
             </div>
 
             {/* Motivation Section */}
-            <div className="bg-white/5 border border-white/10 p-6 rounded-[2.5rem] space-y-4">
+            <div className="bg-gray-50 border border-gray-200 p-6 rounded-[2.5rem] space-y-4">
                 <div className="flex items-center gap-3">
                     <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                    <h4 className="font-bold text-white">Le savais-tu ?</h4>
+                    <h4 className="font-bold text-gray-900">Le savais-tu ?</h4>
                 </div>
-                <p className="text-white/60 text-xs leading-relaxed">
+                <p className="text-gray-500 text-xs leading-relaxed">
                     Les pronostics corrects te font grimper dans le classement mondial de SunuLamb. Les 10 premiers chaque mois reçoivent des tickets VIP gratuits !
                 </p>
                 <button className="text-primary text-xs font-bold underline">Voir le règlement</button>

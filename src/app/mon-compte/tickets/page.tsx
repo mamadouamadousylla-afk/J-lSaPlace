@@ -9,16 +9,16 @@ export default function TicketsPage() {
     const router = useRouter()
 
     return (
-        <div className="flex flex-col min-h-screen bg-slate-950 p-6 pt-16 pb-32 space-y-8">
+        <div className="flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
             <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-poppins font-bold text-white">Mes Tickets</h1>
-                <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center text-white">
+                <h1 className="text-2xl font-poppins font-bold text-gray-900">Mes Tickets</h1>
+                <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-primary">
                     <Ticket className="w-5 h-5" />
                 </div>
             </div>
 
             <div className="space-y-3">
-                <h2 className="text-xl font-bold text-white">Jërejëf ! Ton ticket est prêt.</h2>
+                <h2 className="text-xl font-bold text-gray-900">Jërejëf ! Ton ticket est prêt.</h2>
                 <div className="bg-white px-4 py-2 rounded-full inline-block">
                     <p className="text-black text-xs font-bold font-poppins">Présentez ce QR Code à l&apos;entrée de l&apos;arène.</p>
                 </div>
@@ -46,21 +46,21 @@ export default function TicketsPage() {
                         </div>
                     </div>
 
-                    <div className="p-8 space-y-8 relative bg-slate-900">
+                    <div className="p-8 space-y-8 relative bg-white">
                         {/* Cutout circles for ticket look */}
-                        <div className="absolute -left-4 top-0 w-8 h-8 rounded-full bg-slate-950 -translate-y-1/2" />
-                        <div className="absolute -right-4 top-0 w-8 h-8 rounded-full bg-slate-950 -translate-y-1/2" />
+                        <div className="absolute -left-4 top-0 w-8 h-8 rounded-full bg-background -translate-y-1/2" />
+                        <div className="absolute -right-4 top-0 w-8 h-8 rounded-full bg-background -translate-y-1/2" />
 
                         <div className="space-y-1">
-                            <h3 className="text-2xl font-poppins font-bold text-white">Modou Lô vs Sa Thiès</h3>
-                            <div className="flex items-center gap-4 text-white/60 text-xs mt-2">
+                            <h3 className="text-2xl font-poppins font-bold text-gray-900">Modou Lô vs Sa Thiès</h3>
+                            <div className="flex items-center gap-4 text-gray-400 text-xs mt-2">
                                 <div className="flex items-center gap-1">
                                     <Calendar className="w-3 h-3 text-primary" />
-                                    <span className="text-white">5 Avr, 16h</span>
+                                    <span className="text-gray-700">5 Avr, 16h</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <MapPin className="w-3 h-3 text-primary" />
-                                    <span className="text-white">Tribune</span>
+                                    <span className="text-gray-700">Tribune</span>
                                 </div>
                             </div>
                         </div>

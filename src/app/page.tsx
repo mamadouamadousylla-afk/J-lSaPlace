@@ -65,7 +65,7 @@ export default function Home() {
       {/* Upcoming Events */}
       <section className="px-6 space-y-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-poppins font-bold text-white">Événements à venir</h2>
+          <h2 className="text-2xl font-poppins font-bold text-gray-900">Événements à venir</h2>
           <button className="text-secondary font-bold text-sm">Voir tout</button>
         </div>
 
@@ -79,10 +79,10 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section className="px-6 py-12 bg-slate-500 dark:bg-gray-800/80 rounded-[3rem] mx-4 space-y-10">
+      <section className="px-6 py-12 bg-white/80 backdrop-blur-sm border border-gray-200 rounded-[3rem] mx-4 space-y-10 shadow-sm">
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-poppins font-bold text-white">Comment ça marche ?</h2>
-          <p className="text-white text-sm opacity-80">Votre ticket en 3 étapes simples</p>
+          <h2 className="text-2xl font-poppins font-bold text-gray-900">Comment ça marche ?</h2>
+          <p className="text-gray-500 text-sm">Votre ticket en 3 étapes simples</p>
         </div>
 
         <div className="grid gap-8">
@@ -93,14 +93,14 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ delay: idx * 0.1 }}
               viewport={{ once: true }}
-              className="flex items-start gap-4 p-4 rounded-3xl bg-white dark:bg-gray-900 shadow-sm border border-gray-100 dark:border-gray-800"
+              className="flex items-start gap-4 p-4 rounded-3xl bg-white shadow-sm border border-gray-100"
             >
               <div className={cn("p-4 rounded-2xl", step.color)}>
                 <step.icon className="w-6 h-6" />
               </div>
               <div className="space-y-1">
-                <h3 className="font-bold text-white">{step.title}</h3>
-                <p className="text-white/70 text-sm">{step.desc}</p>
+                <h3 className="font-bold text-gray-900">{step.title}</h3>
+                <p className="text-gray-500 text-sm">{step.desc}</p>
               </div>
             </motion.div>
           ))}
@@ -109,7 +109,7 @@ export default function Home() {
 
       {/* Featured Wrestlers */}
       <section className="px-6 space-y-6">
-        <h2 className="text-2xl font-poppins font-bold text-center text-white">Les Rois de l&apos;Arène</h2>
+        <h2 className="text-2xl font-poppins font-bold text-center text-gray-900">Les Rois de l&apos;Arène</h2>
         <div className="grid grid-cols-2 gap-4">
           {["Modou Lô", "Sa Thiès", "Balla Gaye 2", "Eumeu Sène"].map((name, idx) => (
             <motion.div

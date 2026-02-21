@@ -19,33 +19,33 @@ export default function ProfilePage() {
         <div className="flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-poppins font-bold text-black">Mon Compte</h1>
-                <button className="p-3 rounded-full bg-slate-900 shadow-sm text-red-500">
+                <button className="p-3 rounded-full bg-gray-100 shadow-sm text-red-500">
                     <LogOut className="w-5 h-5" />
                 </button>
             </div>
 
             {/* User Info */}
-            <div className="bg-slate-900 rounded-[2.5rem] p-8 shadow-xl border border-white/10 text-center space-y-4">
+            <div className="bg-white rounded-[2.5rem] p-8 shadow-lg border border-gray-200 text-center space-y-4">
                 <div className="relative inline-block">
                     <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-primary text-3xl font-bold">
                         JD
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center border-4 border-slate-900">
+                    <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center border-4 border-white">
                         <Trophy className="w-3 h-3" />
                     </div>
                 </div>
                 <div>
-                    <h2 className="text-xl font-bold text-white">Jean Diouf</h2>
-                    <p className="text-white/60 text-sm italic">Grand Amateur de Lutte</p>
+                    <h2 className="text-xl font-bold text-gray-900">Jean Diouf</h2>
+                    <p className="text-gray-500 text-sm italic">Grand Amateur de Lutte</p>
                 </div>
                 <div className="flex justify-center gap-4 pt-2">
-                    <div className="px-4 py-2 rounded-2xl bg-black/20">
-                        <p className="text-[10px] text-white/40 font-bold uppercase">Points</p>
-                        <p className="font-poppins font-bold text-white">1,250</p>
+                    <div className="px-4 py-2 rounded-2xl bg-gray-100">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Points</p>
+                        <p className="font-poppins font-bold text-gray-900">1,250</p>
                     </div>
-                    <div className="px-4 py-2 rounded-2xl bg-black/20">
-                        <p className="text-[10px] text-white/40 font-bold uppercase">Niveau</p>
-                        <p className="font-poppins font-bold text-white">Expert</p>
+                    <div className="px-4 py-2 rounded-2xl bg-gray-100">
+                        <p className="text-[10px] text-gray-400 font-bold uppercase">Niveau</p>
+                        <p className="font-poppins font-bold text-gray-900">Expert</p>
                     </div>
                 </div>
             </div>
@@ -53,23 +53,23 @@ export default function ProfilePage() {
             {/* Menu Sections */}
             <div className="space-y-4">
                 <h3 className="font-poppins font-bold px-2 text-sm text-gray-500 uppercase tracking-widest">Général</h3>
-                <div className="bg-slate-900 rounded-[2.5rem] overflow-hidden border border-white/10 shadow-xl text-sm">
+                <div className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-lg text-sm">
                     {menuItems.map((item, idx) => (
                         <Link
                             key={item.label}
                             href={item.href}
                             className={cn(
-                                "flex items-center justify-between p-6 transition-colors hover:bg-slate-800",
-                                idx !== menuItems.length - 1 && "border-b border-white/10"
+                                "flex items-center justify-between p-6 transition-colors hover:bg-gray-50",
+                                idx !== menuItems.length - 1 && "border-b border-gray-100"
                             )}
                         >
                             <div className="flex items-center gap-4">
                                 <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center", item.bg)}>
                                     <item.icon className={cn("w-5 h-5", item.color)} />
                                 </div>
-                                <span className="font-bold text-white">{item.label}</span>
+                                <span className="font-bold text-gray-900">{item.label}</span>
                             </div>
-                            <ChevronRight className="w-5 h-5 text-white/20" />
+                            <ChevronRight className="w-5 h-5 text-gray-300" />
                         </Link>
                     ))}
                 </div>

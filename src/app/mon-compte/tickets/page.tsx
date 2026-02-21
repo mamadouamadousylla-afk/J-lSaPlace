@@ -9,7 +9,17 @@ export default function TicketsPage() {
     const router = useRouter()
 
     return (
-        <div className="flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
+        <div className="relative flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
+            {/* Filigrane African Pattern */}
+            <div
+                className="fixed inset-0 pointer-events-none opacity-[0.06] z-0"
+                style={{
+                    backgroundImage: "url(/fond-lamb.png)",
+                    backgroundSize: "300px 300px",
+                    backgroundRepeat: "repeat"
+                }}
+            />
+            <div className="relative z-10 flex flex-col space-y-8">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-poppins font-bold text-gray-900">Mes Tickets</h1>
                 <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-primary">
@@ -105,6 +115,7 @@ export default function TicketsPage() {
             <div className="bg-gradient-to-br from-primary to-green-700 p-8 rounded-[2.5rem] text-white">
                 <h4 className="font-bold mb-2">Conseil de Sécurité</h4>
                 <p className="text-sm text-white/80">Ne partagez jamais votre QR Code sur les réseaux sociaux. Chaque code est unique et à usage unique.</p>
+            </div>
             </div>
         </div>
     )

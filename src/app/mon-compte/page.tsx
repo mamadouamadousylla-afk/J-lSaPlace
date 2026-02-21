@@ -16,7 +16,17 @@ export default function ProfilePage() {
     const router = useRouter()
 
     return (
-        <div className="flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
+        <div className="relative flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
+            {/* Filigrane African Pattern */}
+            <div
+                className="fixed inset-0 pointer-events-none opacity-[0.06] z-0"
+                style={{
+                    backgroundImage: "url(/fond-lamb.png)",
+                    backgroundSize: "300px 300px",
+                    backgroundRepeat: "repeat"
+                }}
+            />
+            <div className="relative z-10 flex flex-col space-y-8">
             <div className="flex items-center justify-between">
                 <h1 className="text-3xl font-poppins font-bold text-black">Mon Compte</h1>
                 <button className="p-3 rounded-full bg-gray-100 shadow-sm text-red-500">
@@ -93,6 +103,7 @@ export default function ProfilePage() {
             <p className="text-center text-black font-medium text-[10px] pt-4">
                 Version 1.0.0 • SunuLamb 2024
             </p>
+            </div>
         </div>
     )
 }

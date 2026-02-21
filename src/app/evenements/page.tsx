@@ -60,7 +60,17 @@ export default function EventsList() {
     })
 
     return (
-        <div className="flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
+        <div className="relative flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
+            {/* Filigrane African Pattern */}
+            <div
+                className="fixed inset-0 pointer-events-none opacity-[0.06] z-0"
+                style={{
+                    backgroundImage: "url(/fond-lamb.png)",
+                    backgroundSize: "300px 300px",
+                    backgroundRepeat: "repeat"
+                }}
+            />
+            <div className="relative z-10 flex flex-col space-y-8">
             <div className="space-y-2">
                 <h1 className="text-3xl font-poppins font-bold text-black">Événements</h1>
                 <p className="text-gray-600 text-sm font-medium">Trouvez les meilleurs combats de la saison.</p>
@@ -120,6 +130,7 @@ export default function EventsList() {
                     <button onClick={() => setSearch("")} className="text-primary font-bold underline">Effacer la recherche</button>
                 </div>
             )}
+            </div>
         </div>
     )
 }

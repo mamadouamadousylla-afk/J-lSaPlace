@@ -2,8 +2,9 @@
 
 import { motion } from "framer-motion"
 import { Ticket, Download, ArrowLeft, Calendar, MapPin, Share2 } from "lucide-react"
-import { QRCodeSVG } from "qrcode.react"
 import { useRouter } from "next/navigation"
+import Qoder from "@/components/shared/Qoder"
+import Antigravity from "@/components/shared/Antigravity"
 
 export default function TicketsPage() {
     const router = useRouter()
@@ -77,14 +78,14 @@ export default function TicketsPage() {
 
                         {/* QR Code */}
                         <div className="flex flex-col items-center justify-center space-y-4 py-4">
-                            <div className="p-6 bg-white rounded-[2rem] shadow-inner border border-gray-50">
-                                <QRCodeSVG
-                                    value="https://sunulamb.sn/v/ticket-123456"
-                                    size={180}
-                                    fgColor="#1B8B3D"
+                            <Antigravity>
+                                <Qoder 
+                                    value="https://sunulamb.sn/tickets/123456"
+                                    size={200}
+                                    className="p-6 rounded-[2rem] shadow-inner border border-gray-50"
                                 />
-                            </div>
-                            <p className="text-[10px] text-gray-400 font-mono uppercase tracking-[0.2em]">SL-883-X92-2024</p>
+                            </Antigravity>
+                            <p className="text-xs text-gray-400 font-mono tracking-widest">TICKET #8493-2025</p>
                         </div>
 
                         <div className="flex gap-4 pt-4 border-t border-gray-100 dark:border-gray-800 border-dashed">

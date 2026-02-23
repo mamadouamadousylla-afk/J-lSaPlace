@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import { ChevronRight, X } from "lucide-react"
 import { useState } from "react"
+import Antigravity from "@/components/shared/Antigravity"
 
 export default function Hero() {
     const [showAffiche, setShowAffiche] = useState(false)
@@ -86,13 +87,15 @@ export default function Hero() {
                         >
                             <X className="w-8 h-8" />
                         </button>
-                        <motion.img
-                            initial={{ scale: 0.9, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            src="/hero-combat.png"
-                            className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl object-contain object-center"
-                            alt="Affiche du combat"
-                        />
+                        <Antigravity yOffset={20} duration={3}>
+                            <motion.img
+                                initial={{ scale: 0.9, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                src="/hero-combat.png"
+                                className="max-w-full max-h-[90vh] rounded-3xl shadow-2xl object-contain object-center"
+                                alt="Affiche du combat"
+                            />
+                        </Antigravity>
                     </motion.div>
                 )}
             </AnimatePresence>

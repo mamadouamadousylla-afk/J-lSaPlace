@@ -26,21 +26,7 @@ export default function SettingsPage() {
                 </div>
             </div>
 
-            <div className="w-full h-64 rounded-3xl overflow-hidden shadow-lg border border-gray-200">
-                <iframe
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    loading="lazy"
-                    allowFullScreen
-                    referrerPolicy="no-referrer-when-downgrade"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3858.686566835263!2d-17.4069874!3d14.7303961!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xec10d48e891398d%3A0x629530403333333!2sAr%C3%A8ne%20Nationale%20de%20Lutte!5e0!3m2!1sfr!2ssn!4v1709900000000!5m2!1sfr!2ssn">
-                </iframe>
-            </div>
-            <div className="text-center">
-                <p className="text-sm font-bold text-gray-900">Arène Nationale du Sénégal</p>
-                <p className="text-xs text-gray-500">QJ72+P7, Pikine</p>
-            </div>
+
         </div>
     )
 }

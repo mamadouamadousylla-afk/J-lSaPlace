@@ -56,3 +56,4 @@ Capture d’écran *.png
 !src/**/*.svg
 !src/**/*.webp
 .vercel_backup
+.env*.local

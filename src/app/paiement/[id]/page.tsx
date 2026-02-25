@@ -32,7 +32,7 @@ export default function PaymentPage() {
             setIsLoading(false)
             setIsSuccess(true)
             setTimeout(() => {
-                router.push("/mon-compte/tickets")
+                router.push(`/mon-compte/tickets?qty=${qty}&cat=${catId}`)
             }, 3000)
         }, 2000)
     }

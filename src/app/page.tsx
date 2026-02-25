@@ -2,12 +2,39 @@
 
 import Hero from "@/components/home/Hero"
 import EventCard from "@/components/shared/EventCard"
-import FeaturedEventCarousel from "@/components/home/FeaturedEventCarousel"
 import { motion } from "framer-motion"
 import { Users, ShieldCheck, Zap } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-
+const upcomingEvents = [
+  {
+    id: "1",
+    title: "Modou Lô vs Sa Thiès",
+    date: "Dimanche, 5 Avril",
+    location: "Arène Nationale, Dakar",
+    price: 5000,
+    imageUrl: "/hero-combat.png",
+    status: "disponible" as const
+  },
+  {
+    id: "2",
+    title: "Eumeu Sène vs Ada Fass",
+    date: "Dimanche, 19 Avril 2026",
+    location: "Arène Nationale, Dakar",
+    price: 3000,
+    imageUrl: "/eumeu-ada.jpg",
+    status: "disponible" as const
+  },
+  {
+    id: "3",
+    title: "Reug Reug vs Bombardier",
+    date: "Samedi, 4 Janvier",
+    location: "Grand Stade de Mbour",
+    price: 2500,
+    imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=600",
+    status: "disponible" as const
+  }
+]
 
 const steps = [
   {
@@ -35,9 +62,20 @@ export default function Home() {
     <div className="flex flex-col gap-12 pb-12">
       <Hero />
 
-      {/* Featured Events Carousel */}
-      <section className="mt-8">
-        <FeaturedEventCarousel />
+      {/* Upcoming Events */}
+      <section className="px-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-poppins font-bold text-gray-900">Événements à venir</h2>
+          <button className="text-secondary font-bold text-sm">Voir tout</button>
+        </div>
+
+        <div className="flex gap-6 overflow-x-auto pb-4 no-scrollbar -mx-6 px-6">
+          {upcomingEvents.map((event) => (
+            <div key={event.id} onClick={() => window.location.href = `/evenements/${event.id}`} className="cursor-pointer transition-transform active:scale-95">
+              <EventCard {...event} />
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* How it works */}

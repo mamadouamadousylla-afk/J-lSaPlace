@@ -45,12 +45,14 @@ export default function EventDetail() {
     const id = params.id as string
     const event = EVENT_DATA[id] || EVENT_DATA["1"]
 
-    const [selectedCategory, setSelectedCategory] = useState(categories[1])
+    const [selectedCategory, setSelectedCategory] = useState<any>(null)
     const [quantity, setQuantity] = useState(1)
 
     const handleBooking = () => {
+        if (!selectedCategory) return
         router.push(`/paiement/booking-123?qty=${quantity}&cat=${selectedCategory.id}`)
     }
+
 
     return (
         <div className="flex flex-col min-h-screen">
@@ -132,7 +134,7 @@ export default function EventDetail() {
                                 key={cat.id}
                                 className={cn(
                                     "flex items-center justify-between p-4 rounded-3xl border-2 transition-all cursor-pointer",
-                                    selectedCategory.id === cat.id
+                                    selectedCategory?.id === cat.id
                                         ? "border-primary bg-primary/5"
                                         : "border-gray-100 dark:border-gray-800"
                                 )}
@@ -142,7 +144,7 @@ export default function EventDetail() {
                                     name="category"
                                     className="hidden"
                                     onChange={() => setSelectedCategory(cat)}
-                                    checked={selectedCategory.id === cat.id}
+                                    checked={selectedCategory?.id === cat.id}
                                 />
                                 <div className="flex items-center gap-4">
                                     <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold", cat.color)}>
@@ -189,10 +191,19 @@ export default function EventDetail() {
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={handleBooking}
-                    className="button-gnudem w-full bg-secondary text-secondary-foreground py-5 text-xl font-bold flex items-center justify-center gap-3 shadow-2xl"
+                    disabled={!selectedCategory}
+                    className={cn(
+                        "button-gnudem w-full py-5 text-xl font-bold flex items-center justify-center gap-3 shadow-2xl transition-all",
+                        selectedCategory
+                            ? "bg-secondary text-secondary-foreground"
+                            : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
+                    )}
                 >
                     <ShieldCheck className="w-6 h-6" />
-                    Réserver ({formatPrice(selectedCategory.price * quantity)})
+                    {selectedCategory
+                        ? `Réserver (${formatPrice(selectedCategory.price * quantity)})`
+                        : "Veuillez choisir une place"
+                    }
                 </motion.button>
             </div>
         </div>

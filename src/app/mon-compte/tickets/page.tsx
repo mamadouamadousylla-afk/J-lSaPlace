@@ -5,8 +5,9 @@ import { Ticket, Download, ArrowLeft, Calendar, MapPin, Share2 } from "lucide-re
 import { useRouter, useSearchParams } from "next/navigation"
 import Qoder from "@/components/shared/Qoder"
 import Antigravity from "@/components/shared/Antigravity"
+import { Suspense } from "react"
 
-export default function TicketsPage() {
+function TicketContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
 
@@ -129,5 +130,13 @@ export default function TicketsPage() {
                 </div>
             </div>
         </div>
+    )
+}
+
+export default function TicketsPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Chargement...</div>}>
+            <TicketContent />
+        </Suspense>
     )
 }

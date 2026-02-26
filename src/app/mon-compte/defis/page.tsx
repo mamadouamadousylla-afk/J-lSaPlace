@@ -189,8 +189,10 @@ export default function DefisPage() {
                     <Star className="w-5 h-5 text-yellow-500 fill-yellow-500" />
                     <h4 className="font-bold text-gray-900">Le savais-tu ?</h4>
                 </div>
-                <p className="text-gray-500 text-xs leading-relaxed">
-                    Les pronostics corrects te font grimper dans le classement mondial de SunuLamb. Les 10 premiers chaque mois reçoivent des tickets VIP gratuits !
+                <p className="text-gray-500 text-xs leading-relaxed flex items-center flex-wrap gap-1">
+                    Les pronostics corrects te font grimper dans le classement mondial de
+                    <img src="/logo-sunulamb.png" alt="SunuLamb" className="w-4 h-4 rounded-sm inline-block mx-1" />
+                    . Les 10 premiers chaque mois reçoivent des tickets VIP gratuits !
                 </p>
                 <button className="text-primary text-xs font-bold underline">Voir le règlement</button>
             </div>

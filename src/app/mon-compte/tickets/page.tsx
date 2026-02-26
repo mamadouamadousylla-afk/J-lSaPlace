@@ -1,132 +1,251 @@
 "use client"
 
-import { motion } from "framer-motion"
-import { Ticket, Download, ArrowLeft, Calendar, MapPin, Share2 } from "lucide-react"
+import { useState, Suspense, useEffect } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ChevronLeft, Bell, Download, QrCode, Calendar, MapPin, ArrowRight, Ticket } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
+import { cn } from "@/lib/utils"
 import Qoder from "@/components/shared/Qoder"
-import Antigravity from "@/components/shared/Antigravity"
-import { Suspense } from "react"
+import { getEventById } from "@/lib/events"
 
-function TicketContent() {
+interface TicketData {
+    id: string
+    title: string
+    date: string
+    time: string
+    location: string
+    category: string
+    zone: string
+    row?: string
+    seat?: string
+    imageUrl: string
+    status: "upcoming" | "past"
+}
+
+function TicketsContent() {
     const router = useRouter()
     const searchParams = useSearchParams()
 
-    const qty = searchParams.get("qty") || "1"
-    const cat = searchParams.get("cat") || "tribune"
-    const catDisplay = cat.charAt(0).toUpperCase() + cat.slice(1)
+    const id = searchParams.get("id")
+    const qty = searchParams.get("qty")
+    const cat = searchParams.get("cat")
+
+    const [activeTab, setActiveTab] = useState("upcoming")
+    const [displayTickets, setDisplayTickets] = useState<TicketData[]>([])
+
+    useEffect(() => {
+        // Load tickets from localStorage
+        const saved = localStorage.getItem("sunulamb_tickets")
+        let currentTickets: TicketData[] = saved ? JSON.parse(saved) : []
+
+        // If new purchase detected in URL
+        if (id && qty && cat) {
+            const event = getEventById(id)
+            if (event) {
+                const newTicket: TicketData = {
+                    id: `SL-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${cat.toUpperCase()}`,
+                    title: event.title,
+                    date: event.date,
+                    time: event.time,
+                    location: event.location,
+                    category: event.tag || event.category,
+                    zone: cat.toUpperCase(),
+                    row: "B",
+                    seat: Math.floor(Math.random() * 50).toString(),
+                    imageUrl: event.imageUrl,
+                    status: "upcoming"
+                }
+
+                // Avoid duplicates on refresh if possible (simple check)
+                const exists = currentTickets.some(t => t.title === newTicket.title && t.category === newTicket.category && t.date === newTicket.date)
+                if (!exists) {
+                    currentTickets = [newTicket, ...currentTickets]
+                    localStorage.setItem("sunulamb_tickets", JSON.stringify(currentTickets))
+                }
+            }
+        }
+
+        setDisplayTickets(currentTickets)
+    }, [id, qty, cat])
+
+    const [expandedTicket, setExpandedTicket] = useState<string | null>(null)
+
+    // Set first ticket as expanded if just purchased
+    useEffect(() => {
+        if (displayTickets.length > 0 && (id || !expandedTicket)) {
+            setExpandedTicket(displayTickets[0].id)
+        }
+    }, [displayTickets, id])
+
+    const handleDownload = (ticketId: string) => {
+        // Simulated download
+        alert(`Téléchargement du ticket ${ticketId} en PDF...`)
+    }
 
     return (
-        <div className="relative flex flex-col min-h-screen bg-white p-6 pt-16 pb-32 space-y-8">
-            {/* Filigrane African Pattern */}
-            <div
-                className="fixed inset-0 pointer-events-none opacity-[0.06] z-0"
-                style={{
-                    backgroundImage: "url(/fond-lamb.png)",
-                    backgroundSize: "300px 300px",
-                    backgroundRepeat: "repeat"
-                }}
-            />
-            <div className="relative z-10 flex flex-col space-y-8">
-                <div className="flex items-center justify-between">
-                    <h1 className="text-2xl font-poppins font-bold text-gray-900">Mes Tickets</h1>
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-primary">
-                        <Ticket className="w-5 h-5" />
-                    </div>
-                </div>
-
-                <div className="space-y-3">
-                    <h2 className="text-xl font-bold text-gray-900">Jërejëf ! Ton ticket est prêt.</h2>
-                    <div className="bg-white px-4 py-2 rounded-full inline-block">
-                        <p className="text-black text-xs font-bold font-poppins">Présentez ce QR Code à l&apos;entrée de l&apos;arène.</p>
-                    </div>
-                </div>
-
-                {/* Main Ticket */}
-                <motion.div
-                    initial={{ y: 50, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    className="relative"
+        <div className="flex flex-col min-h-screen bg-[#F8F9FA] pb-32">
+            {/* Header */}
+            <header className="px-6 py-8 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-30">
+                <button
+                    onClick={() => router.back()}
+                    className="p-3 rounded-full bg-white shadow-sm border border-gray-100"
                 >
-                    <div className="bg-white dark:bg-gray-900 rounded-[3rem] overflow-hidden shadow-2xl border border-gray-100 dark:border-gray-800">
-                        {/* Ticket Header (Combat Image) */}
-                        <div className="h-40 w-full relative">
-                            <img
-                                src="/hero-combat.png"
-                                className="w-full h-full object-cover object-top"
-                                alt="Combat"
-                            />
-                            <div className="absolute inset-0 bg-primary/40 mix-blend-multiply" />
-                            <div className="absolute bottom-4 left-6">
-                                <span className="px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-[10px] font-bold uppercase border border-white/30">
-                                    Ticket Valide
-                                </span>
-                            </div>
-                        </div>
+                    <ChevronLeft className="w-6 h-6 text-[#2D75B6]" />
+                </button>
+                <h1 className="text-xl font-poppins font-black text-[#1A2D42]">Mes Billets</h1>
+                <div className="flex items-center gap-2">
+                    <button className="p-3 rounded-full bg-white shadow-sm border border-gray-100 relative">
+                        <Bell className="w-6 h-6 text-[#2D75B6]" />
+                        <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-[#FF4B4B] rounded-full border-2 border-white" />
+                    </button>
+                </div>
+            </header>
 
-                        <div className="p-8 space-y-8 relative bg-white">
-                            {/* Cutout circles for ticket look */}
-                            <div className="absolute -left-4 top-0 w-8 h-8 rounded-full bg-background -translate-y-1/2" />
-                            <div className="absolute -right-4 top-0 w-8 h-8 rounded-full bg-background -translate-y-1/2" />
-
-                            <div className="space-y-1">
-                                <div className="flex justify-between items-start">
-                                    <h3 className="text-2xl font-poppins font-bold text-gray-900">Modou Lô vs Sa Thiès</h3>
-                                    <span className="px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded-full uppercase">
-                                        {qty}x {catDisplay}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-4 text-gray-400 text-xs mt-2">
-                                    <div className="flex items-center gap-1">
-                                        <Calendar className="w-3 h-3 text-primary" />
-                                        <span className="text-gray-700">5 Avr, 16h</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <MapPin className="w-3 h-3 text-primary" />
-                                        <span className="text-gray-700">{catDisplay}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* QR Code */}
-                            <div className="flex flex-col items-center justify-center space-y-4 py-4">
-                                <Antigravity>
-                                    <Qoder
-                                        value={`https://sunulamb.sn/tickets/123456?cat=${cat}&qty=${qty}`}
-                                        size={200}
-                                        className="p-6 rounded-[2rem] shadow-inner border border-gray-50"
-                                    />
-                                </Antigravity>
-                                <p className="text-xs text-gray-400 font-mono tracking-widest">TICKET #8493-2025</p>
-                            </div>
-
-                            <div className="flex gap-4 pt-4 border-t border-gray-100 dark:border-gray-800 border-dashed">
-                                <button className="flex-1 button-gnudem bg-secondary text-secondary-foreground py-4 flex items-center justify-center gap-2">
-                                    <Download className="w-5 h-5" />
-                                    Télécharger PDF
-                                </button>
-                                <button className="p-4 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500">
-                                    <Share2 className="w-5 h-5" />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Stats / Info */}
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-white dark:bg-gray-900 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800">
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Nombre de places</p>
-                        <p className="text-xl font-poppins font-bold text-primary">{qty}</p>
-                    </div>
-                    <div className="bg-white dark:bg-gray-900 p-6 rounded-[2rem] border border-gray-100 dark:border-gray-800">
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Catégorie</p>
-                        <p className="text-xl font-poppins font-bold text-primary">{catDisplay}</p>
-                    </div>
+            <div className="px-6 py-6 space-y-6">
+                {/* Tabs */}
+                <div className="bg-[#E9ECEF] p-1.5 rounded-[1.5rem] flex">
+                    <button
+                        onClick={() => setActiveTab("upcoming")}
+                        className={cn(
+                            "flex-1 py-3.5 rounded-[1.25rem] font-bold text-sm transition-all",
+                            activeTab === "upcoming" ? "bg-[#2D75B6] text-white shadow-lg" : "text-[#8E9AAF]"
+                        )}
+                    >
+                        À venir
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("past")}
+                        className={cn(
+                            "flex-1 py-3.5 rounded-[1.25rem] font-bold text-sm transition-all",
+                            activeTab === "past" ? "bg-[#2D75B6] text-white shadow-lg" : "text-[#8E9AAF]"
+                        )}
+                    >
+                        Passés
+                    </button>
                 </div>
 
-                <div className="bg-gradient-to-br from-primary to-green-700 p-8 rounded-[2.5rem] text-white">
-                    <h4 className="font-bold mb-2">Conseil de Sécurité</h4>
-                    <p className="text-sm text-white/80">Ne partagez jamais votre QR Code sur les réseaux sociaux. Chaque code est unique et à usage unique.</p>
+                {/* Tickets List */}
+                <div className="space-y-6">
+                    {displayTickets.filter(t => t.status === activeTab).length > 0 ? (
+                        displayTickets.filter(t => t.status === activeTab).map((ticket) => (
+                            <motion.div
+                                key={ticket.id}
+                                layout
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100"
+                            >
+                                <div className="p-6 flex gap-6">
+                                    <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-sm flex-shrink-0">
+                                        <img src={ticket.imageUrl || "/hero-combat.png"} className="w-full h-full object-cover" />
+                                    </div>
+                                    <div className="flex-1 space-y-2">
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] font-black text-[#2D75B6] uppercase tracking-wider bg-[#F0F7FF] px-2 py-0.5 rounded-full inline-block w-fit">
+                                                {ticket.category}
+                                            </span>
+                                            <h3 className="text-lg font-bold text-[#1A2D42] leading-tight mt-1">{ticket.title}</h3>
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <div className="flex items-center gap-2 text-[#A6ADB9]">
+                                                <Calendar className="w-3.5 h-3.5" />
+                                                <span className="text-[11px] font-medium">{ticket.date} • {ticket.time}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-[#A6ADB9]">
+                                                <MapPin className="w-3.5 h-3.5" />
+                                                <span className="text-[11px] font-medium">{ticket.location}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="px-6 pb-6 pt-2 grid grid-cols-3 gap-4 border-t border-gray-50 border-dashed relative">
+                                    {/* Tear-off side circles */}
+                                    <div className="absolute -left-3 top-[-12px] w-6 h-6 rounded-full bg-[#F8F9FA] shadow-inner" />
+                                    <div className="absolute -right-3 top-[-12px] w-6 h-6 rounded-full bg-[#F8F9FA] shadow-inner" />
+
+                                    <div>
+                                        <p className="text-[9px] font-bold text-[#A6ADB9] uppercase tracking-widest">ZONE</p>
+                                        <p className="text-sm font-black text-[#2D75B6]">{ticket.zone}</p>
+                                    </div>
+                                    {ticket.row && (
+                                        <div>
+                                            <p className="text-[9px] font-bold text-[#A6ADB9] uppercase tracking-widest">RANGÉE</p>
+                                            <p className="text-sm font-black text-[#1A2D42]">{ticket.row}</p>
+                                        </div>
+                                    )}
+                                    {ticket.seat && (
+                                        <div>
+                                            <p className="text-[9px] font-bold text-[#A6ADB9] uppercase tracking-widest">SIÈGE</p>
+                                            <p className="text-sm font-black text-[#1A2D42]">{ticket.seat}</p>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="border-t border-gray-50 border-dashed pt-4" />
+
+                                <div className="px-6 pb-8">
+                                    <AnimatePresence mode="wait">
+                                        {expandedTicket === ticket.id ? (
+                                            <motion.div
+                                                key="expanded"
+                                                initial={{ opacity: 0, height: 0 }}
+                                                animate={{ opacity: 1, height: "auto" }}
+                                                exit={{ opacity: 0, height: 0 }}
+                                                className="space-y-6 flex flex-col items-center"
+                                            >
+                                                <div className="bg-[#F8F9FA] p-6 rounded-[2.5rem] border border-gray-100 flex items-center justify-center relative">
+                                                    <Qoder value={ticket.id} size={140} />
+                                                    <div className="absolute -bottom-4 bg-white px-4 py-1 rounded-full shadow-sm border border-gray-50">
+                                                        <p className="text-[10px] font-mono text-[#A6ADB9] tracking-widest uppercase">ID: {ticket.id}</p>
+                                                    </div>
+                                                </div>
+
+                                                <button
+                                                    onClick={() => handleDownload(ticket.id)}
+                                                    className="w-full py-4.5 rounded-[1.5rem] bg-[#2D75B6] text-white font-bold flex items-center justify-center gap-3 shadow-xl shadow-blue-500/10 active:scale-[0.98] transition-all"
+                                                >
+                                                    <Download className="w-5 h-5" />
+                                                    Enregistrer PDF
+                                                </button>
+                                            </motion.div>
+                                        ) : (
+                                            <button
+                                                key="collapsed"
+                                                onClick={() => setExpandedTicket(ticket.id)}
+                                                className="w-full py-4 rounded-[1.5rem] border-2 border-gray-100 text-[#1A2D42] font-bold flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <QrCode className="w-5 h-5 text-[#2D75B6]" />
+                                                Afficher le QR
+                                            </button>
+                                        )}
+                                    </AnimatePresence>
+                                </div>
+                            </motion.div>
+                        ))
+                    ) : (
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="bg-white rounded-[3rem] p-12 text-center space-y-6 border border-gray-100 shadow-sm"
+                        >
+                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto">
+                                <Ticket className="w-10 h-10 text-gray-200" />
+                            </div>
+                            <div className="space-y-2">
+                                <h3 className="text-xl font-bold text-[#1A2D42]">Aucun billet ici</h3>
+                                <p className="text-[#A6ADB9] text-sm font-medium px-4">
+                                    Vos billets apparaîtront ici dès que vos réservations seront confirmées.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => router.push('/')}
+                                className="px-8 py-3.5 bg-[#2D75B6] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/10 active:scale-95 transition-all text-sm"
+                            >
+                                Découvrir les combats
+                            </button>
+                        </motion.div>
+                    )}
                 </div>
             </div>
         </div>
@@ -136,7 +255,7 @@ function TicketContent() {
 export default function TicketsPage() {
     return (
         <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Chargement...</div>}>
-            <TicketContent />
+            <TicketsContent />
         </Suspense>
     )
 }

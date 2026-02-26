@@ -27,82 +27,96 @@ export default function ProfilePage() {
                 }}
             />
             <div className="relative z-10 flex flex-col space-y-8">
-            <div className="flex items-center justify-between">
-                <h1 className="text-3xl font-poppins font-bold text-black">Mon Compte</h1>
-                <button className="p-3 rounded-full bg-gray-100 shadow-sm text-red-500">
-                    <LogOut className="w-5 h-5" />
-                </button>
-            </div>
-
-            {/* User Info */}
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-lg border border-gray-200 text-center space-y-4">
-                <div className="relative inline-block">
-                    <div className="w-24 h-24 rounded-full bg-primary/20 flex items-center justify-center text-primary text-3xl font-bold">
-                        JD
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-3xl font-poppins font-black text-[#2D2D2D]">Mon Profile</h1>
+                        <span className="text-2xl">😊</span>
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center border-4 border-white">
-                        <Trophy className="w-3 h-3" />
-                    </div>
-                </div>
-                <div>
-                    <h2 className="text-xl font-bold text-gray-900">Jean Diouf</h2>
-                    <p className="text-gray-500 text-sm italic">Grand Amateur de Lutte</p>
-                </div>
-                <div className="flex justify-center gap-4 pt-2">
-                    <div className="px-4 py-2 rounded-2xl bg-gray-100">
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Points</p>
-                        <p className="font-poppins font-bold text-gray-900">1,250</p>
-                    </div>
-                    <div className="px-4 py-2 rounded-2xl bg-gray-100">
-                        <p className="text-[10px] text-gray-400 font-bold uppercase">Niveau</p>
-                        <p className="font-poppins font-bold text-gray-900">Expert</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Menu Sections */}
-            <div className="space-y-4">
-                <h3 className="font-poppins font-bold px-2 text-sm text-gray-500 uppercase tracking-widest">Général</h3>
-                <div className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-lg text-sm">
-                    {menuItems.map((item, idx) => (
-                        <Link
-                            key={item.label}
-                            href={item.href}
-                            className={cn(
-                                "flex items-center justify-between p-6 transition-colors hover:bg-gray-50",
-                                idx !== menuItems.length - 1 && "border-b border-gray-100"
-                            )}
-                        >
-                            <div className="flex items-center gap-4">
-                                <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center", item.bg)}>
-                                    <item.icon className={cn("w-5 h-5", item.color)} />
-                                </div>
-                                <span className="font-bold text-gray-900">{item.label}</span>
-                            </div>
-                            <ChevronRight className="w-5 h-5 text-gray-300" />
-                        </Link>
-                    ))}
-                </div>
-            </div>
-
-            {/* Gamification Banner */}
-            <div className="bg-gradient-to-br from-[#1B8B3D] to-[#0A5D28] p-8 rounded-[2.5rem] text-white space-y-4 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
-                <div className="relative z-10 space-y-2">
-                    <h4 className="font-poppins font-bold text-lg">Challenge SunuLamb 🏆</h4>
-                    <p className="text-white/80 text-sm">As-tu assisté au combat du week-end ? Badge ton badge et gagne des points !</p>
                     <button
-                        onClick={() => router.push('/mon-compte/defis')}
-                        className="button-gnudem bg-secondary text-secondary-foreground px-6 py-3 mt-2 text-xs font-bold rounded-full shadow-lg active:scale-95 transition-transform relative z-20"
+                        onClick={() => router.push('/mon-compte/parametres')}
+                        className="p-3 rounded-full bg-white shadow-[0_4px_20px_rgba(0,0,0,0.08)] text-[#2D75B6] hover:scale-110 transition-transform"
                     >
-                        Voir mes défis
+                        <Settings className="w-6 h-6 fill-current" />
                     </button>
                 </div>
-            </div>
 
-            <p className="text-center text-black font-medium text-[10px] pt-4">
-                Version 1.0.0 • SunuLamb 2024
-            </p>
+                {/* Illustration & User Name */}
+                <div className="flex flex-col items-center justify-center py-4 space-y-8 relative">
+                    <div className="relative w-64 h-64">
+                        {/* Background dots */}
+                        <div className="absolute top-10 left-4 w-4 h-4 rounded-full bg-blue-300 opacity-60" />
+                        <div className="absolute top-1/4 -left-4 w-3 h-3 rounded-full bg-orange-200 opacity-60" />
+                        <div className="absolute top-0 right-10 w-4 h-4 rounded-full bg-blue-400 opacity-60" />
+                        <div className="absolute bottom-1/4 -right-2 w-4 h-4 rounded-full bg-blue-300 opacity-60" />
+                        <div className="absolute bottom-10 left-10 w-2 h-2 rounded-full bg-orange-200 opacity-60" />
+                        <div className="absolute top-1/2 -right-8 w-2 h-2 rounded-full bg-blue-400 opacity-60" />
+
+                        {/* Central Illustration */}
+                        <div className="relative z-10 w-full h-full flex items-center justify-center">
+                            <svg viewBox="0 0 200 200" className="w-full h-full">
+                                <circle cx="100" cy="100" r="70" fill="none" stroke="#2D75B6" strokeWidth="12" strokeDasharray="380 440" strokeLinecap="round" transform="rotate(-90 100 100)" />
+                                <rect x="155" y="105" width="40" height="12" rx="4" fill="#FF7043" />
+                                <path d="M100 65 C115 65 125 75 125 90 C125 105 115 115 100 115 C85 115 75 105 75 90 C75 75 85 65 100 65 Z" fill="#FF7043" />
+                                <path d="M65 145 C65 125 80 115 100 115 C120 115 135 125 135 145 L135 155 L65 155 Z" fill="#FF7043" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 className="text-3xl font-poppins font-bold text-[#2D2D2D] tracking-tight">hakim sylla</h2>
+                </div>
+
+                {/* Menu Sections */}
+                <div className="space-y-4">
+                    <h3 className="font-poppins font-bold px-2 text-sm text-gray-500 uppercase tracking-widest">Général</h3>
+                    <div className="bg-white rounded-[2.5rem] overflow-hidden border border-gray-200 shadow-lg text-sm">
+                        {menuItems.map((item, idx) => (
+                            <Link
+                                key={item.label}
+                                href={item.href}
+                                className={cn(
+                                    "flex items-center justify-between p-6 transition-colors hover:bg-gray-50",
+                                    idx !== menuItems.length - 1 && "border-b border-gray-100"
+                                )}
+                            >
+                                <div className="flex items-center gap-4">
+                                    <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center", item.bg)}>
+                                        <item.icon className={cn("w-5 h-5", item.color)} />
+                                    </div>
+                                    <span className="font-bold text-gray-900">{item.label}</span>
+                                </div>
+                                <ChevronRight className="w-5 h-5 text-gray-300" />
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Gamification Banner */}
+                <div className="bg-gradient-to-br from-[#1B8B3D] to-[#0A5D28] p-8 rounded-[2.5rem] text-white space-y-4 relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+                    <div className="relative z-10 space-y-2">
+                        <div className="flex items-center gap-2">
+                            <h4 className="font-poppins font-bold text-lg flex items-center gap-2">
+                                Challenge
+                                <img src="/logo-sunulamb.png" alt="SunuLamb" className="h-5 w-auto object-contain inline-block" />
+                                🏆
+                            </h4>
+                        </div>
+                        <p className="text-white/80 text-sm">As-tu assisté au combat du week-end ? Badge ton badge et gagne des points !</p>
+                        <button
+                            onClick={() => router.push('/mon-compte/defis')}
+                            className="button-gnudem bg-secondary text-secondary-foreground px-6 py-3 mt-2 text-xs font-bold rounded-full shadow-lg active:scale-95 transition-transform relative z-20"
+                        >
+                            Voir mes défis
+                        </button>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-center gap-2 pt-4 opacity-50">
+                    <p className="text-black font-medium text-[10px] flex items-center gap-1">
+                        Version 1.0.0 •
+                        <img src="/logo-sunulamb.png" alt="SunuLamb" className="h-3 w-auto object-contain inline-block" />
+                        2024
+                    </p>
+                </div>
             </div>
         </div>
     )

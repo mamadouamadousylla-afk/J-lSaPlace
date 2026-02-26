@@ -2,210 +2,144 @@
 
 import { useParams, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Info, ArrowLeft, Plus, Minus, ShieldCheck } from "lucide-react"
+import { Calendar, MapPin, Info, ArrowLeft, ShieldCheck, Share2, Heart } from "lucide-react"
 import { formatPrice, cn } from "@/lib/utils"
 import { useState } from "react"
-
-const categories = [
-    { id: "vip", name: "VIP", price: 15000, color: "bg-yellow-400", seats: 50 },
-    { id: "tribune", name: "Tribune", price: 5000, color: "bg-primary", seats: 200 },
-    { id: "pelouse", name: "Pelouse", price: 2000, color: "bg-green-300", seats: 500 },
-]
-
-const EVENT_DATA: Record<string, any> = {
-    "1": {
-        title: "Modou Lô vs Sa Thiès",
-        date: "Dimanche, 5 Avril",
-        time: "16h00 - 20h00",
-        location: "Arène Nationale de Lutte",
-        address: "Pikine, Dakar",
-        heroImage: "/hero-combat.png",
-        fighters: [
-            { name: "Modou Lô", wins: 22, height: "1m85", image: "/modou-lo.png" },
-            { name: "Sa Thiès", wins: 18, height: "1m82", image: "/sa-thies.png" }
-        ]
-    },
-    "2": {
-        title: "Eumeu Sène vs Ada Fass",
-        date: "Dimanche, 19 Avril 2026",
-        time: "17h00 - 21h00",
-        location: "Arène Nationale de Lutte",
-        address: "Pikine, Dakar",
-        heroImage: "/eumeu-ada.jpg",
-        fighters: [
-            { name: "Eumeu Sène", wins: 15, height: "1m80", image: "/eumeu-ada.jpg" },
-            { name: "Ada Fass", wins: 12, height: "1m78", image: "/eumeu-ada.jpg" }
-        ]
-    }
-}
+import { getEventById } from "@/lib/events"
+import { useFavorites } from "@/context/FavoritesContext"
+import BookingModal from "@/components/shared/BookingModal"
 
 export default function EventDetail() {
     const params = useParams()
     const router = useRouter()
     const id = params.id as string
-    const event = EVENT_DATA[id] || EVENT_DATA["1"]
+    const event = getEventById(id)
 
-    const [selectedCategory, setSelectedCategory] = useState<any>(null)
-    const [quantity, setQuantity] = useState(1)
+    const [isBookingOpen, setIsBookingOpen] = useState(false)
+    const { toggleFavorite, isFavorite } = useFavorites()
 
-    const handleBooking = () => {
-        if (!selectedCategory) return
-        router.push(`/paiement/booking-123?qty=${quantity}&cat=${selectedCategory.id}`)
+    if (!event) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <p className="text-gray-500">Événement non trouvé.</p>
+            </div>
+        )
     }
 
+    const fav = isFavorite(event.id)
 
     return (
-        <div className="flex flex-col min-h-screen">
+        <div className="flex flex-col min-h-screen bg-gray-50/50">
             {/* Absolute Header */}
-            <div className="absolute top-12 left-6 z-10">
+            <div className="fixed top-12 left-6 right-6 z-50 flex items-center justify-between">
                 <button
                     onClick={() => router.back()}
                     className="p-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white"
                 >
                     <ArrowLeft className="w-6 h-6" />
                 </button>
+                <div className="flex items-center gap-3">
+                    <button className="p-3 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-white">
+                        <Share2 className="w-6 h-6" />
+                    </button>
+                    <button
+                        onClick={() => toggleFavorite(event.id)}
+                        className={cn(
+                            "p-3 rounded-full backdrop-blur-md border transition-colors",
+                            fav
+                                ? "bg-red-500 border-red-500 text-white"
+                                : "bg-white/20 border-white/30 text-white"
+                        )}
+                    >
+                        <Heart className={cn("w-6 h-6", fav && "fill-current")} />
+                    </button>
+                </div>
             </div>
 
             {/* Hero Image */}
-            <div className="relative h-[50vh] w-full">
+            <div className="relative h-[60vh] w-full">
                 <img
-                    src={event.heroImage}
+                    src={event.imageUrl}
                     alt={event.title}
-                    className="h-full w-full object-cover object-top"
+                    className="h-full w-full object-cover"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-50/50 via-transparent to-black/20" />
             </div>
 
             {/* Content */}
-            <div className="px-6 -mt-10 relative z-20 space-y-8 pb-32">
-                <div className="bg-white rounded-[2.5rem] p-6 shadow-lg border border-gray-200 space-y-4">
-                    <div className="inline-block px-4 py-1 rounded-full bg-primary/20 text-primary-foreground text-[10px] font-bold uppercase">
-                        Grand Combat Royal
+            <div className="px-6 -mt-20 relative z-20 space-y-8 pb-32">
+                <div className="bg-white rounded-[3rem] p-8 shadow-xl border border-gray-100 space-y-6">
+                    <div className="flex items-center gap-3">
+                        <div className="px-4 py-1.5 rounded-full bg-[#2D75B6]/10 text-[#2D75B6] text-[11px] font-bold uppercase tracking-wider">
+                            {event.category}
+                        </div>
+                        <div className="px-4 py-1.5 rounded-full bg-gray-100 text-gray-500 text-[11px] font-bold uppercase tracking-wider">
+                            {event.tag}
+                        </div>
                     </div>
-                    <h1 className="text-3xl font-poppins font-bold leading-tight text-gray-900">{event.title}</h1>
 
-                    <div className="flex flex-col gap-3">
-                        <div className="flex items-center gap-3 text-gray-500">
-                            <div className="p-2 rounded-xl bg-gray-100">
-                                <Calendar className="w-5 h-5 text-primary" />
+                    <h1 className="text-4xl font-poppins font-bold leading-tight text-gray-900">{event.title}</h1>
+
+                    <div className="grid grid-cols-1 gap-5">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-[#2D75B6]">
+                                <Calendar className="w-6 h-6" />
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-gray-900">{event.date}</p>
-                                <p className="text-xs text-gray-500">{event.time}</p>
+                                <p className="text-xs text-gray-500 font-medium">{event.time}</p>
                             </div>
                         </div>
-                        <div className="flex items-center gap-3 text-gray-500">
-                            <div className="p-2 rounded-xl bg-gray-100">
-                                <MapPin className="w-5 h-5 text-primary" />
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-[#2D75B6]">
+                                <MapPin className="w-6 h-6" />
                             </div>
                             <div>
                                 <p className="text-sm font-bold text-gray-900">{event.location}</p>
-                                <p className="text-xs text-gray-500">{event.address}</p>
+                                <p className="text-xs text-gray-500 font-medium">{event.address}</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Head to Head */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-poppins font-bold px-2">Les Adversaires</h2>
-                    <div className="grid grid-cols-2 gap-4">
-                        {event.fighters.map((l: any, i: number) => (
-                            <div key={i} className="bg-white p-4 rounded-3xl border border-gray-200 text-center space-y-2 shadow-sm">
-                                <div className="w-24 h-24 rounded-full mx-auto overflow-hidden border-2 border-primary/30">
-                                    <img src={l.image} className="w-full h-full object-cover" alt={l.name} />
-                                </div>
-                                <p className="font-bold text-gray-900">{l.name}</p>
-                                <div className="flex justify-center gap-4 text-[10px] font-medium text-gray-500">
-                                    <span>{l.wins} Victoires</span>
-                                    <span>{l.height}</span>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Categories */}
-                <section className="space-y-4">
-                    <h2 className="text-xl font-poppins font-bold px-2">Choisir vos places</h2>
-                    <div className="space-y-3">
-                        {categories.map((cat) => (
-                            <label
-                                key={cat.id}
-                                className={cn(
-                                    "flex items-center justify-between p-4 rounded-3xl border-2 transition-all cursor-pointer",
-                                    selectedCategory?.id === cat.id
-                                        ? "border-primary bg-primary/5"
-                                        : "border-gray-100 dark:border-gray-800"
-                                )}
-                            >
-                                <input
-                                    type="radio"
-                                    name="category"
-                                    className="hidden"
-                                    onChange={() => setSelectedCategory(cat)}
-                                    checked={selectedCategory?.id === cat.id}
-                                />
-                                <div className="flex items-center gap-4">
-                                    <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center text-white font-bold", cat.color)}>
-                                        {cat.name[0]}
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold">{cat.name}</h3>
-                                        <p className="text-xs text-gray-400">{cat.seats} places disponibles</p>
-                                    </div>
-                                </div>
-                                <p className="font-poppins font-bold text-lg">{formatPrice(cat.price)}</p>
-                            </label>
-                        ))}
-                    </div>
-                </section>
-
-                {/* Quantity */}
-                <section className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-3xl">
-                    <div className="space-y-1">
-                        <h3 className="font-bold text-sm">Quantité</h3>
-                        <p className="text-xs text-gray-400">Max 5 tickets</p>
-                    </div>
-                    <div className="flex items-center gap-6">
-                        <button
-                            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center text-primary border border-gray-100"
-                        >
-                            <Minus className="w-5 h-5" />
-                        </button>
-                        <span className="text-xl font-bold font-poppins">{quantity}</span>
-                        <button
-                            onClick={() => setQuantity(Math.min(5, quantity + 1))}
-                            className="w-10 h-10 rounded-full bg-white dark:bg-gray-900 shadow-sm flex items-center justify-center text-primary border border-gray-100"
-                        >
-                            <Plus className="w-5 h-5" />
-                        </button>
-                    </div>
+                {/* Description */}
+                <section className="px-2 space-y-4">
+                    <h2 className="text-xl font-poppins font-bold flex items-center gap-2">
+                        <Info className="w-5 h-5 text-[#2D75B6]" />
+                        À propos
+                    </h2>
+                    <p className="text-gray-500 leading-relaxed font-medium">
+                        {event.description}
+                    </p>
                 </section>
             </div>
 
-            {/* Floating Action Buffer */}
-            <div className="fixed bottom-24 inset-x-6 z-50">
+            {/* Floating Action Button */}
+            <div className="fixed bottom-12 inset-x-6 z-50">
                 <motion.button
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={handleBooking}
-                    disabled={!selectedCategory}
-                    className={cn(
-                        "button-gnudem w-full py-5 text-xl font-bold flex items-center justify-center gap-3 shadow-2xl transition-all",
-                        selectedCategory
-                            ? "bg-secondary text-secondary-foreground"
-                            : "bg-gray-300 text-gray-500 cursor-not-allowed opacity-50"
-                    )}
+                    onClick={() => setIsBookingOpen(true)}
+                    className="w-full py-5 bg-[#2D75B6] text-white text-xl font-bold rounded-[2rem] flex items-center justify-center gap-3 shadow-2xl shadow-[#2D75B6]/30 transition-all"
                 >
-                    <ShieldCheck className="w-6 h-6" />
-                    {selectedCategory
-                        ? `Réserver (${formatPrice(selectedCategory.price * quantity)})`
-                        : "Veuillez choisir une place"
-                    }
+                    <ShieldCheck className="w-7 h-7" />
+                    Réserver · {formatPrice(event.price)}
                 </motion.button>
             </div>
+
+            {/* Booking Modal */}
+            <BookingModal
+                isOpen={isBookingOpen}
+                onClose={() => setIsBookingOpen(false)}
+                event={{
+                    id: event.id,
+                    title: event.title,
+                    location: event.location,
+                    date: event.date,
+                    time: event.time,
+                    imageUrl: event.imageUrl
+                }}
+            />
         </div>
     )
 }

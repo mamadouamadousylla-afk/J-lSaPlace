@@ -2,64 +2,46 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/layout/BottomNav";
-import { cn } from "@/lib/utils";
+import { FavoritesProvider } from "@/context/FavoritesContext";
 
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
-  display: "swap",
 });
 
 const poppins = Poppins({
-  weight: ["400", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800", "900"],
   subsets: ["latin"],
   variable: "--font-poppins",
-  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "SunuLamb | Billetterie Lutte Sénégalaise",
-  description: "Achetez vos tickets pour les plus grands combats de lutte sénégalaise en quelques clics.",
-  manifest: "/manifest.json",
+  title: "SunuLamb - Billetterie au Senegal",
+  description: "Billets evenements au Senegal.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1B8B3D",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  viewportFit: "cover",
+  userScalable: false,
+  themeColor: "#2D75B6",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    <html lang="fr" className="h-full">
-      <body
-        className={cn(
-          inter.variable,
-          poppins.variable,
-          "font-inter antialiased bg-background text-foreground h-full overflow-x-hidden relative"
-        )}
-      >
-        {/* Background Watermark - Source: fond-lamb-source.png */}
-        <div
-          className="fixed inset-0 pointer-events-none opacity-[0.06] z-[-1]"
-          style={{
-            backgroundImage: "url(/fond-lamb.png)",
-            backgroundSize: "400px 400px",
-            backgroundPosition: "center",
-            backgroundRepeat: "repeat"
-          }}
-        />
-
-        <main className="min-h-full pb-20 relative z-10">
-          {children}
-        </main>
-        <BottomNav />
+    <html lang="fr">
+      <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
+        <FavoritesProvider>
+          <main className="max-w-lg mx-auto relative min-h-screen pb-20">
+            {children}
+          </main>
+          <BottomNav />
+        </FavoritesProvider>
       </body>
     </html>
   );

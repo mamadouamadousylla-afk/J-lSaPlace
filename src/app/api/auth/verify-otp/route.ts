@@ -8,7 +8,7 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 // POST /api/auth/verify-otp — Verify OTP and return session
 export async function POST(request: NextRequest) {
     try {
-        const { phone, token, firstName, lastName } = await request.json()
+        const { phone, token, firstName, lastName, password } = await request.json()
 
         if (!phone || !token) {
             return NextResponse.json({ error: "Téléphone et code requis" }, { status: 400 })
@@ -40,22 +40,31 @@ export async function POST(request: NextRequest) {
                 })
             }
 
-            // Create new user with provided names
+            // Create new user with provided names and password
             const userFirstName = otpResult.data?.firstName || firstName || ""
             const userLastName = otpResult.data?.lastName || lastName || ""
+            const userPassword = otpResult.data?.password || password || ""
             const fullName = userFirstName && userLastName 
                 ? `${userFirstName} ${userLastName}` 
                 : userFirstName || userLastName || "Utilisateur"
 
+            // Build user data object
+            const userData: Record<string, string> = {
+                id: crypto.randomUUID(),
+                phone: formattedPhone,
+                full_name: fullName,
+                first_name: userFirstName,
+                last_name: userLastName
+            }
+            
+            // Add password if provided (in production, this should be hashed)
+            if (userPassword) {
+                userData.password = userPassword
+            }
+
             const { data: newUser, error: createError } = await supabase
                 .from("users")
-                .insert({
-                    id: crypto.randomUUID(),
-                    phone: formattedPhone,
-                    full_name: fullName,
-                    first_name: userFirstName,
-                    last_name: userLastName
-                })
+                .insert(userData)
                 .select()
                 .single()
 

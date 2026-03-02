@@ -6,6 +6,7 @@ export interface OTPData {
     expires: number
     firstName?: string
     lastName?: string
+    password?: string
 }
 
 // In-memory store (resets on server restart)
@@ -17,13 +18,14 @@ export function generateOTP(): string {
 }
 
 // Store OTP with 5-minute expiry
-export function storeOTP(phone: string, otp: string, firstName?: string, lastName?: string): void {
+export function storeOTP(phone: string, otp: string, firstName?: string, lastName?: string, password?: string): void {
     const formattedPhone = phone.startsWith("+") ? phone : `+221${phone}`
     otpStore.set(formattedPhone, {
         otp,
         expires: Date.now() + 5 * 60 * 1000,
         firstName,
-        lastName
+        lastName,
+        password
     })
 }
 

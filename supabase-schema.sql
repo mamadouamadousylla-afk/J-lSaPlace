@@ -16,6 +16,7 @@ create table if not exists public.users (
     last_name   text,
     phone       text unique,
     email       text unique,
+    password    text,
     avatar_url  text,
     points      int not null default 0,
     rank        int,

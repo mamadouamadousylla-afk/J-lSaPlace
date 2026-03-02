@@ -9,7 +9,7 @@ const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER || ""
 
 export async function POST(request: NextRequest) {
     try {
-        const { phone, firstName, lastName } = await request.json()
+        const { phone, firstName, lastName, password } = await request.json()
 
         if (!phone) {
             return NextResponse.json({ error: "Numéro de téléphone requis" }, { status: 400 })
@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
         // Generate OTP
         const otp = generateOTP()
         
-        // Store OTP with shared store
-        storeOTP(formattedPhone, otp, firstName, lastName)
+        // Store OTP with shared store (including password for signup)
+        storeOTP(formattedPhone, otp, firstName, lastName, password)
 
         // Check if Twilio is configured
         if (!accountSid || !authToken || !twilioPhoneNumber) {
@@ -56,11 +56,11 @@ export async function POST(request: NextRequest) {
         console.error("Erreur Twilio:", error)
         
         // Fallback to dev mode on error
-        const { phone, firstName, lastName } = await request.json().catch(() => ({}))
+        const { phone, firstName, lastName, password } = await request.json().catch(() => ({}))
         if (phone) {
             const formattedPhone = phone.startsWith("+") ? phone : `+221${phone}`
             const otp = generateOTP()
-            storeOTP(formattedPhone, otp, firstName, lastName)
+            storeOTP(formattedPhone, otp, firstName, lastName, password)
             
             return NextResponse.json({
                 success: true,

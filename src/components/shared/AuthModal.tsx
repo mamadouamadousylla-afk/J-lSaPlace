@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, Phone, Lock, User, ArrowRight, Loader2 } from "lucide-react"
+import { X, Phone, Lock, User, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useAuth } from "@/context/AuthContext"
 
@@ -29,6 +29,7 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [agreeTerms, setAgreeTerms] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     const handleSendOTP = async () => {
         if (!phone || phone.length < 9) {
@@ -42,14 +43,23 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
             return
         }
         
+        // For signup, require password
+        if (mode === 'signup' && (!password || password.length < 6)) {
+            setError("Le mot de passe doit contenir au moins 6 caractères")
+            return
+        }
+        
         setLoading(true)
         setError(null)
         
         try {
             const endpoint = '/api/auth/sms-otp'
-            const body = 
-                { phone: `+221${phone}`, firstName: mode === 'signup' ? firstName : undefined, lastName: mode === 'signup' ? lastName : undefined }
-                
+            const body = { 
+                phone: `+221${phone}`, 
+                firstName: mode === 'signup' ? firstName : undefined, 
+                lastName: mode === 'signup' ? lastName : undefined,
+                password: mode === 'signup' ? password : undefined
+            }
             
             const res = await fetch(endpoint, {
                 method: "POST",
@@ -90,7 +100,8 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                     phone: `+221${phone}`, 
                     token: otp,
                     firstName: mode === 'signup' ? firstName : undefined,
-                    lastName: mode === 'signup' ? lastName : undefined
+                    lastName: mode === 'signup' ? lastName : undefined,
+                    password: mode === 'signup' ? password : undefined
                 })
             })
             
@@ -130,6 +141,17 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
         setError(null)
         onClose()
     }
+
+    // Password strength indicator
+    const getPasswordStrength = () => {
+        if (!password) return { width: '0%', color: 'bg-gray-200' }
+        if (password.length < 6) return { width: '25%', color: 'bg-red-500' }
+        if (password.length < 8) return { width: '50%', color: 'bg-yellow-500' }
+        if (password.length < 10) return { width: '75%', color: 'bg-blue-500' }
+        return { width: '100%', color: 'bg-green-500' }
+    }
+    
+    const passwordStrength = getPasswordStrength()
 
     if (!isOpen) return null
 
@@ -247,6 +269,46 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                     )}
                                 </div>
 
+                                {/* Password field for signup */}
+                                {mode === 'signup' && (
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+                                            Mot de passe
+                                        </label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                            <input
+                                                type={showPassword ? "text" : "password"}
+                                                placeholder="Créez un mot de passe"
+                                                value={password}
+                                                onChange={(e) => setPassword(e.target.value)}
+                                                className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#2D75B6] focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 text-sm"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            >
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                        {/* Password strength indicator */}
+                                        {password && (
+                                            <div className="space-y-1">
+                                                <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+                                                    <div 
+                                                        className={`h-full transition-all duration-300 ${passwordStrength.color}`}
+                                                        style={{ width: passwordStrength.width }}
+                                                    />
+                                                </div>
+                                                <p className="text-[10px] text-gray-500">
+                                                    Minimum 6 caractères
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* Password field (login only) */}
                                 {mode === 'login' && (
                                     <div className="space-y-1.5">
@@ -256,12 +318,19 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                         <div className="relative">
                                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                             <input
-                                                type="password"
+                                                type={showPassword ? "text" : "password"}
                                                 placeholder="Mot de passe"
                                                 value={password}
                                                 onChange={(e) => setPassword(e.target.value)}
-                                                className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#2D75B6] focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 text-sm"
+                                                className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-[#2D75B6] focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 text-sm"
                                             />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                            >
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
                                         </div>
                                         <button className="text-xs text-gray-400 hover:text-[#2D75B6] transition-colors">
                                             Mot de passe oublié ?
@@ -301,10 +370,10 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                 {/* Submit button */}
                                 <button
                                     onClick={handleSendOTP}
-                                    disabled={loading || !phone || (mode === 'signup' && !agreeTerms)}
+                                    disabled={loading || !phone || (mode === 'signup' && (!agreeTerms || !password))}
                                     className={cn(
                                         "w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all",
-                                        loading || !phone || (mode === 'signup' && !agreeTerms)
+                                        loading || !phone || (mode === 'signup' && (!agreeTerms || !password))
                                             ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                             : "bg-[#2D75B6] text-white shadow-lg shadow-blue-500/20"
                                     )}

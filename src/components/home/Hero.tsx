@@ -3,15 +3,45 @@
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Heart } from "lucide-react"
-import { allEvents } from "@/lib/events"
+import { supabase } from "@/lib/supabase"
 import { useFavorites } from "@/context/FavoritesContext"
 import { cn, formatPrice } from "@/lib/utils"
+import { useState, useEffect } from "react"
+
+interface HeroEvent {
+    id: string
+    title: string
+    date: string
+    image_url: string
+    price_vip: number
+    tag: string
+}
 
 export default function Hero() {
     const { toggleFavorite, isFavorite } = useFavorites()
-    const heroEvent = allEvents[0] // Using the first event (Grand Gala de Lutte) as hero
+    const [heroEvent, setHeroEvent] = useState<HeroEvent | null>(null)
+    const [loading, setLoading] = useState(true)
 
-    if (!heroEvent) return null
+    useEffect(() => {
+        async function loadHeroEvent() {
+            const { data, error } = await supabase
+                .from("events")
+                .select("id, title, date, image_url, price_vip, tag")
+                .eq("status", "published")
+                .order("created_at", { ascending: false })
+                .limit(1)
+                .single()
+
+            if (data) {
+                setHeroEvent(data)
+            }
+            setLoading(false)
+        }
+
+        loadHeroEvent()
+    }, [])
+
+    if (loading || !heroEvent) return null
 
     return (
         <div className="px-6">
@@ -24,7 +54,7 @@ export default function Hero() {
                 {/* Background Image */}
                 <div
                     className="absolute inset-0 bg-cover bg-center"
-                    style={{ backgroundImage: `url(${heroEvent.imageUrl})` }}
+                    style={{ backgroundImage: `url(${heroEvent.image_url || "/hero-combat.png"})` }}
                 />
 
                 {/* Gradient Overlay for text readability */}
@@ -66,7 +96,7 @@ export default function Hero() {
 
                         <div className="flex items-center justify-between pt-2">
                             <p className="text-white/90 font-medium">
-                                À partir de {formatPrice(heroEvent.price)}
+                                À partir de {formatPrice(heroEvent.price_vip)}
                             </p>
 
                             <Link href={`/evenements/${heroEvent.id}`}>

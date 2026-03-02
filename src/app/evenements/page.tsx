@@ -1,59 +1,48 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Search, Filter, Calendar } from "lucide-react"
+import { Search, Filter } from "lucide-react"
 import EventCard from "@/components/shared/EventCard"
-import { cn, formatPrice } from "@/lib/utils"
+import { cn } from "@/lib/utils"
+import { supabase } from "@/lib/supabase"
 
-const allEvents = [
-    {
-        id: "1",
-        title: "Modou Lô vs Sa Thiès",
-        date: "5 Avr 2025",
-        location: "Arène Nationale, Dakar",
-        price: 5000,
-        imageUrl: "/hero-combat.png",
-        status: "disponible" as const,
-        category: "Lutte avec frappe"
-    },
-    {
-        id: "2",
-        title: "Eumeu Sène vs Ada Fass",
-        date: "19 Avr 2026",
-        location: "Arène Nationale, Dakar",
-        price: 3000,
-        imageUrl: "/eumeu-ada.jpg",
-        status: "disponible" as const,
-        category: "Lutte avec frappe"
-    },
-    {
-        id: "3",
-        title: "Reug Reug vs Bombardier",
-        date: "4 Jan 2025",
-        location: "Grand Stade de Mbour",
-        price: 2500,
-        imageUrl: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&q=80&w=600",
-        status: "disponible" as const,
-        category: "Gala de lutte"
-    },
-    {
-        id: "4",
-        title: "Gris Bordeaux vs Ama Baldé",
-        date: "2 Fév 2025",
-        location: "Arène Nationale, Dakar",
-        price: 4000,
-        imageUrl: "/hero-combat.png",
-        status: "disponible" as const,
-        category: "Lutte simple"
-    }
-]
+interface EventData {
+    id: string
+    title: string
+    date: string
+    location: string
+    price_vip: number
+    image_url: string
+    category: string
+}
 
 export default function EventsList() {
     const [search, setSearch] = useState("")
     const [activeCategory, setActiveCategory] = useState("Tous")
+    const [events, setEvents] = useState<EventData[]>([])
+    const [loading, setLoading] = useState(true)
 
-    const filteredEvents = allEvents.filter(e => {
+    useEffect(() => {
+        async function loadEvents() {
+            const { data } = await supabase
+                .from("events")
+                .select("id, title, date, location, price_vip, image_url, category")
+                .eq("status", "published")
+                .order("created_at", { ascending: false })
+
+            if (data) {
+                setEvents(data)
+            }
+            setLoading(false)
+        }
+        loadEvents()
+    }, [])
+
+    // Obtenir les catégories uniques
+    const categories = ["Tous", ...new Set(events.map(e => e.category))]
+
+    const filteredEvents = events.filter(e => {
         const matchesSearch = e.title.toLowerCase().includes(search.toLowerCase())
         const matchesCategory = activeCategory === "Tous" || e.category === activeCategory
         return matchesSearch && matchesCategory
@@ -95,7 +84,7 @@ export default function EventsList() {
 
             {/* Categories / Tabs */}
             <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6">
-                {["Tous", "Lutte avec frappe", "Gala de lutte", "Lutte simple"].map((tab) => (
+                {categories.map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveCategory(tab)}
@@ -119,7 +108,15 @@ export default function EventsList() {
                         transition={{ delay: idx * 0.1 }}
                         className="w-full max-w-[320px]"
                     >
-                        <EventCard {...event} />
+                        <EventCard 
+                            id={event.id}
+                            title={event.title}
+                            date={event.date}
+                            location={event.location}
+                            price={event.price_vip}
+                            imageUrl={event.image_url || "/hero-combat.png"}
+                            status="disponible"
+                        />
                     </motion.div>
                 ))}
             </div>

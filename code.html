@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Global System Settings - SunuLamb Admin</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#15803d", // A deep green matching the screenshot
+                        "background-light": "#f8fafc",
+                        "background-dark": "#0f172a",
+                    },
+                    fontFamily: {
+                        display: ["Inter", "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                },
+            },
+        };
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        .tab-active { border-bottom: 2px solid #15803d; color: #15803d; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen flex">
+<aside class="w-64 bg-primary text-white flex-shrink-0 flex flex-col hidden lg:flex">
+<div class="p-6">
+<h1 class="text-2xl font-bold tracking-tight">SunuLamb Admin</h1>
+</div>
+<nav class="flex-1 px-4 space-y-1">
+<a class="flex items-center px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-icons mr-3">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-icons mr-3">confirmation_number</span>
+                Events Management
+            </a>
+<a class="flex items-center px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-icons mr-3">local_activity</span>
+                Tickets
+            </a>
+<a class="flex items-center px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-icons mr-3">people</span>
+                Users
+            </a>
+<a class="flex items-center px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-icons mr-3">payments</span>
+                Payments
+            </a>
+<a class="flex items-center px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-icons mr-3">notifications</span>
+                Notifications
+            </a>
+<a class="flex items-center px-4 py-3 text-white/80 hover:bg-white/10 rounded-lg transition-colors" href="#">
+<span class="material-icons mr-3">analytics</span>
+                Reports
+            </a>
+<a class="flex items-center px-4 py-3 bg-white/20 text-white rounded-lg transition-colors font-medium" href="#">
+<span class="material-icons mr-3">settings</span>
+                Settings
+            </a>
+</nav>
+<div class="p-4 border-t border-white/10">
+<div class="flex items-center">
+<div class="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">AD</div>
+<div class="ml-3">
+<p class="text-sm font-medium">Admin User</p>
+<p class="text-xs text-white/60">Super Admin</p>
+</div>
+</div>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-h-screen overflow-y-auto">
+<header class="h-16 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex items-center justify-between px-8 sticky top-0 z-10">
+<h2 class="text-xl font-bold text-primary">Global System Settings</h2>
+<div class="flex items-center space-x-4">
+<button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" onclick="document.documentElement.classList.toggle('dark')">
+<span class="material-icons text-slate-500 dark:text-slate-400">dark_mode</span>
+</button>
+<div class="h-8 w-8 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">AD</div>
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300">Admin User</span>
+</div>
+</header>
+<div class="p-8 max-w-5xl mx-auto w-full">
+<div class="border-b border-slate-200 dark:border-slate-800 mb-8">
+<nav class="flex space-x-8">
+<button class="pb-4 px-1 text-sm font-medium transition-colors tab-active">
+                        General Settings
+                    </button>
+<button class="pb-4 px-1 text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors">
+                        Payment Gateways
+                    </button>
+<button class="pb-4 px-1 text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors">
+                        Security &amp; Access
+                    </button>
+<button class="pb-4 px-1 text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-primary transition-colors">
+                        Localization
+                    </button>
+</nav>
+</div>
+<div class="space-y-8">
+<section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+<h3 class="text-base font-semibold">Site Identity</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Manage your platform's public information.</p>
+</div>
+<div class="p-6 space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Site Name</label>
+<input class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm" type="text" value="SunuLamb"/>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Platform Email</label>
+<input class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm" type="email" value="contact@sunulamb.com"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Platform Logo</label>
+<div class="flex items-center space-x-6">
+<div class="h-20 w-20 bg-slate-100 dark:bg-slate-800 rounded-lg flex items-center justify-center border-2 border-dashed border-slate-300 dark:border-slate-700">
+<span class="material-icons text-slate-400">image</span>
+</div>
+<div class="flex flex-col space-y-2">
+<div class="flex space-x-2">
+<button class="bg-primary text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-green-700 transition-colors">Upload New</button>
+<button class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Remove</button>
+</div>
+<p class="text-xs text-slate-400">Recommended size: 512x512px. PNG or SVG.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50">
+<h3 class="text-base font-semibold">Financial Configuration</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Set default currency and taxation rules.</p>
+</div>
+<div class="p-6 space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Default Currency</label>
+<select class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm">
+<option selected="">West African CFA franc (XOF)</option>
+<option>US Dollar (USD)</option>
+<option>Euro (EUR)</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Currency Symbol Position</label>
+<div class="flex space-x-4 mt-2">
+<label class="inline-flex items-center">
+<input checked="" class="text-primary focus:ring-primary" name="symbol-pos" type="radio"/>
+<span class="ml-2 text-sm">After Amount (100 FCFA)</span>
+</label>
+<label class="inline-flex items-center">
+<input class="text-primary focus:ring-primary" name="symbol-pos" type="radio"/>
+<span class="ml-2 text-sm">Before Amount (FCFA 100)</span>
+</label>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+<div class="space-y-2">
+<label class="block text-sm font-medium text-slate-700 dark:text-slate-300">Transaction Fee (%)</label>
+<div class="relative">
+<input class="w-full rounded-lg border-slate-300 dark:border-slate-700 dark:bg-slate-800 focus:ring-primary focus:border-primary text-sm pr-8" type="number" value="2.5"/>
+<span class="absolute right-3 top-2 text-slate-400 text-sm">%</span>
+</div>
+</div>
+<div class="flex items-center space-x-3 pt-6">
+<input checked="" class="rounded text-primary focus:ring-primary h-4 w-4" type="checkbox"/>
+<label class="text-sm text-slate-700 dark:text-slate-300">Enable automatic payouts to promoters</label>
+</div>
+</div>
+</div>
+</section>
+<section class="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm">
+<div class="px-6 py-4 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 flex justify-between items-center">
+<div>
+<h3 class="text-base font-semibold">Integrations</h3>
+<p class="text-sm text-slate-500 dark:text-slate-400">Third-party service keys and webhooks.</p>
+</div>
+<button class="text-primary text-sm font-semibold hover:underline">Add New Service</button>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-6 flex items-center justify-between">
+<div class="flex items-center space-x-4">
+<div class="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">
+<span class="material-icons text-blue-500">account_balance_wallet</span>
+</div>
+<div>
+<p class="text-sm font-medium">Orange Money API</p>
+<p class="text-xs text-slate-500">Last synced: 2 hours ago</p>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<span class="px-2 py-1 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 text-[10px] font-bold uppercase tracking-wider rounded">Connected</span>
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+<span class="material-icons text-slate-400 text-sm">settings</span>
+</button>
+</div>
+</div>
+<div class="p-6 flex items-center justify-between">
+<div class="flex items-center space-x-4">
+<div class="h-10 w-10 bg-slate-100 dark:bg-slate-800 rounded flex items-center justify-center">
+<span class="material-icons text-orange-500">flash_on</span>
+</div>
+<div>
+<p class="text-sm font-medium">Wave Senegal</p>
+<p class="text-xs text-slate-500">Requires credential update</p>
+</div>
+</div>
+<div class="flex items-center space-x-2">
+<span class="px-2 py-1 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider rounded">Setup Required</span>
+<button class="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors">
+<span class="material-icons text-slate-400 text-sm">settings</span>
+</button>
+</div>
+</div>
+</div>
+</section>
+<div class="flex items-center justify-end space-x-4 pt-4">
+<button class="px-6 py-2.5 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all">
+                        Reset to Defaults
+                    </button>
+<button class="px-8 py-2.5 rounded-lg text-sm font-semibold bg-primary text-white hover:bg-green-700 shadow-lg shadow-green-900/10 transition-all">
+                        Save Changes
+                    </button>
+</div>
+</div>
+</div>
+<footer class="mt-auto p-8 border-t border-slate-200 dark:border-slate-800 text-center text-xs text-slate-400">
+            © 2024 SunuLamb System v2.4.0. All Rights Reserved.
+        </footer>
+</main>
+<div class="fixed bottom-8 right-8">
+<button class="h-14 w-14 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl flex items-center justify-center text-slate-700 dark:text-slate-200 hover:bg-slate-50 transition-colors">
+<span class="material-icons">contact_support</span>
+</button>
+</div>
+
+</body></html>

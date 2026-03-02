@@ -1,10 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, User, Minus, Plus, ArrowRight, Smartphone, CheckCircle2 } from "lucide-react"
+import { X, User, Minus, Plus, ArrowRight, Smartphone, CheckCircle2, AlertCircle, LogIn } from "lucide-react"
 import { formatPrice, cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
+import { supabase } from "@/lib/supabase"
+import { usePaymentSettings } from "@/context/SettingsContext"
+import { useAuth } from "@/context/AuthContext"
+import AuthModal from "./AuthModal"
 
 interface BookingModalProps {
     isOpen: boolean
@@ -16,27 +20,158 @@ interface BookingModalProps {
         date: string
         time: string
         imageUrl: string
+        category?: string
+        priceVip?: number
+        priceTribune?: number
+        pricePelouse?: number
     }
 }
 
-const paymentMethods = [
+// Configuration des types de places par catégorie
+const CATEGORY_SEAT_TYPES: Record<string, { label: string; key: string; priceKey: string }[]> = {
+    SPORT: [
+        { label: "VIP", key: "vip", priceKey: "price_vip" },
+        { label: "Tribune", key: "tribune", priceKey: "price_tribune" },
+        { label: "Pelouse", key: "pelouse", priceKey: "price_pelouse" }
+    ],
+    MUSIQUE: [
+        { label: "VIP Backstage", key: "vip", priceKey: "price_vip" },
+        { label: "Tribune Or", key: "tribune", priceKey: "price_tribune" },
+        { label: "Fosse Générale", key: "pelouse", priceKey: "price_pelouse" }
+    ],
+    HUMOUR: [
+        { label: "Premium", key: "vip", priceKey: "price_vip" },
+        { label: "Standard", key: "tribune", priceKey: "price_tribune" },
+        { label: "Étudiant", key: "pelouse", priceKey: "price_pelouse" }
+    ],
+    LOISIRS: [
+        { label: "VIP Prestige", key: "vip", priceKey: "price_vip" },
+        { label: "Tribune Privilège", key: "tribune", priceKey: "price_tribune" },
+        { label: "Accès Général", key: "pelouse", priceKey: "price_pelouse" }
+    ],
+    CONFERENCE: [
+        { label: "Business Class", key: "vip", priceKey: "price_vip" },
+        { label: "Standard", key: "tribune", priceKey: "price_tribune" },
+        { label: "Étudiant", key: "pelouse", priceKey: "price_pelouse" }
+    ]
+}
+
+const allPaymentMethods = [
     { id: "wave", name: "Wave", logo: "/wave-logo.png" },
     { id: "orange", name: "Orange Money", logo: "/om-logo.png" },
     { id: "free", name: "Free Money", logo: "/free-logo.png" },
+    { id: "card", name: "Carte Bancaire", logo: "" },
 ]
 
 export default function BookingModal({ isOpen, onClose, event }: BookingModalProps) {
     const router = useRouter()
+    const { payment } = usePaymentSettings()
+    const { user, loading: authLoading } = useAuth()
+    const [showAuthModal, setShowAuthModal] = useState(false)
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
     const [whatsapp, setWhatsapp] = useState("")
-    const [vipQty, setVipQty] = useState(1)
-    const [standardQty, setStandardQty] = useState(0)
-    const [selectedPayment, setSelectedPayment] = useState(paymentMethods[0].id)
+    const [selectedPayment, setSelectedPayment] = useState("") // Aucun mode sélectionné par défaut
+    const [showErrors, setShowErrors] = useState(false)
+    
+    // Quantités de billets dynamiques
+    const [ticketQuantities, setTicketQuantities] = useState<Record<string, number>>({})
+    
+    // Récupérer les infos complètes de l'événement depuis Supabase
+    const [eventData, setEventData] = useState<any>(null)
 
-    const vipPrice = 50000
-    const standardPrice = 10000
-    const total = (vipQty * vipPrice) + (standardQty * standardPrice)
+    // Filtrer les méthodes de paiement selon les paramètres
+    const paymentMethods = allPaymentMethods.filter(method => {
+        if (method.id === 'wave') return payment.wave_enabled
+        if (method.id === 'orange') return payment.orange_enabled
+        if (method.id === 'free') return payment.free_enabled
+        if (method.id === 'card') return payment.card_enabled
+        return true
+    })
+
+    useEffect(() => {
+        async function loadEventData() {
+            if (!event.id) {
+                console.error("ID d'événement manquant")
+                return
+            }
+            
+            const { data, error } = await supabase
+                .from("events")
+                .select("*")
+                .eq("id", event.id)
+                .single()
+
+            if (error) {
+                console.error("Erreur lors du chargement de l'événement:", error.message, error.code, error.details)
+                return
+            }
+
+            if (data) {
+                setEventData(data)
+                // Initialiser les quantités à 0
+                const seatTypes = CATEGORY_SEAT_TYPES[data.category] || CATEGORY_SEAT_TYPES.SPORT
+                const initialQuantities: Record<string, number> = {}
+                seatTypes.forEach(type => {
+                    initialQuantities[type.key] = 0
+                })
+                setTicketQuantities(initialQuantities)
+            }
+        }
+
+        if (isOpen && event.id) {
+            loadEventData()
+        }
+    }, [event.id, isOpen])
+
+    // Réinitialiser le formulaire quand le modal s'ouvre
+    useEffect(() => {
+        if (isOpen) {
+            // Si l'utilisateur est connecté, pré-remplir ses infos
+            if (user) {
+                setFirstName(user.user_metadata?.first_name || "")
+                setLastName(user.user_metadata?.last_name || "")
+                setWhatsapp(user.phone?.replace("+221", "") || "")
+            } else {
+                setFirstName("")
+                setLastName("")
+                setWhatsapp("")
+            }
+            setShowErrors(false)
+        }
+    }, [isOpen, user])
+
+    // Obtenir les types de places pour la catégorie
+    const seatTypes = CATEGORY_SEAT_TYPES[eventData?.category] || CATEGORY_SEAT_TYPES.SPORT
+    
+    // Calculer le total
+    const total = seatTypes.reduce((sum, type) => {
+        const price = eventData?.[type.priceKey] || 0
+        return sum + (ticketQuantities[type.key] || 0) * price
+    }, 0)
+
+    // Nombre total de billets
+    const totalTickets = Object.values(ticketQuantities).reduce((sum, qty) => sum + qty, 0)
+
+    // Validation
+    const isValid = () => {
+        return (
+            firstName.trim() !== "" &&
+            lastName.trim() !== "" &&
+            whatsapp.trim() !== "" &&
+            whatsapp.length >= 9 &&
+            totalTickets > 0 &&
+            selectedPayment !== ""
+        )
+    }
+
+    // Mettre à jour la quantité d'un type de billet
+    const updateQuantity = (key: string, delta: number) => {
+        setTicketQuantities(prev => ({
+            ...prev,
+            [key]: Math.max(0, (prev[key] || 0) + delta)
+        }))
+    }
 
     if (!isOpen) return null
 
@@ -87,36 +222,88 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
 
                         {/* User Info Form */}
                         <div className="space-y-5">
-                            <div className="flex items-center gap-2.5 text-[#1A2D42]">
-                                <User className="w-5 h-5 text-[#2D75B6]" />
-                                <h3 className="font-bold text-lg">Vos informations</h3>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2.5 text-[#1A2D42]">
+                                    <User className="w-5 h-5 text-[#2D75B6]" />
+                                    <h3 className="font-bold text-lg">Vos informations</h3>
+                                    <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider">(obligatoire)</span>
+                                </div>
+                                
+                                {/* Login option - only show if not logged in */}
+                                {!user && (
+                                    <button
+                                        onClick={() => setShowAuthModal(true)}
+                                        className="flex items-center gap-2 px-4 py-2 bg-[#2D75B6]/10 text-[#2D75B6] rounded-full text-sm font-bold hover:bg-[#2D75B6]/20 transition-colors"
+                                    >
+                                        <LogIn className="w-4 h-4" />
+                                        Se connecter
+                                    </button>
+                                )}
                             </div>
+
+                            {/* Show if logged in */}
+                            {user && (
+                                <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-2xl">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
+                                            {(user.user_metadata?.first_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                                        </div>
+                                        <div>
+                                            <p className="font-bold text-gray-900">
+                                                {user.user_metadata?.first_name} {user.user_metadata?.last_name}
+                                            </p>
+                                            <p className="text-sm text-gray-500">{user.phone}</p>
+                                        </div>
+                                    </div>
+                                    <span className="text-xs text-green-600 font-bold bg-green-100 px-3 py-1 rounded-full">
+                                        Connecté
+                                    </span>
+                                </div>
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-[#8E9AAF] uppercase tracking-widest ml-1">PRÉNOM</label>
+                                    <label className="text-[11px] font-bold text-[#8E9AAF] uppercase tracking-widest ml-1">
+                                        PRÉNOM <span className="text-red-500">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         placeholder="Ex: Moussa"
                                         value={firstName}
                                         onChange={(e) => setFirstName(e.target.value)}
-                                        className="w-full px-6 py-4 rounded-[1.25rem] bg-[#F8F9FA] border-none focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 placeholder:text-gray-300 transition-all font-medium text-sm"
+                                        className={cn(
+                                            "w-full px-6 py-4 rounded-[1.25rem] bg-[#F8F9FA] border-2 focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 placeholder:text-gray-300 transition-all font-medium text-sm",
+                                            showErrors && !firstName.trim() ? "border-red-300" : "border-transparent"
+                                        )}
                                     />
+                                    {showErrors && !firstName.trim() && (
+                                        <p className="text-red-500 text-xs ml-1">Prénom requis</p>
+                                    )}
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[11px] font-bold text-[#8E9AAF] uppercase tracking-widest ml-1">NOM</label>
+                                    <label className="text-[11px] font-bold text-[#8E9AAF] uppercase tracking-widest ml-1">
+                                        NOM <span className="text-red-500">*</span>
+                                    </label>
                                     <input
                                         type="text"
                                         placeholder="Ex: Diop"
                                         value={lastName}
                                         onChange={(e) => setLastName(e.target.value)}
-                                        className="w-full px-6 py-4 rounded-[1.25rem] bg-[#F8F9FA] border-none focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 placeholder:text-gray-300 transition-all font-medium text-sm"
+                                        className={cn(
+                                            "w-full px-6 py-4 rounded-[1.25rem] bg-[#F8F9FA] border-2 focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 placeholder:text-gray-300 transition-all font-medium text-sm",
+                                            showErrors && !lastName.trim() ? "border-red-300" : "border-transparent"
+                                        )}
                                     />
+                                    {showErrors && !lastName.trim() && (
+                                        <p className="text-red-500 text-xs ml-1">Nom requis</p>
+                                    )}
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[11px] font-bold text-[#8E9AAF] uppercase tracking-widest ml-1">NUMÉRO WHATSAPP</label>
+                                <label className="text-[11px] font-bold text-[#8E9AAF] uppercase tracking-widest ml-1">
+                                    NUMÉRO WHATSAPP <span className="text-red-500">*</span>
+                                </label>
                                 <div className="flex gap-3">
                                     <div className="px-5 py-4 rounded-[1.25rem] bg-[#F8F9FA] flex items-center gap-2.5 font-bold text-gray-900 border border-gray-50/50">
                                         <div className="w-6 h-4 rounded-sm overflow-hidden flex shadow-sm">
@@ -131,9 +318,15 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                         placeholder="77 000 00 00"
                                         value={whatsapp}
                                         onChange={(e) => setWhatsapp(e.target.value)}
-                                        className="flex-1 px-6 py-4 rounded-[1.25rem] bg-[#F8F9FA] border-none focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 placeholder:text-gray-300 transition-all font-medium tracking-wide text-sm"
+                                        className={cn(
+                                            "flex-1 px-6 py-4 rounded-[1.25rem] bg-[#F8F9FA] border-2 focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 placeholder:text-gray-300 transition-all font-medium tracking-wide text-sm",
+                                            showErrors && whatsapp.length < 9 ? "border-red-300" : "border-transparent"
+                                        )}
                                     />
                                 </div>
+                                {showErrors && whatsapp.length < 9 && (
+                                    <p className="text-red-500 text-xs ml-1">Numéro WhatsApp invalide (9 chiffres minimum)</p>
+                                )}
                             </div>
                         </div>
 
@@ -147,62 +340,59 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                 </div>
                                 <h3 className="font-bold text-lg">Billets</h3>
                             </div>
-
+                        
+                            {/* Message d'erreur si aucun billet sélectionné */}
+                            {showErrors && totalTickets === 0 && (
+                                <div className="flex items-center gap-2 text-red-500 text-sm bg-red-50 px-4 py-2 rounded-xl">
+                                    <AlertCircle className="w-4 h-4" />
+                                    <span>Veuillez sélectionner au moins un billet</span>
+                                </div>
+                            )}
+                        
                             <div className="space-y-4">
-                                {/* VIP */}
-                                <div className="flex items-center justify-between p-5 bg-[#F8FBFE] rounded-[2rem] border border-blue-50/30">
-                                    <div className="space-y-0.5">
-                                        <p className="font-bold text-gray-900 text-lg">VIP</p>
-                                        <p className="text-[#2D75B6] font-bold tracking-tight">{formatPrice(vipPrice)}</p>
-                                    </div>
-                                    <div className="flex items-center gap-5 bg-white rounded-full p-1.5 shadow-sm border border-gray-100/50">
-                                        <button
-                                            onClick={() => setVipQty(Math.max(0, vipQty - 1))}
+                                {seatTypes.map((type, index) => {
+                                    const price = eventData?.[type.priceKey] || 0
+                                    const quantity = ticketQuantities[type.key] || 0
+                                    return (
+                                        <div 
+                                            key={type.key} 
                                             className={cn(
-                                                "w-11 h-11 rounded-full flex items-center justify-center transition-all",
-                                                vipQty > 0 ? "text-gray-400 hover:bg-gray-50" : "text-gray-200"
+                                                "flex items-center justify-between p-5 rounded-[2rem] border",
+                                                index === 0 
+                                                    ? "bg-[#F8FBFE] border-blue-50/30" 
+                                                    : "bg-[#F8F9FA] border-gray-50"
                                             )}
                                         >
-                                            <Minus className="w-6 h-6" />
-                                        </button>
-                                        <span className="w-4 text-center font-bold text-gray-900 text-lg">{vipQty}</span>
-                                        <button
-                                            onClick={() => setVipQty(vipQty + 1)}
-                                            className="w-11 h-11 rounded-full bg-[#2D75B6] flex items-center justify-center text-white shadow-lg shadow-blue-500/20 active:scale-90 transition-transform"
-                                        >
-                                            <Plus className="w-6 h-6" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Standard */}
-                                <div className="flex items-center justify-between p-5 bg-[#F8F9FA] rounded-[2rem] border border-gray-50">
-                                    <div className="space-y-0.5">
-                                        <p className="font-bold text-gray-900 text-lg">Standard</p>
-                                        <p className="text-[#2D75B6] font-bold tracking-tight">{formatPrice(standardPrice)}</p>
-                                    </div>
-                                    <div className="flex items-center gap-5 bg-white rounded-full p-1.5 shadow-sm border border-gray-100/50">
-                                        <button
-                                            onClick={() => setStandardQty(Math.max(0, standardQty - 1))}
-                                            className={cn(
-                                                "w-11 h-11 rounded-full flex items-center justify-center transition-all",
-                                                standardQty > 0 ? "text-gray-400 hover:bg-gray-50" : "text-gray-200"
-                                            )}
-                                        >
-                                            <Minus className="w-6 h-6" />
-                                        </button>
-                                        <span className="w-4 text-center font-bold text-gray-900 text-lg">{standardQty}</span>
-                                        <button
-                                            onClick={() => setStandardQty(standardQty + 1)}
-                                            className={cn(
-                                                "w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90",
-                                                standardQty > 0 ? "bg-[#2D75B6] text-white shadow-lg" : "bg-gray-100 text-gray-400"
-                                            )}
-                                        >
-                                            <Plus className="w-6 h-6" />
-                                        </button>
-                                    </div>
-                                </div>
+                                            <div className="space-y-0.5">
+                                                <p className="font-bold text-gray-900 text-lg">{type.label}</p>
+                                                <p className="text-[#2D75B6] font-bold tracking-tight">{formatPrice(price)}</p>
+                                            </div>
+                                            <div className="flex items-center gap-5 bg-white rounded-full p-1.5 shadow-sm border border-gray-100/50">
+                                                <button
+                                                    onClick={() => updateQuantity(type.key, -1)}
+                                                    className={cn(
+                                                        "w-11 h-11 rounded-full flex items-center justify-center transition-all",
+                                                        quantity > 0 ? "text-gray-400 hover:bg-gray-50" : "text-gray-200"
+                                                    )}
+                                                >
+                                                    <Minus className="w-6 h-6" />
+                                                </button>
+                                                <span className="w-4 text-center font-bold text-gray-900 text-lg">{quantity}</span>
+                                                <button
+                                                    onClick={() => updateQuantity(type.key, 1)}
+                                                    className={cn(
+                                                        "w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90",
+                                                        quantity > 0 
+                                                            ? "bg-[#2D75B6] text-white shadow-lg shadow-blue-500/20" 
+                                                            : "bg-gray-100 text-gray-400"
+                                                    )}
+                                                >
+                                                    <Plus className="w-6 h-6" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
                             </div>
                         </div>
 
@@ -211,7 +401,16 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                             <div className="flex items-center gap-2.5 text-[#1A2D42]">
                                 <Smartphone className="w-5 h-5 text-[#2D75B6]" />
                                 <h3 className="font-bold text-lg">Mode de paiement</h3>
+                                <span className="text-[10px] text-red-500 font-bold uppercase tracking-wider">(obligatoire)</span>
                             </div>
+
+                            {/* Message d'erreur si aucun mode de paiement sélectionné */}
+                            {showErrors && !selectedPayment && (
+                                <div className="flex items-center gap-2 text-red-500 text-sm bg-red-50 px-4 py-2 rounded-xl">
+                                    <AlertCircle className="w-4 h-4" />
+                                    <span>Veuillez sélectionner un mode de paiement</span>
+                                </div>
+                            )}
 
                             <div className="space-y-3">
                                 {paymentMethods.map((method) => (
@@ -222,7 +421,7 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                             "w-full flex items-center justify-between p-4 rounded-[2.5rem] transition-all border-2",
                                             selectedPayment === method.id
                                                 ? "border-[#2D8F5E] bg-[#F0F9F4]"
-                                                : "border-gray-100 bg-white"
+                                                : "border-gray-100 bg-white hover:border-gray-200"
                                         )}
                                     >
                                         <div className="flex items-center gap-4">
@@ -251,16 +450,23 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
 
                         <div className="space-y-5 pb-4">
                             <button
-                                disabled={total === 0 || !firstName || !lastName || !whatsapp}
+                                disabled={!isValid()}
                                 className={cn(
                                     "w-full py-5 rounded-[1.5rem] font-bold text-xl flex items-center justify-center gap-3 transition-all active:scale-[0.98]",
-                                    (total === 0 || !firstName || !lastName || !whatsapp)
+                                    !isValid()
                                         ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                                         : "bg-[#2D75B6] text-white shadow-xl shadow-[#2D75B6]/25"
                                 )}
                                 onClick={() => {
+                                    if (!isValid()) {
+                                        setShowErrors(true)
+                                        return
+                                    }
+                                    // Trouver le type de billet principal
+                                    const mainType = Object.entries(ticketQuantities)
+                                        .sort(([,a], [,b]) => b - a)[0]
                                     // Simulate payment flow
-                                    router.push(`/mon-compte/tickets?id=${event.id}&qty=${vipQty + standardQty}&cat=${vipQty > 0 ? 'vip' : 'standard'}`)
+                                    router.push(`/mon-compte/tickets?id=${event.id}&qty=${totalTickets}&cat=${mainType?.[0] || 'vip'}`)
                                 }}
                             >
                                 Suivant
@@ -272,6 +478,13 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                         </div>
                     </div>
                 </motion.div>
+
+                {/* Auth Modal */}
+                <AuthModal
+                    isOpen={showAuthModal}
+                    onClose={() => setShowAuthModal(false)}
+                    onSuccess={() => setShowAuthModal(false)}
+                />
             </div>
         </AnimatePresence>
     )

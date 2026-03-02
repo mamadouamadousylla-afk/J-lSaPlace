@@ -15,8 +15,11 @@ const navItems = [
 export default function BottomNav() {
     const pathname = usePathname()
 
+    // Hide on admin routes completely
+    if (pathname.startsWith('/admin')) return null;
+
     return (
-        <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 pb-safe">
+        <nav className="fixed bottom-0 left-0 right-0 max-w-lg mx-auto bg-white/80 backdrop-blur-xl border-t border-gray-100 z-50">
             <div className="flex justify-around items-center h-20 max-w-lg mx-auto px-4">
                 {navItems.map((item) => {
                     const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href))

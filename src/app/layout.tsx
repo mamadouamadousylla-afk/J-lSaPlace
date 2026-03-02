@@ -3,6 +3,10 @@ import { Inter, Poppins } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/layout/BottomNav";
 import { FavoritesProvider } from "@/context/FavoritesContext";
+import { AuthProvider } from "@/context/AuthContext";
+import { SettingsProvider } from "@/context/SettingsContext";
+import MainWrapper from "@/components/layout/MainWrapper";
+
 
 const inter = Inter({
   subsets: ["latin"],
@@ -36,12 +40,16 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body className={`${inter.variable} ${poppins.variable} font-sans antialiased`}>
-        <FavoritesProvider>
-          <main className="max-w-lg mx-auto relative min-h-screen pb-20">
-            {children}
-          </main>
-          <BottomNav />
-        </FavoritesProvider>
+        <AuthProvider>
+          <SettingsProvider>
+            <FavoritesProvider>
+              <MainWrapper>
+                {children}
+              </MainWrapper>
+              <BottomNav />
+            </FavoritesProvider>
+          </SettingsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

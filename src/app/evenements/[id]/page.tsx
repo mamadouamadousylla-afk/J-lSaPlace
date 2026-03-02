@@ -2,21 +2,126 @@
 
 import { useParams, useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Info, ArrowLeft, ShieldCheck, Share2, Heart } from "lucide-react"
+import { Calendar, MapPin, Info, ArrowLeft, ShieldCheck, Share2, Heart, User, Navigation } from "lucide-react"
 import { formatPrice, cn } from "@/lib/utils"
-import { useState } from "react"
-import { getEventById } from "@/lib/events"
+import { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
 import { useFavorites } from "@/context/FavoritesContext"
 import BookingModal from "@/components/shared/BookingModal"
+
+// Google Maps types
+declare global {
+    interface Window {
+        google: any;
+    }
+}
+
+interface EventData {
+    id: string
+    title: string
+    date: string
+    time: string
+    category: string
+    tag: string
+    price_vip: number
+    price_tribune: number
+    price_pelouse: number
+    location: string
+    address: string
+    image_url: string
+    description: string
+    promoter: string
+    promoter_logo: string
+    promoter_description: string
+    latitude: number
+    longitude: number
+}
 
 export default function EventDetail() {
     const params = useParams()
     const router = useRouter()
     const id = params.id as string
-    const event = getEventById(id)
+    const [event, setEvent] = useState<EventData | null>(null)
+    const [loading, setLoading] = useState(true)
+    const [mapLoaded, setMapLoaded] = useState(false)
+
+    useEffect(() => {
+        async function loadEvent() {
+            if (!id) return
+            
+            const { data, error } = await supabase
+                .from("events")
+                .select("*")
+                .eq("id", id)
+                .single()
+
+            if (error) {
+                console.error("Erreur lors du chargement de l'événement:", error.message, error.code, error.details)
+                console.error("Erreur complète:", JSON.stringify(error, null, 2))
+            } else if (data) {
+                setEvent(data)
+            }
+            setLoading(false)
+        }
+
+        loadEvent()
+    }, [id])
+
+    // Charger Google Maps quand l'événement est chargé avec des coordonnées
+    useEffect(() => {
+        if (!event?.latitude || !event?.longitude || mapLoaded) return
+
+        const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+        if (!apiKey) return
+
+        // Fonction pour initialiser la carte
+        const initMap = () => {
+            const mapElement = document.getElementById('event-map')
+            if (!mapElement || !window.google) return
+
+            const map = new window.google.maps.Map(mapElement, {
+                center: { lat: event.latitude, lng: event.longitude },
+                zoom: 15,
+                disableDefaultUI: true,
+                zoomControl: true,
+            })
+
+            new window.google.maps.Marker({
+                position: { lat: event.latitude, lng: event.longitude },
+                map: map,
+                title: event.location,
+            })
+
+            setMapLoaded(true)
+        }
+
+        // Vérifier si Google Maps est déjà chargé
+        if (window.google) {
+            initMap()
+        } else {
+            // Charger le script Google Maps
+            const script = document.createElement('script')
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initEventMap`
+            script.async = true
+            script.defer = true
+            
+            // Exposer la fonction de callback globalement
+            ;(window as any).initEventMap = initMap
+            
+            document.head.appendChild(script)
+        }
+    }, [event, mapLoaded])
 
     const [isBookingOpen, setIsBookingOpen] = useState(false)
     const { toggleFavorite, isFavorite } = useFavorites()
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D75B6]"></div>
+            </div>
+        )
+    }
 
     if (!event) {
         return (
@@ -59,7 +164,7 @@ export default function EventDetail() {
             {/* Hero Image */}
             <div className="relative h-[60vh] w-full">
                 <img
-                    src={event.imageUrl}
+                    src={event.image_url || "/hero-combat.png"}
                     alt={event.title}
                     className="h-full w-full object-cover"
                 />
@@ -112,6 +217,70 @@ export default function EventDetail() {
                         {event.description}
                     </p>
                 </section>
+
+                {/* Promoteur */}
+                {event.promoter && (
+                    <section className="px-2 space-y-4">
+                        <h2 className="text-xl font-poppins font-bold flex items-center gap-2">
+                            <User className="w-5 h-5 text-[#2D75B6]" />
+                            Organisé par
+                        </h2>
+                        <div className="bg-white rounded-2xl p-6 shadow-md border border-gray-100">
+                            <div className="flex items-center gap-4">
+                                {event.promoter_logo ? (
+                                    <img 
+                                        src={event.promoter_logo} 
+                                        alt={event.promoter}
+                                        className="w-16 h-16 rounded-full object-cover border-2 border-[#2D75B6]/20"
+                                    />
+                                ) : (
+                                    <div className="w-16 h-16 rounded-full bg-[#2D75B6]/10 flex items-center justify-center">
+                                        <User className="w-8 h-8 text-[#2D75B6]" />
+                                    </div>
+                                )}
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-bold text-gray-900">{event.promoter}</h3>
+                                    {event.promoter_description && (
+                                        <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                                            {event.promoter_description}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                )}
+
+                {/* Carte de localisation */}
+                {event.latitude && event.longitude && (
+                    <section className="px-2 space-y-4">
+                        <h2 className="text-xl font-poppins font-bold flex items-center gap-2">
+                            <Navigation className="w-5 h-5 text-[#2D75B6]" />
+                            Localisation
+                        </h2>
+                        <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100">
+                            <div 
+                                id="event-map" 
+                                className="w-full h-48 bg-gray-100"
+                            ></div>
+                            <div className="p-4 flex items-center justify-between">
+                                <div>
+                                    <p className="text-sm font-bold text-gray-900">{event.location}</p>
+                                    <p className="text-xs text-gray-500">{event.address}</p>
+                                </div>
+                                <a 
+                                    href={`https://www.google.com/maps/dir/?api=1&destination=${event.latitude},${event.longitude}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-4 py-2 bg-[#2D75B6] text-white text-sm font-bold rounded-full flex items-center gap-2"
+                                >
+                                    <Navigation className="w-4 h-4" />
+                                    Itinéraire
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+                )}
             </div>
 
             {/* Floating Action Button */}
@@ -123,7 +292,7 @@ export default function EventDetail() {
                     className="w-full py-5 bg-[#2D75B6] text-white text-xl font-bold rounded-[2rem] flex items-center justify-center gap-3 shadow-2xl shadow-[#2D75B6]/30 transition-all"
                 >
                     <ShieldCheck className="w-7 h-7" />
-                    Réserver · {formatPrice(event.price)}
+                    Réserver
                 </motion.button>
             </div>
 
@@ -137,7 +306,7 @@ export default function EventDetail() {
                     location: event.location,
                     date: event.date,
                     time: event.time,
-                    imageUrl: event.imageUrl
+                    imageUrl: event.image_url || "/hero-combat.png"
                 }}
             />
         </div>

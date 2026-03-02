@@ -12,3 +12,10 @@ export function formatPrice(price: number) {
     minimumFractionDigits: 0,
   }).format(price)
 }
+
+// Fonction pour formater les nombres de manière cohérente (évite les erreurs d'hydratation)
+export function formatNumber(num: number) {
+  return new Intl.NumberFormat("fr-FR", {
+    minimumFractionDigits: 0,
+  }).format(num)
+}

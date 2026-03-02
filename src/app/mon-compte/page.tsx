@@ -1,14 +1,13 @@
 "use client" // Update: Synchronized with GitHub
 
 import { motion } from "framer-motion"
-import { User, Settings, CreditCard, Bell, MapPin, LogOut, ChevronRight, Trophy } from "lucide-react"
+import { User, Settings, CreditCard, Bell, LogOut, ChevronRight, Trophy } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 
 const menuItems = [
     { icon: CreditCard, label: "Historique d'achats", href: "/mon-compte/tickets", color: "text-blue-500", bg: "bg-blue-50" },
     { icon: Bell, label: "Notifications", href: "/mon-compte/notifications", color: "text-purple-500", bg: "bg-purple-50" },
-    { icon: MapPin, label: "Arènes favorites", href: "/mon-compte/arenes", color: "text-red-500", bg: "bg-red-50" },
     { icon: Settings, label: "Paramètres", href: "/mon-compte/parametres", color: "text-gray-500", bg: "bg-gray-50" },
 ]
 
@@ -89,32 +88,9 @@ export default function ProfilePage() {
                     </div>
                 </div>
 
-                {/* Gamification Banner */}
-                <div className="bg-gradient-to-br from-[#1B8B3D] to-[#0A5D28] p-8 rounded-[2.5rem] text-white space-y-4 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
-                    <div className="relative z-10 space-y-2">
-                        <div className="flex items-center gap-2">
-                            <h4 className="font-poppins font-bold text-lg flex items-center gap-2">
-                                Challenge
-                                <img src="/logo-sunulamb.png" alt="SunuLamb" className="h-5 w-auto object-contain inline-block" />
-                                🏆
-                            </h4>
-                        </div>
-                        <p className="text-white/80 text-sm">As-tu assisté au combat du week-end ? Badge ton badge et gagne des points !</p>
-                        <button
-                            onClick={() => router.push('/mon-compte/defis')}
-                            className="button-gnudem bg-secondary text-secondary-foreground px-6 py-3 mt-2 text-xs font-bold rounded-full shadow-lg active:scale-95 transition-transform relative z-20"
-                        >
-                            Voir mes défis
-                        </button>
-                    </div>
-                </div>
-
                 <div className="flex items-center justify-center gap-2 pt-4 opacity-50">
                     <p className="text-black font-medium text-[10px] flex items-center gap-1">
-                        Version 1.0.0 •
-                        <img src="/logo-sunulamb.png" alt="SunuLamb" className="h-3 w-auto object-contain inline-block" />
-                        2024
+                        ©2026 Azerty Agency • All rights reserved
                     </p>
                 </div>
             </div>

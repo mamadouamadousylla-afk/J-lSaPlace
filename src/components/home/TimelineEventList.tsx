@@ -1,11 +1,56 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Heart } from "lucide-react"
 import { cn, formatPrice } from "@/lib/utils"
-import { allEvents, EventData } from "@/lib/events"
+import { supabase } from "@/lib/supabase"
 import { useFavorites } from "@/context/FavoritesContext"
+
+// Fonction pour extraire le mois de la date si month_label est vide
+function extractMonthFromDate(dateString: string): string {
+    if (!dateString) return ""
+    
+    const months: Record<string, string> = {
+        "janvier": "JANVIER", "jan": "JANVIER",
+        "février": "FEVRIER", "fevrier": "FEVRIER", "fév": "FEVRIER", "fev": "FEVRIER",
+        "mars": "MARS", "mar": "MARS",
+        "avril": "AVRIL", "avr": "AVRIL",
+        "mai": "MAI",
+        "juin": "JUIN",
+        "juillet": "JUILLET", "jui": "JUILLET",
+        "août": "AOUT", "aout": "AOUT", "aug": "AOUT",
+        "septembre": "SEPTEMBRE", "sep": "SEPTEMBRE",
+        "octobre": "OCTOBRE", "oct": "OCTOBRE",
+        "novembre": "NOVEMBRE", "nov": "NOVEMBRE",
+        "décembre": "DECEMBRE", "decembre": "DECEMBRE", "déc": "DECEMBRE", "dec": "DECEMBRE"
+    }
+    
+    const lowerDate = dateString.toLowerCase()
+    for (const [month, upperMonth] of Object.entries(months)) {
+        if (lowerDate.includes(month)) {
+            return upperMonth
+        }
+    }
+    return ""
+}
+
+interface EventData {
+    id: string
+    title: string
+    date: string
+    time: string
+    monthLabel: string
+    category: string
+    categoryId: string
+    price: number
+    location: string
+    address: string
+    imageUrl: string
+    description: string
+    tag: string
+}
 
 interface TimelineEventListProps {
     selectedCategory: string
@@ -14,16 +59,68 @@ interface TimelineEventListProps {
 
 export default function TimelineEventList({ selectedCategory, searchQuery }: TimelineEventListProps) {
     const { toggleFavorite, isFavorite } = useFavorites()
+    const [events, setEvents] = useState<EventData[]>([])
+    const [loading, setLoading] = useState(true)
+
+    // Charger les événements depuis Supabase
+    useEffect(() => {
+        async function loadEvents() {
+            setLoading(true)
+            const { data, error } = await supabase
+                .from("events")
+                .select("*")
+                .eq("status", "published")
+                .order("created_at", { ascending: false })
+
+            if (error) {
+                console.error("Erreur lors du chargement des événements:", error)
+            } else if (data) {
+                console.log("Événements chargés depuis Supabase:", data.length, data.map(e => ({ id: e.id, title: e.title })))
+                // Mapper les données Supabase vers le format EventData
+                const mappedEvents: EventData[] = data.map(event => ({
+                    id: event.id,
+                    title: event.title,
+                    date: event.date,
+                    time: event.time,
+                    monthLabel: event.month_label || extractMonthFromDate(event.date),
+                    category: event.category,
+                    categoryId: event.category_id,
+                    price: event.price_vip, // Prix VIP par défaut
+                    location: event.location,
+                    address: event.address || event.location,
+                    imageUrl: event.image_url || "/hero-combat.png",
+                    description: event.description || "",
+                    tag: event.tag || event.category
+                }))
+                setEvents(mappedEvents)
+            }
+            setLoading(false)
+        }
+
+        loadEvents()
+
+        // Souscription temps réel
+        const channel = supabase
+            .channel('events-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+                loadEvents()
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [])
 
     const filteredEvents = searchQuery
-        ? allEvents.filter(e =>
+        ? events.filter(e =>
             e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
             e.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
             e.tag.toLowerCase().includes(searchQuery.toLowerCase())
         )
         : (selectedCategory === "all"
-            ? allEvents
-            : allEvents.filter(e => e.categoryId === selectedCategory))
+            ? events
+            : events.filter(e => e.categoryId === selectedCategory))
 
     // Helper to determine if it's the first event of the month in the current list
     const isFirstInMonth = (event: EventData, index: number) => {
@@ -40,12 +137,20 @@ export default function TimelineEventList({ selectedCategory, searchQuery }: Tim
                 <div className="absolute left-3 top-0 bottom-0 w-[1px] border-l border-dashed border-[#2D75B6]/30" />
 
                 <div className="space-y-6">
-                    {filteredEvents.length > 0 ? (
+                    {loading ? (
+                        <div className="py-20 text-center">
+                            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-[#2D75B6]"></div>
+                            <p className="mt-4 text-gray-500">Chargement des événements...</p>
+                        </div>
+                    ) : filteredEvents.length > 0 ? (
                         filteredEvents.map((event, idx) => (
                             <div key={event.id} className="relative">
                                 {/* Month Badge on Timeline */}
                                 {isFirstInMonth(event, idx) && (
-                                    <div className="absolute -left-[32px] top-6 w-6 h-16 bg-[#FF4B4B] rounded-full flex items-center justify-center shadow-sm z-10">
+                                    <div 
+                                        className="absolute -left-[32px] top-6 w-6 bg-[#FF4B4B] rounded-full flex items-center justify-center shadow-sm z-10"
+                                        style={{ height: `${Math.max(72, event.monthLabel.length * 10)}px` }}
+                                    >
                                         <span className="-rotate-90 text-[10px] font-bold text-white tracking-widest whitespace-nowrap">
                                             {event.monthLabel}
                                         </span>

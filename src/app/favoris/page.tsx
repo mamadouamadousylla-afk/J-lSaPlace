@@ -1,17 +1,44 @@
 "use client"
 
 import { useFavorites } from "@/context/FavoritesContext"
-import { allEvents } from "@/lib/events"
+import { supabase } from "@/lib/supabase"
 import { formatPrice } from "@/lib/utils"
 import { Heart, ArrowLeft } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react"
+
+interface EventData {
+    id: string
+    title: string
+    date: string
+    image_url: string
+    category: string
+    price_vip: number
+}
 
 export default function FavorisPage() {
     const { favorites, toggleFavorite, isFavorite } = useFavorites()
     const router = useRouter()
+    const [allEvents, setAllEvents] = useState<EventData[]>([])
+    const [loading, setLoading] = useState(true)
+
+    useEffect(() => {
+        async function loadEvents() {
+            const { data } = await supabase
+                .from("events")
+                .select("id, title, date, image_url, category, price_vip")
+                .eq("status", "published")
+            
+            if (data) {
+                setAllEvents(data)
+            }
+            setLoading(false)
+        }
+        loadEvents()
+    }, [])
 
     const favoriteEvents = allEvents.filter(e => favorites.includes(e.id))
 
@@ -60,7 +87,7 @@ export default function FavorisPage() {
                                     <div className="relative w-full h-[180px] rounded-[2rem] overflow-hidden shadow-lg group">
                                         <div
                                             className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-105"
-                                            style={{ backgroundImage: `url(${event.imageUrl})` }}
+                                            style={{ backgroundImage: `url(${event.image_url || "/hero-combat.png"})` }}
                                         />
                                         <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition-colors" />
 
@@ -88,7 +115,7 @@ export default function FavorisPage() {
                                                 </span>
                                             </div>
                                             <span className="text-white font-bold text-sm">
-                                                {formatPrice(event.price)}
+                                                {formatPrice(event.price_vip)}
                                             </span>
                                         </div>
                                     </div>

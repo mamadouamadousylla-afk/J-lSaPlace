@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Search, Bell, Activity, X } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useSiteSettings } from "@/context/SettingsContext"
 
 interface HeaderProps {
     onSearch?: (query: string) => void
@@ -11,6 +12,7 @@ interface HeaderProps {
 export default function Header({ onSearch }: HeaderProps) {
     const [isSearching, setIsSearching] = useState(false)
     const [query, setQuery] = useState("")
+    const { site } = useSiteSettings()
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value
@@ -30,8 +32,8 @@ export default function Header({ onSearch }: HeaderProps) {
                         className="flex items-center h-8"
                     >
                         <img
-                            src="/logo-sunulamb.png"
-                            alt="SunuLamb"
+                            src={site.logo_url || "/logo-sunulamb.png"}
+                            alt={site.name || "SunuLamb"}
                             className="h-full w-auto object-contain"
                         />
                     </motion.div>

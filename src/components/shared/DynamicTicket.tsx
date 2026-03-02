@@ -1,8 +1,11 @@
 "use client"
 
+import { useRef } from "react"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Download, Music, Mic2, Users, Presentation, Sparkles, Ticket } from "lucide-react"
+import { Calendar, MapPin, Download, Music, Mic2, Users, Presentation, Sparkles } from "lucide-react"
 import Qoder from "./Qoder"
+import html2canvas from "html2canvas"
+import jsPDF from "jspdf"
 
 // Brand colors from Jël Sa Place logo
 export const BRAND_COLORS = {
@@ -130,6 +133,8 @@ export default function DynamicTicket({
     onDownload,
     compact = false
 }: DynamicTicketProps) {
+    const ticketRef = useRef<HTMLDivElement>(null)
+    
     // Get category config or default to SPORT
     const config = CATEGORY_CONFIG[category?.toUpperCase()] || CATEGORY_CONFIG.SPORT
     
@@ -139,69 +144,102 @@ export default function DynamicTicket({
     // Generate QR code value
     const qrValue = qrCode || id
 
-    // Handle download with direct file generation
-    const handleDownload = () => {
+    // Handle PDF download
+    const handleDownload = async () => {
         if (onDownload) {
             onDownload()
             return
         }
-        
-        // Generate ticket content
-        const ticketContent = `
-════════════════════════════════════════
-       JËL SA PLACE - TICKET
-════════════════════════════════════════
 
-🎫 ${title}
+        if (!ticketRef.current) return
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+        try {
+            // Capture the ticket element as canvas
+            const canvas = await html2canvas(ticketRef.current, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            })
 
-📅 DATE: ${date}
-⏰ HEURE: ${time}
-📍 LIEU: ${location}
+            // Create PDF
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            })
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+            const imgWidth = 210 // A4 width in mm
+            const imgHeight = (canvas.height * imgWidth) / canvas.width
+            const imgData = canvas.toDataURL('image/png')
 
-🎭 CATÉGORIE: ${config.label}
-🏷️ ZONE: ${zoneConfig.icon} ${zoneConfig.label}
-${row ? `📍 RANGÉE: ${row}` : ''}
-${seat ? `💺 SIÈGE: ${seat}` : ''}
+            // Add image to PDF (centered)
+            const yOffset = (297 - imgHeight) / 2 // Center vertically on A4
+            pdf.addImage(imgData, 'PNG', 0, Math.max(0, yOffset), imgWidth, imgHeight)
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📋 TICKET ID: ${id}
-${holderName ? `👤 TITULAIRE: ${holderName}` : ''}
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-QR CODE: ${qrValue}
-
-════════════════════════════════════════
-        MERCI DE VOTRE ACHAT !
-════════════════════════════════════════
-        `
-        
-        // Create and download file
-        const blob = new Blob([ticketContent], { type: 'text/plain;charset=utf-8' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `ticket-${id}.txt`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
+            // Download the PDF
+            pdf.save(`ticket-${id}.pdf`)
+        } catch (error) {
+            console.error('Error generating PDF:', error)
+            // Fallback: create a simple text PDF
+            const pdf = new jsPDF()
+            pdf.setFontSize(20)
+            pdf.setTextColor(0, 0, 0)
+            
+            // Header
+            pdf.setFontSize(24)
+            pdf.text('Jel Sa Place - Ticket', 105, 20, { align: 'center' })
+            
+            pdf.setFontSize(16)
+            pdf.text(title, 105, 35, { align: 'center' })
+            
+            pdf.setFontSize(12)
+            let y = 55
+            pdf.text(`Date: ${date}`, 20, y)
+            pdf.text(`Heure: ${time}`, 120, y)
+            
+            y += 15
+            pdf.text(`Lieu: ${location}`, 20, y)
+            
+            y += 15
+            pdf.text(`Categorie: ${config.label}`, 20, y)
+            pdf.text(`Zone: ${zoneConfig.icon} ${zoneConfig.label}`, 120, y)
+            
+            if (row) {
+                y += 15
+                pdf.text(`Rangee: ${row}`, 20, y)
+            }
+            if (seat) {
+                pdf.text(`Siege: ${seat}`, 120, y)
+            }
+            
+            y += 15
+            pdf.text(`Ticket ID: ${id}`, 20, y)
+            
+            if (holderName) {
+                y += 15
+                pdf.text(`Titulaire: ${holderName}`, 20, y)
+            }
+            
+            // Footer
+            y += 30
+            pdf.setFontSize(10)
+            pdf.text('Merci de votre achat !', 105, y, { align: 'center' })
+            
+            pdf.save(`ticket-${id}.pdf`)
+        }
     }
 
     return (
         <div className="relative w-full max-w-sm mx-auto">
-            {/* Main Ticket Card */}
-            <div className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-gray-100">
+            {/* Main Ticket Card - Ref for PDF capture */}
+            <div ref={ticketRef} className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-gray-100">
                 {/* Hero Image with Gradient Overlay */}
                 <div className="relative h-48 overflow-hidden">
                     <img 
                         src={imageUrl || config.defaultImage} 
                         alt={title}
+                        crossOrigin="anonymous"
                         className="w-full h-full object-cover"
                     />
                     <div className={`absolute inset-0 bg-gradient-to-t ${config.gradient} opacity-60`} />
@@ -220,7 +258,7 @@ QR CODE: ${qrValue}
                     {/* Jël Sa Place Brand Mark */}
                     <div className="absolute top-4 right-4">
                         <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-black/40 backdrop-blur-sm">
-                            <span className="text-xs font-black text-white">Jël</span>
+                            <span className="text-xs font-black text-white">Jel</span>
                             <span className="text-xs font-black text-yellow-400">Sa</span>
                             <span className="text-xs font-black text-green-400">Place</span>
                         </div>
@@ -276,7 +314,7 @@ QR CODE: ${qrValue}
                         <div className={`flex items-center justify-center gap-6 py-3 px-4 rounded-xl bg-gradient-to-r ${config.bgGradient}`}>
                             {row && (
                                 <div className="text-center">
-                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Rangée</p>
+                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Rangee</p>
                                     <p className="text-lg font-black" style={{ color: config.textColor }}>{row}</p>
                                 </div>
                             )}
@@ -285,7 +323,7 @@ QR CODE: ${qrValue}
                             )}
                             {seat && (
                                 <div className="text-center">
-                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Siège</p>
+                                    <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Siege</p>
                                     <p className="text-lg font-black" style={{ color: config.textColor }}>{seat}</p>
                                 </div>
                             )}
@@ -326,7 +364,7 @@ QR CODE: ${qrValue}
                                 className={`w-full py-4 rounded-xl bg-gradient-to-r ${config.gradient} text-white font-bold flex items-center justify-center gap-3 shadow-xl active:scale-[0.98] transition-all`}
                             >
                                 <Download className="w-5 h-5" />
-                                Télécharger
+                                Telecharger
                             </button>
                         </div>
                     )}
@@ -338,7 +376,7 @@ QR CODE: ${qrValue}
                 
                 {/* Jël Sa Place Brand Footer */}
                 <div className="bg-black py-3 px-4 flex items-center justify-center gap-1">
-                    <span className="text-xs font-black text-white">Jël</span>
+                    <span className="text-xs font-black text-white">Jel</span>
                     <span className="text-xs font-black text-yellow-400">Sa</span>
                     <span className="text-xs font-black text-green-400">Place</span>
                 </div>

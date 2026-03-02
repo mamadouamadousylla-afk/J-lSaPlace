@@ -2,23 +2,12 @@
 
 import { useState, Suspense, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronLeft, Bell, Download, QrCode, Calendar, MapPin, ArrowRight, Ticket } from "lucide-react"
+import { ChevronLeft, Bell, Ticket } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { cn } from "@/lib/utils"
-import Qoder from "@/components/shared/Qoder"
-import { getEventById } from "@/lib/events"
+import DynamicTicket, { CATEGORY_CONFIG, DynamicTicketProps } from "@/components/shared/DynamicTicket"
+import { supabase } from "@/lib/supabase"
 
-interface TicketData {
-    id: string
-    title: string
-    date: string
-    time: string
-    location: string
-    category: string
-    zone: string
-    row?: string
-    seat?: string
-    imageUrl: string
+interface TicketData extends DynamicTicketProps {
     status: "upcoming" | "past"
 }
 
@@ -29,224 +18,187 @@ function TicketsContent() {
     const id = searchParams.get("id")
     const qty = searchParams.get("qty")
     const cat = searchParams.get("cat")
+    const zone = searchParams.get("zone")
 
     const [activeTab, setActiveTab] = useState("upcoming")
     const [displayTickets, setDisplayTickets] = useState<TicketData[]>([])
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Load tickets from localStorage
-        const saved = localStorage.getItem("sunulamb_tickets")
-        let currentTickets: TicketData[] = saved ? JSON.parse(saved) : []
+        async function loadTickets() {
+            setLoading(true)
+            
+            // Load tickets from localStorage
+            const saved = localStorage.getItem("sunulamb_tickets")
+            let currentTickets: TicketData[] = saved ? JSON.parse(saved) : []
 
-        // If new purchase detected in URL
-        if (id && qty && cat) {
-            const event = getEventById(id)
-            if (event) {
-                const newTicket: TicketData = {
-                    id: `SL-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${cat.toUpperCase()}`,
-                    title: event.title,
-                    date: event.date,
-                    time: event.time,
-                    location: event.location,
-                    category: event.tag || event.category,
-                    zone: cat.toUpperCase(),
-                    row: "B",
-                    seat: Math.floor(Math.random() * 50).toString(),
-                    imageUrl: event.imageUrl,
-                    status: "upcoming"
-                }
+            // If new purchase detected in URL
+            if (id && qty && cat) {
+                // Fetch event details from Supabase
+                const { data: eventData, error } = await supabase
+                    .from("events")
+                    .select("*")
+                    .eq("id", id)
+                    .single()
 
-                // Avoid duplicates on refresh if possible (simple check)
-                const exists = currentTickets.some(t => t.title === newTicket.title && t.category === newTicket.category && t.date === newTicket.date)
-                if (!exists) {
-                    currentTickets = [newTicket, ...currentTickets]
+                if (eventData) {
+                    // Generate tickets for each quantity
+                    for (let i = 0; i < parseInt(qty || "1"); i++) {
+                        const newTicket: TicketData = {
+                            id: `SL-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${cat.toUpperCase()}-${i + 1}`,
+                            title: eventData.title,
+                            date: eventData.date,
+                            time: eventData.time,
+                            location: eventData.location,
+                            category: eventData.category || "SPORT",
+                            zone: cat.toUpperCase(),
+                            row: String.fromCharCode(65 + Math.floor(Math.random() * 10)), // A-J
+                            seat: String(Math.floor(Math.random() * 100) + 1), // 1-100
+                            imageUrl: eventData.image_url,
+                            holderName: "Titulaire",
+                            status: "upcoming"
+                        }
+
+                        // Avoid duplicates
+                        const exists = currentTickets.some(t => 
+                            t.title === newTicket.title && 
+                            t.zone === newTicket.zone && 
+                            t.date === newTicket.date &&
+                            t.seat === newTicket.seat
+                        )
+                        if (!exists) {
+                            currentTickets = [newTicket, ...currentTickets]
+                        }
+                    }
                     localStorage.setItem("sunulamb_tickets", JSON.stringify(currentTickets))
                 }
             }
+
+            setDisplayTickets(currentTickets)
+            setLoading(false)
         }
 
-        setDisplayTickets(currentTickets)
-    }, [id, qty, cat])
-
-    const [expandedTicket, setExpandedTicket] = useState<string | null>(null)
-
-    // Set first ticket as expanded if just purchased
-    useEffect(() => {
-        if (displayTickets.length > 0 && (id || !expandedTicket)) {
-            setExpandedTicket(displayTickets[0].id)
-        }
-    }, [displayTickets, id])
+        loadTickets()
+    }, [id, qty, cat, zone])
 
     const handleDownload = (ticketId: string) => {
         // Simulated download
         alert(`Téléchargement du ticket ${ticketId} en PDF...`)
     }
 
+    const handleAddToWallet = (ticketId: string) => {
+        // Simulated wallet add
+        alert(`Ticket ${ticketId} ajouté au wallet !`)
+    }
+
     return (
-        <div className="flex flex-col min-h-screen bg-[#F8F9FA] pb-32">
+        <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pb-32">
             {/* Header */}
-            <header className="px-6 py-8 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-30">
+            <header className="px-6 py-6 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-30 border-b border-gray-100">
                 <button
                     onClick={() => router.back()}
                     className="p-3 rounded-full bg-white shadow-sm border border-gray-100"
                 >
-                    <ChevronLeft className="w-6 h-6 text-[#2D75B6]" />
+                    <ChevronLeft className="w-6 h-6 text-gray-700" />
                 </button>
-                <h1 className="text-xl font-poppins font-black text-[#1A2D42]">Mes Billets</h1>
+                <h1 className="text-xl font-bold text-gray-900">Mes Billets</h1>
                 <div className="flex items-center gap-2">
                     <button className="p-3 rounded-full bg-white shadow-sm border border-gray-100 relative">
-                        <Bell className="w-6 h-6 text-[#2D75B6]" />
-                        <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-[#FF4B4B] rounded-full border-2 border-white" />
+                        <Bell className="w-6 h-6 text-gray-700" />
+                        <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white" />
                     </button>
                 </div>
             </header>
 
-            <div className="px-6 py-6 space-y-6">
+            <div className="px-4 py-6 space-y-6">
                 {/* Tabs */}
-                <div className="bg-[#E9ECEF] p-1.5 rounded-[1.5rem] flex">
+                <div className="bg-gray-200 p-1.5 rounded-[1.5rem] flex">
                     <button
                         onClick={() => setActiveTab("upcoming")}
-                        className={cn(
-                            "flex-1 py-3.5 rounded-[1.25rem] font-bold text-sm transition-all",
-                            activeTab === "upcoming" ? "bg-[#2D75B6] text-white shadow-lg" : "text-[#8E9AAF]"
-                        )}
+                        className={`flex-1 py-3.5 rounded-[1.25rem] font-bold text-sm transition-all ${
+                            activeTab === "upcoming" 
+                                ? "bg-white text-gray-900 shadow-sm" 
+                                : "text-gray-500"
+                        }`}
                     >
                         À venir
                     </button>
                     <button
                         onClick={() => setActiveTab("past")}
-                        className={cn(
-                            "flex-1 py-3.5 rounded-[1.25rem] font-bold text-sm transition-all",
-                            activeTab === "past" ? "bg-[#2D75B6] text-white shadow-lg" : "text-[#8E9AAF]"
-                        )}
+                        className={`flex-1 py-3.5 rounded-[1.25rem] font-bold text-sm transition-all ${
+                            activeTab === "past" 
+                                ? "bg-white text-gray-900 shadow-sm" 
+                                : "text-gray-500"
+                        }`}
                     >
                         Passés
                     </button>
                 </div>
 
                 {/* Tickets List */}
-                <div className="space-y-6">
-                    {displayTickets.filter(t => t.status === activeTab).length > 0 ? (
-                        displayTickets.filter(t => t.status === activeTab).map((ticket) => (
-                            <motion.div
-                                key={ticket.id}
-                                layout
-                                initial={{ opacity: 0, y: 20 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                className="bg-white rounded-[2.5rem] overflow-hidden shadow-sm border border-gray-100"
-                            >
-                                <div className="p-6 flex gap-6">
-                                    <div className="w-24 h-24 rounded-3xl overflow-hidden shadow-sm flex-shrink-0">
-                                        <img src={ticket.imageUrl || "/hero-combat.png"} className="w-full h-full object-cover" />
-                                    </div>
-                                    <div className="flex-1 space-y-2">
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] font-black text-[#2D75B6] uppercase tracking-wider bg-[#F0F7FF] px-2 py-0.5 rounded-full inline-block w-fit">
-                                                {ticket.category}
-                                            </span>
-                                            <h3 className="text-lg font-bold text-[#1A2D42] leading-tight mt-1">{ticket.title}</h3>
-                                        </div>
-                                        <div className="flex flex-col gap-1">
-                                            <div className="flex items-center gap-2 text-[#A6ADB9]">
-                                                <Calendar className="w-3.5 h-3.5" />
-                                                <span className="text-[11px] font-medium">{ticket.date} • {ticket.time}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2 text-[#A6ADB9]">
-                                                <MapPin className="w-3.5 h-3.5" />
-                                                <span className="text-[11px] font-medium">{ticket.location}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="px-6 pb-6 pt-2 grid grid-cols-3 gap-4 border-t border-gray-50 border-dashed relative">
-                                    {/* Tear-off side circles */}
-                                    <div className="absolute -left-3 top-[-12px] w-6 h-6 rounded-full bg-[#F8F9FA] shadow-inner" />
-                                    <div className="absolute -right-3 top-[-12px] w-6 h-6 rounded-full bg-[#F8F9FA] shadow-inner" />
-
-                                    <div>
-                                        <p className="text-[9px] font-bold text-[#A6ADB9] uppercase tracking-widest">ZONE</p>
-                                        <p className="text-sm font-black text-[#2D75B6]">{ticket.zone}</p>
-                                    </div>
-                                    {ticket.row && (
-                                        <div>
-                                            <p className="text-[9px] font-bold text-[#A6ADB9] uppercase tracking-widest">RANGÉE</p>
-                                            <p className="text-sm font-black text-[#1A2D42]">{ticket.row}</p>
-                                        </div>
-                                    )}
-                                    {ticket.seat && (
-                                        <div>
-                                            <p className="text-[9px] font-bold text-[#A6ADB9] uppercase tracking-widest">SIÈGE</p>
-                                            <p className="text-sm font-black text-[#1A2D42]">{ticket.seat}</p>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="border-t border-gray-50 border-dashed pt-4" />
-
-                                <div className="px-6 pb-8">
-                                    <AnimatePresence mode="wait">
-                                        {expandedTicket === ticket.id ? (
-                                            <motion.div
-                                                key="expanded"
-                                                initial={{ opacity: 0, height: 0 }}
-                                                animate={{ opacity: 1, height: "auto" }}
-                                                exit={{ opacity: 0, height: 0 }}
-                                                className="space-y-6 flex flex-col items-center"
-                                            >
-                                                <div className="bg-[#F8F9FA] p-6 rounded-[2.5rem] border border-gray-100 flex items-center justify-center relative">
-                                                    <Qoder value={ticket.id} size={140} />
-                                                    <div className="absolute -bottom-4 bg-white px-4 py-1 rounded-full shadow-sm border border-gray-50">
-                                                        <p className="text-[10px] font-mono text-[#A6ADB9] tracking-widest uppercase">ID: {ticket.id}</p>
-                                                    </div>
-                                                </div>
-
-                                                <button
-                                                    onClick={() => handleDownload(ticket.id)}
-                                                    className="w-full py-4.5 rounded-[1.5rem] bg-[#2D75B6] text-white font-bold flex items-center justify-center gap-3 shadow-xl shadow-blue-500/10 active:scale-[0.98] transition-all"
-                                                >
-                                                    <Download className="w-5 h-5" />
-                                                    Enregistrer PDF
-                                                </button>
-                                            </motion.div>
-                                        ) : (
-                                            <button
-                                                key="collapsed"
-                                                onClick={() => setExpandedTicket(ticket.id)}
-                                                className="w-full py-4 rounded-[1.5rem] border-2 border-gray-100 text-[#1A2D42] font-bold flex items-center justify-center gap-3 hover:bg-gray-50 transition-colors"
-                                            >
-                                                <QrCode className="w-5 h-5 text-[#2D75B6]" />
-                                                Afficher le QR
-                                            </button>
-                                        )}
-                                    </AnimatePresence>
-                                </div>
-                            </motion.div>
-                        ))
-                    ) : (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="bg-white rounded-[3rem] p-12 text-center space-y-6 border border-gray-100 shadow-sm"
-                        >
-                            <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto">
-                                <Ticket className="w-10 h-10 text-gray-200" />
-                            </div>
-                            <div className="space-y-2">
-                                <h3 className="text-xl font-bold text-[#1A2D42]">Aucun billet ici</h3>
-                                <p className="text-[#A6ADB9] text-sm font-medium px-4">
-                                    Vos billets apparaîtront ici dès que vos réservations seront confirmées.
-                                </p>
-                            </div>
+                {loading ? (
+                    <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                    </div>
+                ) : displayTickets.filter(t => t.status === activeTab).length > 0 ? (
+                    <div className="space-y-8">
+                        {displayTickets
+                            .filter(t => t.status === activeTab)
+                            .map((ticket) => (
+                                <motion.div
+                                    key={ticket.id}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <DynamicTicket
+                                        id={ticket.id}
+                                        title={ticket.title}
+                                        date={ticket.date}
+                                        time={ticket.time}
+                                        location={ticket.location}
+                                        category={ticket.category}
+                                        zone={ticket.zone}
+                                        row={ticket.row}
+                                        seat={ticket.seat}
+                                        imageUrl={ticket.imageUrl}
+                                        holderName={ticket.holderName}
+                                        onDownload={() => handleDownload(ticket.id)}
+                                        onAddToWallet={() => handleAddToWallet(ticket.id)}
+                                    />
+                                </motion.div>
+                            ))}
+                    </div>
+                ) : (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-white rounded-[3rem] p-12 text-center space-y-6 border border-gray-100 shadow-sm"
+                    >
+                        <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto">
+                            <Ticket className="w-10 h-10 text-gray-200" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-bold text-gray-900">
+                                {activeTab === "upcoming" ? "Aucun billet à venir" : "Aucun billet passé"}
+                            </h3>
+                            <p className="text-gray-500 text-sm font-medium px-4">
+                                {activeTab === "upcoming" 
+                                    ? "Vos billets apparaîtront ici dès que vos réservations seront confirmées." 
+                                    : "Vos anciens billets apparaîtront ici après l'événement."
+                                }
+                            </p>
+                        </div>
+                        {activeTab === "upcoming" && (
                             <button
                                 onClick={() => router.push('/')}
-                                className="px-8 py-3.5 bg-[#2D75B6] text-white font-bold rounded-2xl shadow-lg shadow-blue-500/10 active:scale-95 transition-all text-sm"
+                                className="px-8 py-3.5 bg-blue-600 text-white font-bold rounded-2xl shadow-lg active:scale-95 transition-all text-sm"
                             >
-                                Découvrir les combats
+                                Découvrir les événements
                             </button>
-                        </motion.div>
-                    )}
-                </div>
+                        )}
+                    </motion.div>
+                )}
             </div>
         </div>
     )

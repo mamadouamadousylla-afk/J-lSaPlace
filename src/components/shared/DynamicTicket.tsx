@@ -164,16 +164,16 @@ export default function DynamicTicket({
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: [100, 210] // Ticket proportions
+                format: [100, 220] // Ticket proportions
             })
 
             const pageWidth = 100
-            const pageHeight = 210
+            const pageHeight = 220
             const margin = 8
             let yPos = 0
 
-            // ========== HEADER IMAGE WITH GRADIENT ==========
-            const headerHeight = 70
+            // ========== HEADER IMAGE WITH GRADIENT OVERLAY ==========
+            const headerHeight = 75
             
             // Try to load the event image
             const imgSrc = imageUrl || config.defaultImage
@@ -203,7 +203,7 @@ export default function DynamicTicket({
                 console.log('Could not load image:', e)
             }
 
-            // Draw header image
+            // Draw header image first (base layer)
             if (imageData) {
                 try {
                     pdf.addImage(imageData, 'JPEG', 0, 0, pageWidth, headerHeight)
@@ -216,60 +216,56 @@ export default function DynamicTicket({
                 pdf.rect(0, 0, pageWidth, headerHeight, 'F')
             }
 
-            // ========== GRADIENT OVERLAY ==========
-            // Draw gradient overlay (multiple semi-transparent rectangles)
-            const gradientSteps = 20
+            // ========== GRADIENT OVERLAY (semi-transparent) ==========
+            // Draw gradient overlay on top of image with transparency effect
             const [color1, color2, color3] = config.gradientColors
             
+            // Create gradient effect with multiple semi-transparent layers
+            const gradientSteps = 30
             for (let i = 0; i < gradientSteps; i++) {
                 const ratio = i / gradientSteps
-                // Interpolate colors
-                let r, g, b
                 
+                // Interpolate between colors
+                let r, g, b
                 if (ratio < 0.5) {
-                    // From color1 to color2
                     const localRatio = ratio * 2
                     r = Math.round(parseInt(color1.slice(1, 3), 16) * (1 - localRatio) + parseInt(color2.slice(1, 3), 16) * localRatio)
                     g = Math.round(parseInt(color1.slice(3, 5), 16) * (1 - localRatio) + parseInt(color2.slice(3, 5), 16) * localRatio)
                     b = Math.round(parseInt(color1.slice(5, 7), 16) * (1 - localRatio) + parseInt(color2.slice(5, 7), 16) * localRatio)
                 } else {
-                    // From color2 to color3
                     const localRatio = (ratio - 0.5) * 2
                     r = Math.round(parseInt(color2.slice(1, 3), 16) * (1 - localRatio) + parseInt(color3.slice(1, 3), 16) * localRatio)
                     g = Math.round(parseInt(color2.slice(3, 5), 16) * (1 - localRatio) + parseInt(color3.slice(3, 5), 16) * localRatio)
                     b = Math.round(parseInt(color2.slice(5, 7), 16) * (1 - localRatio) + parseInt(color3.slice(5, 7), 16) * localRatio)
                 }
 
-                // Set fill with opacity (simulating gradient with transparency)
-                pdf.setFillColor(r, g, b)
+                // Draw with simulated transparency (draw same color multiple times)
                 const rectHeight = headerHeight / gradientSteps
-                const yPos = i * rectHeight
+                const rectY = i * rectHeight
                 
-                // Draw multiple times with different opacities for better gradient effect
-                pdf.setFillColor(r, g, b)
-                pdf.rect(0, yPos, pageWidth, rectHeight + 1, 'F')
+                // Draw gradient layer (approximates 60% opacity)
+                for (let j = 0; j < 3; j++) {
+                    pdf.setFillColor(r, g, b)
+                    pdf.rect(0, rectY, pageWidth, rectHeight + 1, 'F')
+                }
             }
 
-            // Dark overlay at bottom for text readability
-            for (let i = 0; i < 10; i++) {
-                const opacity = i / 10
-                const yPos = headerHeight - 25 + (i * 2.5)
+            // Dark overlay at bottom for text readability (gradient to black)
+            for (let i = 0; i < 15; i++) {
+                const opacity = (i / 15) * 0.8
+                const rectY = headerHeight - 30 + (i * 2)
                 pdf.setFillColor(0, 0, 0)
-                pdf.rect(0, yPos, pageWidth, 3, 'F')
+                pdf.rect(0, rectY, pageWidth, 3, 'F')
             }
 
             // ========== BRAND BADGES ==========
-            // Category badge (top left) - rounded pill
+            // Category badge (top left)
             const badgeWidth = 28
             const badgeHeight = 9
+            
+            // Badge background
             pdf.setFillColor(0, 0, 0)
-            // Simulate rounded rect with multiple small rects
-            for (let i = 0; i < 5; i++) {
-                const w = badgeWidth - (i * 2)
-                const xOffset = i
-                pdf.rect(margin + xOffset, 10 + i * 0.1, w, badgeHeight - i * 0.2, 'F')
-            }
-            pdf.roundedRect(margin, 10, badgeWidth, badgeHeight, 3, 3, 'F')
+            pdf.roundedRect(margin, 10, badgeWidth, badgeHeight, 4, 4, 'F')
             
             pdf.setTextColor(255, 255, 255)
             pdf.setFontSize(8)
@@ -277,17 +273,17 @@ export default function DynamicTicket({
             pdf.text(config.label.toUpperCase(), margin + badgeWidth / 2, 16, { align: 'center' })
 
             // Brand badge (top right) - Jël Sa Place
-            const brandWidth = 30
-            pdf.setFillColor(0, 0, 0, 0.6)
-            pdf.roundedRect(pageWidth - margin - brandWidth, 10, brandWidth, badgeHeight, 3, 3, 'F')
+            const brandWidth = 32
+            pdf.setFillColor(0, 0, 0)
+            pdf.roundedRect(pageWidth - margin - brandWidth, 10, brandWidth, badgeHeight, 4, 4, 'F')
             
             pdf.setTextColor(255, 255, 255)
             pdf.setFontSize(7)
-            pdf.text('Jel', pageWidth - margin - brandWidth + 5, 16)
+            pdf.text('Jel', pageWidth - margin - brandWidth + 6, 16)
             pdf.setTextColor(255, 215, 0) // Yellow
-            pdf.text('Sa', pageWidth - margin - brandWidth + 12, 16)
+            pdf.text('Sa', pageWidth - margin - brandWidth + 14, 16)
             pdf.setTextColor(76, 175, 80) // Green
-            pdf.text('Place', pageWidth - margin - brandWidth + 17, 16)
+            pdf.text('Place', pageWidth - margin - brandWidth + 19, 16)
 
             // ========== TITLE ==========
             pdf.setTextColor(255, 255, 255)
@@ -298,11 +294,11 @@ export default function DynamicTicket({
             pdf.text(titleLines, margin, titleY)
 
             // ========== WHITE CARD BODY ==========
-            yPos = headerHeight + 2
+            yPos = headerHeight + 3
             
             // White rounded card background
             pdf.setFillColor(255, 255, 255)
-            pdf.roundedRect(2, yPos - 2, pageWidth - 4, pageHeight - headerHeight - 20, 6, 6, 'F')
+            pdf.roundedRect(2, yPos, pageWidth - 4, pageHeight - headerHeight - 18, 8, 8, 'F')
 
             yPos += 15
 
@@ -329,7 +325,7 @@ export default function DynamicTicket({
 
             yPos += 5
             pdf.setTextColor(0, 0, 0)
-            pdf.setFontSize(11)
+            pdf.setFontSize(10)
             pdf.setFont('helvetica', 'bold')
             const locationLines = pdf.splitTextToSize(location, pageWidth - margin * 2)
             pdf.text(locationLines, margin, yPos)
@@ -426,11 +422,11 @@ export default function DynamicTicket({
             }
 
             // ========== QR CODE ==========
-            yPos += 20
+            yPos += 22
             
             // Generate QR code as image
             const qrDataUrl = await QRCode.toDataURL(qrValue, {
-                width: 200,
+                width: 300,
                 margin: 1,
                 color: {
                     dark: '#000000',
@@ -438,19 +434,23 @@ export default function DynamicTicket({
                 }
             })
 
-            // QR code container
-            const qrSize = 38
+            // QR code container with border
+            const qrSize = 40
             const qrX = (pageWidth - qrSize) / 2
             
-            // White background for QR
+            // White background for QR with shadow effect
+            pdf.setFillColor(250, 250, 250)
+            pdf.roundedRect(qrX - 6, yPos - 4, qrSize + 12, qrSize + 12, 5, 5, 'F')
+            
+            // Inner white background
             pdf.setFillColor(255, 255, 255)
-            pdf.roundedRect(qrX - 5, yPos - 3, qrSize + 10, qrSize + 10, 4, 4, 'F')
+            pdf.roundedRect(qrX - 3, yPos - 1, qrSize + 6, qrSize + 6, 3, 3, 'F')
             
             // Add QR code image
             pdf.addImage(qrDataUrl, 'PNG', qrX, yPos, qrSize, qrSize)
 
             // QR code label
-            pdf.setTextColor(160, 160, 160)
+            pdf.setTextColor(140, 140, 140)
             pdf.setFontSize(7)
             pdf.setFont('helvetica', 'normal')
             pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 10, { align: 'center' })

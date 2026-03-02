@@ -1,10 +1,20 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Calendar, MapPin, QrCode, Download, Wallet, Music, Mic2, Users, Presentation, Sparkles, Ticket } from "lucide-react"
+import { Calendar, MapPin, Download, Music, Mic2, Users, Presentation, Sparkles, Ticket } from "lucide-react"
 import Qoder from "./Qoder"
 
-// Category configurations with colors, icons, and gradients
+// Brand colors from Jël Sa Place logo
+export const BRAND_COLORS = {
+    jel: "#FFFFFF",      // White for "Jël"
+    sa: "#FFD700",       // Yellow for "Sa"
+    place: "#4CAF50",    // Green for "Place"
+    black: "#000000",
+    darkBg: "#1A1A1A",
+    gradient: "from-white via-yellow-400 to-green-500"
+}
+
+// Category configurations with Jël Sa Place branding
 export const CATEGORY_CONFIG: Record<string, {
     label: string
     icon: React.ReactNode
@@ -18,10 +28,10 @@ export const CATEGORY_CONFIG: Record<string, {
     SPORT: {
         label: "Sport",
         icon: <Sparkles className="w-5 h-5" />,
-        gradient: "from-orange-500 via-red-500 to-rose-600",
-        bgGradient: "from-orange-500/10 via-red-500/10 to-rose-600/10",
-        accentColor: "#F97316",
-        textColor: "#EA580C",
+        gradient: "from-green-500 via-emerald-500 to-teal-600",
+        bgGradient: "from-green-500/10 via-emerald-500/10 to-teal-600/10",
+        accentColor: BRAND_COLORS.place,
+        textColor: "#059669",
         defaultImage: "/hero-combat.png",
         zoneLabels: {
             vip: { label: "VIP Ringside", icon: "🏆" },
@@ -32,10 +42,10 @@ export const CATEGORY_CONFIG: Record<string, {
     MUSIQUE: {
         label: "Musique",
         icon: <Music className="w-5 h-5" />,
-        gradient: "from-purple-500 via-pink-500 to-fuchsia-600",
-        bgGradient: "from-purple-500/10 via-pink-500/10 to-fuchsia-600/10",
-        accentColor: "#A855F7",
-        textColor: "#9333EA",
+        gradient: "from-yellow-400 via-amber-500 to-orange-500",
+        bgGradient: "from-yellow-400/10 via-amber-500/10 to-orange-500/10",
+        accentColor: BRAND_COLORS.sa,
+        textColor: "#D97706",
         defaultImage: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80",
         zoneLabels: {
             vip: { label: "VIP Backstage", icon: "🎤" },
@@ -46,10 +56,10 @@ export const CATEGORY_CONFIG: Record<string, {
     HUMOUR: {
         label: "Humour",
         icon: <Mic2 className="w-5 h-5" />,
-        gradient: "from-yellow-400 via-amber-500 to-orange-500",
-        bgGradient: "from-yellow-400/10 via-amber-500/10 to-orange-500/10",
-        accentColor: "#F59E0B",
-        textColor: "#D97706",
+        gradient: "from-yellow-300 via-amber-400 to-yellow-500",
+        bgGradient: "from-yellow-300/10 via-amber-400/10 to-yellow-500/10",
+        accentColor: "#FBBF24",
+        textColor: "#B45309",
         defaultImage: "https://images.unsplash.com/photo-1585699324551-f6c309eedeca?w=800&q=80",
         zoneLabels: {
             vip: { label: "Premium", icon: "👑" },
@@ -60,10 +70,10 @@ export const CATEGORY_CONFIG: Record<string, {
     LOISIRS: {
         label: "Loisirs",
         icon: <Users className="w-5 h-5" />,
-        gradient: "from-teal-500 via-cyan-500 to-blue-600",
-        bgGradient: "from-teal-500/10 via-cyan-500/10 to-blue-600/10",
-        accentColor: "#14B8A6",
-        textColor: "#0D9488",
+        gradient: "from-green-400 via-emerald-500 to-teal-600",
+        bgGradient: "from-green-400/10 via-emerald-500/10 to-teal-600/10",
+        accentColor: "#10B981",
+        textColor: "#059669",
         defaultImage: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80",
         zoneLabels: {
             vip: { label: "VIP Prestige", icon: "💎" },
@@ -74,10 +84,10 @@ export const CATEGORY_CONFIG: Record<string, {
     CONFERENCE: {
         label: "Conférence",
         icon: <Presentation className="w-5 h-5" />,
-        gradient: "from-blue-600 via-indigo-600 to-violet-700",
-        bgGradient: "from-blue-600/10 via-indigo-600/10 to-violet-700/10",
-        accentColor: "#6366F1",
-        textColor: "#4F46E5",
+        gradient: "from-green-500 via-teal-500 to-cyan-600",
+        bgGradient: "from-green-500/10 via-teal-500/10 to-cyan-600/10",
+        accentColor: "#14B8A6",
+        textColor: "#0D9488",
         defaultImage: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=800&q=80",
         zoneLabels: {
             vip: { label: "Business Class", icon: "💼" },
@@ -101,7 +111,6 @@ export interface DynamicTicketProps {
     qrCode?: string
     holderName?: string
     onDownload?: () => void
-    onAddToWallet?: () => void
     compact?: boolean
 }
 
@@ -119,7 +128,6 @@ export default function DynamicTicket({
     qrCode,
     holderName,
     onDownload,
-    onAddToWallet,
     compact = false
 }: DynamicTicketProps) {
     // Get category config or default to SPORT
@@ -130,6 +138,60 @@ export default function DynamicTicket({
     
     // Generate QR code value
     const qrValue = qrCode || id
+
+    // Handle download with direct file generation
+    const handleDownload = () => {
+        if (onDownload) {
+            onDownload()
+            return
+        }
+        
+        // Generate ticket content
+        const ticketContent = `
+════════════════════════════════════════
+       JËL SA PLACE - TICKET
+════════════════════════════════════════
+
+🎫 ${title}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📅 DATE: ${date}
+⏰ HEURE: ${time}
+📍 LIEU: ${location}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎭 CATÉGORIE: ${config.label}
+🏷️ ZONE: ${zoneConfig.icon} ${zoneConfig.label}
+${row ? `📍 RANGÉE: ${row}` : ''}
+${seat ? `💺 SIÈGE: ${seat}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📋 TICKET ID: ${id}
+${holderName ? `👤 TITULAIRE: ${holderName}` : ''}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+QR CODE: ${qrValue}
+
+════════════════════════════════════════
+        MERCI DE VOTRE ACHAT !
+════════════════════════════════════════
+        `
+        
+        // Create and download file
+        const blob = new Blob([ticketContent], { type: 'text/plain;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `ticket-${id}.txt`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+    }
 
     return (
         <div className="relative w-full max-w-sm mx-auto">
@@ -145,9 +207,9 @@ export default function DynamicTicket({
                     <div className={`absolute inset-0 bg-gradient-to-t ${config.gradient} opacity-60`} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     
-                    {/* Category Badge */}
+                    {/* Category Badge with Jël Sa Place branding */}
                     <div className="absolute top-4 left-4">
-                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30`}>
+                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20`}>
                             <span className="text-white">{config.icon}</span>
                             <span className="text-xs font-bold text-white uppercase tracking-wider">
                                 {config.label}
@@ -155,9 +217,18 @@ export default function DynamicTicket({
                         </div>
                     </div>
                     
+                    {/* Jël Sa Place Brand Mark */}
+                    <div className="absolute top-4 right-4">
+                        <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-black/40 backdrop-blur-sm">
+                            <span className="text-xs font-black text-white">Jël</span>
+                            <span className="text-xs font-black text-yellow-400">Sa</span>
+                            <span className="text-xs font-black text-green-400">Place</span>
+                        </div>
+                    </div>
+                    
                     {/* Title */}
                     <div className="absolute bottom-4 left-4 right-4">
-                        <h2 className="text-xl font-black text-white leading-tight line-clamp-2">
+                        <h2 className="text-xl font-black text-white leading-tight line-clamp-2 drop-shadow-lg">
                             {title}
                         </h2>
                     </div>
@@ -247,27 +318,16 @@ export default function DynamicTicket({
                         </div>
                     )}
 
-                    {/* Action Buttons */}
+                    {/* Download Button Only */}
                     {!compact && (
-                        <div className="flex gap-3 pt-2">
-                            {onAddToWallet && (
-                                <button
-                                    onClick={onAddToWallet}
-                                    className={`flex-1 py-3 rounded-xl bg-gradient-to-r ${config.gradient} text-white font-bold flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] transition-all`}
-                                >
-                                    <Wallet className="w-4 h-4" />
-                                    Wallet
-                                </button>
-                            )}
-                            {onDownload && (
-                                <button
-                                    onClick={onDownload}
-                                    className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-700 font-bold flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
-                                >
-                                    <Download className="w-4 h-4" />
-                                    PDF
-                                </button>
-                            )}
+                        <div className="pt-2">
+                            <button
+                                onClick={handleDownload}
+                                className={`w-full py-4 rounded-xl bg-gradient-to-r ${config.gradient} text-white font-bold flex items-center justify-center gap-3 shadow-xl active:scale-[0.98] transition-all`}
+                            >
+                                <Download className="w-5 h-5" />
+                                Télécharger
+                            </button>
                         </div>
                     )}
                 </div>
@@ -275,6 +335,13 @@ export default function DynamicTicket({
                 {/* Decorative Elements */}
                 <div className="absolute -left-3 top-28 w-6 h-6 rounded-full bg-[#F8F9FA] shadow-inner" />
                 <div className="absolute -right-3 top-28 w-6 h-6 rounded-full bg-[#F8F9FA] shadow-inner" />
+                
+                {/* Jël Sa Place Brand Footer */}
+                <div className="bg-black py-3 px-4 flex items-center justify-center gap-1">
+                    <span className="text-xs font-black text-white">Jël</span>
+                    <span className="text-xs font-black text-yellow-400">Sa</span>
+                    <span className="text-xs font-black text-green-400">Place</span>
+                </div>
             </div>
 
             {/* Shadow Effect */}

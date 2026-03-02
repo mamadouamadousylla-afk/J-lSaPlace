@@ -1,10 +1,8 @@
 "use client"
 
-import { useRef } from "react"
 import { motion } from "framer-motion"
 import { Calendar, MapPin, Download, Music, Mic2, Users, Presentation, Sparkles } from "lucide-react"
 import Qoder from "./Qoder"
-import html2canvas from "html2canvas"
 import jsPDF from "jspdf"
 
 // Brand colors from Jël Sa Place logo
@@ -133,8 +131,6 @@ export default function DynamicTicket({
     onDownload,
     compact = false
 }: DynamicTicketProps) {
-    const ticketRef = useRef<HTMLDivElement>(null)
-    
     // Get category config or default to SPORT
     const config = CATEGORY_CONFIG[category?.toUpperCase()] || CATEGORY_CONFIG.SPORT
     
@@ -144,96 +140,181 @@ export default function DynamicTicket({
     // Generate QR code value
     const qrValue = qrCode || id
 
-    // Handle PDF download
+    // Handle PDF download - Generate directly with jsPDF
     const handleDownload = async () => {
         if (onDownload) {
             onDownload()
             return
         }
 
-        if (!ticketRef.current) return
-
         try {
-            // Capture the ticket element as canvas
-            const canvas = await html2canvas(ticketRef.current, {
-                scale: 2,
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                logging: false
-            })
-
-            // Create PDF
+            // Create PDF document
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: 'a4'
+                format: [80, 160] // Ticket size (like a real ticket)
             })
 
-            const imgWidth = 210 // A4 width in mm
-            const imgHeight = (canvas.height * imgWidth) / canvas.width
-            const imgData = canvas.toDataURL('image/png')
+            // Colors
+            const greenColor: [number, number, number] = [76, 175, 80]
+            const yellowColor: [number, number, number] = [255, 215, 0]
+            const blackColor: [number, number, number] = [0, 0, 0]
+            const whiteColor: [number, number, number] = [255, 255, 255]
+            const grayColor: [number, number, number] = [150, 150, 150]
 
-            // Add image to PDF (centered)
-            const yOffset = (297 - imgHeight) / 2 // Center vertically on A4
-            pdf.addImage(imgData, 'PNG', 0, Math.max(0, yOffset), imgWidth, imgHeight)
+            // Header with gradient effect (simulated with rectangles)
+            pdf.setFillColor(...greenColor)
+            pdf.rect(0, 0, 80, 35, 'F')
+            
+            // Add yellow accent stripe
+            pdf.setFillColor(...yellowColor)
+            pdf.rect(0, 32, 80, 3, 'F')
+
+            // Brand name
+            pdf.setTextColor(...whiteColor)
+            pdf.setFontSize(14)
+            pdf.setFont('helvetica', 'bold')
+            pdf.text('Jel', 40, 12, { align: 'center' })
+            pdf.setTextColor(...yellowColor)
+            pdf.text('Sa', 47, 12, { align: 'center' })
+            pdf.setTextColor(...whiteColor)
+            pdf.text('Place', 55, 12, { align: 'center' })
+
+            // Category badge
+            pdf.setTextColor(...whiteColor)
+            pdf.setFontSize(8)
+            pdf.text(config.label.toUpperCase(), 40, 22, { align: 'center' })
+
+            // Event Title
+            pdf.setTextColor(...blackColor)
+            pdf.setFontSize(12)
+            pdf.setFont('helvetica', 'bold')
+            const titleLines = pdf.splitTextToSize(title, 70)
+            pdf.text(titleLines, 40, 45, { align: 'center' })
+
+            // Divider line
+            pdf.setDrawColor(...grayColor)
+            pdf.setLineWidth(0.1)
+            pdf.line(10, 55, 70, 55)
+
+            // Event Details
+            let yPos = 65
+            pdf.setFontSize(9)
+            
+            // Date & Time
+            pdf.setTextColor(...grayColor)
+            pdf.setFont('helvetica', 'normal')
+            pdf.text('DATE', 10, yPos)
+            pdf.text('HEURE', 50, yPos)
+            
+            yPos += 5
+            pdf.setTextColor(...blackColor)
+            pdf.setFont('helvetica', 'bold')
+            pdf.text(date, 10, yPos)
+            pdf.text(time, 50, yPos)
+
+            yPos += 10
+            // Location
+            pdf.setTextColor(...grayColor)
+            pdf.setFont('helvetica', 'normal')
+            pdf.text('LIEU', 10, yPos)
+            yPos += 5
+            pdf.setTextColor(...blackColor)
+            pdf.setFont('helvetica', 'bold')
+            const locationLines = pdf.splitTextToSize(location, 60)
+            pdf.text(locationLines, 10, yPos)
+
+            yPos += 10
+            // Zone
+            pdf.setTextColor(...grayColor)
+            pdf.setFont('helvetica', 'normal')
+            pdf.text('ZONE', 10, yPos)
+            yPos += 5
+            pdf.setTextColor(...greenColor)
+            pdf.setFont('helvetica', 'bold')
+            pdf.text(`${zoneConfig.icon} ${zoneConfig.label}`, 10, yPos)
+
+            // Row & Seat
+            if (row || seat) {
+                yPos += 10
+                pdf.setTextColor(...grayColor)
+                pdf.setFont('helvetica', 'normal')
+                if (row) pdf.text('RANGEE', 10, yPos)
+                if (seat) pdf.text('SIEGE', 50, yPos)
+                
+                yPos += 5
+                pdf.setTextColor(...blackColor)
+                pdf.setFont('helvetica', 'bold')
+                if (row) pdf.text(row, 10, yPos)
+                if (seat) pdf.text(seat, 50, yPos)
+            }
+
+            // Divider
+            yPos += 10
+            pdf.setDrawColor(...grayColor)
+            pdf.line(10, yPos, 70, yPos)
+
+            // Ticket ID
+            yPos += 8
+            pdf.setTextColor(...grayColor)
+            pdf.setFontSize(7)
+            pdf.setFont('helvetica', 'normal')
+            pdf.text('TICKET ID', 10, yPos)
+            yPos += 4
+            pdf.setTextColor(...blackColor)
+            pdf.setFont('helvetica', 'bold')
+            pdf.text(id, 10, yPos)
+
+            // Holder
+            if (holderName) {
+                yPos += 6
+                pdf.setTextColor(...grayColor)
+                pdf.setFont('helvetica', 'normal')
+                pdf.text('TITULAIRE', 10, yPos)
+                yPos += 4
+                pdf.setTextColor(...blackColor)
+                pdf.setFont('helvetica', 'bold')
+                pdf.text(holderName, 10, yPos)
+            }
+
+            // QR Code representation
+            yPos += 10
+            pdf.setFillColor(240, 240, 240)
+            pdf.roundedRect(25, yPos, 30, 30, 2, 2, 'F')
+            
+            // QR placeholder text
+            pdf.setTextColor(...blackColor)
+            pdf.setFontSize(6)
+            pdf.setFont('helvetica', 'normal')
+            pdf.text('QR CODE', 40, yPos + 12, { align: 'center' })
+            pdf.setFont('helvetica', 'bold')
+            pdf.setFontSize(5)
+            pdf.text(qrValue.substring(0, 15) + '...', 40, yPos + 18, { align: 'center' })
+
+            // Footer
+            pdf.setFillColor(...blackColor)
+            pdf.rect(0, 150, 80, 10, 'F')
+            pdf.setTextColor(...whiteColor)
+            pdf.setFontSize(10)
+            pdf.setFont('helvetica', 'bold')
+            pdf.text('Jel', 35, 156, { align: 'center' })
+            pdf.setTextColor(...yellowColor)
+            pdf.text('Sa', 42, 156, { align: 'center' })
+            pdf.setTextColor(...greenColor)
+            pdf.text('Place', 49, 156, { align: 'center' })
 
             // Download the PDF
             pdf.save(`ticket-${id}.pdf`)
         } catch (error) {
             console.error('Error generating PDF:', error)
-            // Fallback: create a simple text PDF
-            const pdf = new jsPDF()
-            pdf.setFontSize(20)
-            pdf.setTextColor(0, 0, 0)
-            
-            // Header
-            pdf.setFontSize(24)
-            pdf.text('Jel Sa Place - Ticket', 105, 20, { align: 'center' })
-            
-            pdf.setFontSize(16)
-            pdf.text(title, 105, 35, { align: 'center' })
-            
-            pdf.setFontSize(12)
-            let y = 55
-            pdf.text(`Date: ${date}`, 20, y)
-            pdf.text(`Heure: ${time}`, 120, y)
-            
-            y += 15
-            pdf.text(`Lieu: ${location}`, 20, y)
-            
-            y += 15
-            pdf.text(`Categorie: ${config.label}`, 20, y)
-            pdf.text(`Zone: ${zoneConfig.icon} ${zoneConfig.label}`, 120, y)
-            
-            if (row) {
-                y += 15
-                pdf.text(`Rangee: ${row}`, 20, y)
-            }
-            if (seat) {
-                pdf.text(`Siege: ${seat}`, 120, y)
-            }
-            
-            y += 15
-            pdf.text(`Ticket ID: ${id}`, 20, y)
-            
-            if (holderName) {
-                y += 15
-                pdf.text(`Titulaire: ${holderName}`, 20, y)
-            }
-            
-            // Footer
-            y += 30
-            pdf.setFontSize(10)
-            pdf.text('Merci de votre achat !', 105, y, { align: 'center' })
-            
-            pdf.save(`ticket-${id}.pdf`)
+            alert('Erreur lors de la génération du PDF. Veuillez réessayer.')
         }
     }
 
     return (
         <div className="relative w-full max-w-sm mx-auto">
-            {/* Main Ticket Card - Ref for PDF capture */}
-            <div ref={ticketRef} className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-gray-100">
+            {/* Main Ticket Card */}
+            <div className="relative bg-white rounded-[2rem] overflow-hidden shadow-2xl border border-gray-100">
                 {/* Hero Image with Gradient Overlay */}
                 <div className="relative h-48 overflow-hidden">
                     <img 
@@ -245,7 +326,7 @@ export default function DynamicTicket({
                     <div className={`absolute inset-0 bg-gradient-to-t ${config.gradient} opacity-60`} />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     
-                    {/* Category Badge with Jël Sa Place branding */}
+                    {/* Category Badge */}
                     <div className="absolute top-4 left-4">
                         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20`}>
                             <span className="text-white">{config.icon}</span>
@@ -311,7 +392,7 @@ export default function DynamicTicket({
 
                     {/* Seat Info */}
                     {(row || seat) && (
-                        <div className={`flex items-center justify-center gap-6 py-3 px-4 rounded-xl bg-gradient-to-r ${config.bgGradient}`}>
+                        <div className="flex items-center justify-center gap-6 py-3 px-4 rounded-xl bg-gray-50">
                             {row && (
                                 <div className="text-center">
                                     <p className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Rangee</p>
@@ -319,7 +400,7 @@ export default function DynamicTicket({
                                 </div>
                             )}
                             {row && seat && (
-                                <div className="w-px h-8 bg-gray-300/50" />
+                                <div className="w-px h-8 bg-gray-300" />
                             )}
                             {seat && (
                                 <div className="text-center">
@@ -356,7 +437,7 @@ export default function DynamicTicket({
                         </div>
                     )}
 
-                    {/* Download Button Only */}
+                    {/* Download Button */}
                     {!compact && (
                         <div className="pt-2">
                             <button
@@ -371,8 +452,8 @@ export default function DynamicTicket({
                 </div>
 
                 {/* Decorative Elements */}
-                <div className="absolute -left-3 top-28 w-6 h-6 rounded-full bg-[#F8F9FA] shadow-inner" />
-                <div className="absolute -right-3 top-28 w-6 h-6 rounded-full bg-[#F8F9FA] shadow-inner" />
+                <div className="absolute -left-3 top-28 w-6 h-6 rounded-full bg-gray-100" />
+                <div className="absolute -right-3 top-28 w-6 h-6 rounded-full bg-gray-100" />
                 
                 {/* Jël Sa Place Brand Footer */}
                 <div className="bg-black py-3 px-4 flex items-center justify-center gap-1">
@@ -384,7 +465,7 @@ export default function DynamicTicket({
 
             {/* Shadow Effect */}
             <div 
-                className={`absolute -bottom-4 left-4 right-4 h-8 rounded-[2rem] bg-gradient-to-t ${config.gradient} opacity-20 blur-xl`}
+                className={`absolute -bottom-4 left-4 right-4 h-8 rounded-[2rem] bg-green-500 opacity-20 blur-xl`}
             />
         </div>
     )

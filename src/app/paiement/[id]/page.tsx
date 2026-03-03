@@ -70,8 +70,19 @@ export default function PaymentPage() {
 
                 // Create tickets for each quantity
                 const tickets = []
+                
+                // Get zone label matching the category
+                const { CATEGORY_CONFIG } = await import("@/components/shared/DynamicTicket")
+                const categoryKey = (eventData?.category || "SPORT").toUpperCase()
+                const catConfig = CATEGORY_CONFIG[categoryKey]
+                const zoneLabel = catConfig?.zoneLabels?.[catId.toLowerCase()]?.label || catId.toUpperCase()
+                const zoneSanitized = zoneLabel
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                    .replace(/\s+/g, "-")
+                    .toUpperCase()
+
                 for (let i = 0; i < qty; i++) {
-                    const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${catId.toUpperCase()}-${i + 1}`
+                    const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
                     
                     const { data: ticket, error } = await supabase
                         .from("tickets")

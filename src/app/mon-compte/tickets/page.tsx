@@ -85,10 +85,21 @@ function TicketsContent() {
                     .single()
 
                 if (eventData) {
+                    // Get zone label matching the category
+                    const categoryKey = (eventData.category || "SPORT").toUpperCase()
+                    const { CATEGORY_CONFIG } = await import("@/components/shared/DynamicTicket")
+                    const catConfig = CATEGORY_CONFIG[categoryKey]
+                    const zoneLabel = catConfig?.zoneLabels?.[cat.toLowerCase()]?.label || cat.toUpperCase()
+                    // Sanitize label for use in ID (no spaces, no accents)
+                    const zoneSanitized = zoneLabel
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                        .replace(/\s+/g, "-")
+                        .toUpperCase()
+
                     // Generate tickets for each quantity
                     for (let i = 0; i < parseInt(qty || "1"); i++) {
                         const newTicket: TicketData = {
-                            id: `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${cat.toUpperCase()}-${i + 1}`,
+                            id: `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`,
                             title: eventData.title,
                             date: eventData.date,
                             time: eventData.time,

@@ -410,7 +410,7 @@ export default function DynamicTicket({
             }
 
             // ========== QR CODE ==========
-            yPos += 20
+            yPos += 15
             
             const qrDataUrl = await QRCode.toDataURL(qrValue, {
                 width: 400,
@@ -418,26 +418,26 @@ export default function DynamicTicket({
                 color: { dark: '#000000', light: '#ffffff' }
             })
 
-            const qrSize = 45
+            const qrSize = 35 // Smaller size to fit completely
             const qrX = (pageWidth - qrSize) / 2
 
             // White background
             pdf.setFillColor(255, 255, 255)
-            pdf.roundedRect(qrX - 6, yPos - 4, qrSize + 12, qrSize + 12, 5, 5, 'F')
+            pdf.roundedRect(qrX - 5, yPos - 3, qrSize + 10, qrSize + 10, 4, 4, 'F')
 
             // Border
-            pdf.setDrawColor(220, 220, 220)
-            pdf.setLineWidth(0.5)
-            pdf.roundedRect(qrX - 3, yPos - 1, qrSize + 6, qrSize + 6, 3, 3, 'S')
+            pdf.setDrawColor(200, 200, 200)
+            pdf.setLineWidth(0.4)
+            pdf.roundedRect(qrX - 2, yPos, qrSize + 4, qrSize + 4, 2, 2, 'S')
 
             // QR code image
-            pdf.addImage(qrDataUrl, 'PNG', qrX, yPos, qrSize, qrSize)
+            pdf.addImage(qrDataUrl, 'PNG', qrX, yPos + 2, qrSize, qrSize)
 
             // Label
-            pdf.setTextColor(130, 130, 130)
-            pdf.setFontSize(8)
+            pdf.setTextColor(120, 120, 120)
+            pdf.setFontSize(7)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 14, { align: 'center' })
+            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 12, { align: 'center' })
 
             // ========== FOOTER ==========
             const footerY = pageHeight - 18

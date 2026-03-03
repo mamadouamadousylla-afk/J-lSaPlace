@@ -426,9 +426,9 @@ export default function DynamicTicket({
                     img.src = '/logo jel sa passe.png'
                 })
                 
-                // Calculate logo dimensions (max width 50mm, maintain aspect ratio)
-                const maxLogoWidth = 50
-                const maxLogoHeight = 10
+                // Calculate logo dimensions (max width 35mm, maintain aspect ratio)
+                const maxLogoWidth = 35
+                const maxLogoHeight = 8
                 const aspectRatio = logoImg.width / logoImg.height
                 let logoWidth = maxLogoWidth
                 let logoHeight = logoWidth / aspectRatio

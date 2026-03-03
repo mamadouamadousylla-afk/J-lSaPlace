@@ -18,6 +18,15 @@ interface CategoryFilterProps {
 }
 
 export default function CategoryFilter({ selectedCategory, onCategoryChange }: CategoryFilterProps) {
+    const handleClick = (catId: string) => {
+        // If already selected → deselect (go back to "all")
+        if (selectedCategory === catId) {
+            onCategoryChange("all")
+        } else {
+            onCategoryChange(catId)
+        }
+    }
+
     return (
         <section className="px-6 space-y-4">
             <div className="flex items-center justify-between">
@@ -36,7 +45,7 @@ export default function CategoryFilter({ selectedCategory, onCategoryChange }: C
                     return (
                         <button
                             key={cat.id}
-                            onClick={() => onCategoryChange(cat.id)}
+                            onClick={() => handleClick(cat.id)}
                             className="flex flex-col items-center gap-3 min-w-[80px]"
                         >
                             <motion.div

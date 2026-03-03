@@ -779,8 +779,12 @@ export default function AdminEvents() {
                                         </div>
 
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Date (ex: 15 MARS - 16:00)</label>
-                                            <input required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} type="text" className="w-full p-3.5 bg-white border border-gray-200 rounded-xl focus:border-[#1A8744] focus:ring-1 focus:ring-[#1A8744] outline-none transition-all shadow-sm" placeholder="15 MARS - 16:00" />
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Date (ex: 15 MARS)</label>
+                                            <input required value={formData.date} onChange={e => setFormData({ ...formData, date: e.target.value })} type="text" className="w-full p-3.5 bg-white border border-gray-200 rounded-xl focus:border-[#1A8744] focus:ring-1 focus:ring-[#1A8744] outline-none transition-all shadow-sm" placeholder="15 MARS" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Heure (ex: 16h00 - 20h00)</label>
+                                            <input required value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} type="text" className="w-full p-3.5 bg-white border border-gray-200 rounded-xl focus:border-[#1A8744] focus:ring-1 focus:ring-[#1A8744] outline-none transition-all shadow-sm" placeholder="16h00 - 20h00" />
                                         </div>
                                         <div>
                                             <label className="block text-sm font-bold text-gray-700 mb-2">Lieu</label>

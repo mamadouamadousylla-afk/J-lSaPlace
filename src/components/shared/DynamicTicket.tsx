@@ -411,20 +411,59 @@ export default function DynamicTicket({
             pdf.setFont('helvetica', 'normal')
             pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 6, { align: 'center' })
 
-            // ========== FOOTER ==========
-            const footerY = pageHeight - 12
+            // ========== FOOTER with Logo ==========
+            const footerY = pageHeight - 14
             pdf.setFillColor(0, 0, 0)
-            pdf.rect(0, footerY, pageWidth, 12, 'F')
+            pdf.rect(0, footerY, pageWidth, 14, 'F')
 
-            pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(12)
-            pdf.setFont('helvetica', 'bold')
-            const centerX = pageWidth / 2
-            pdf.text('Jel', centerX - 13, footerY + 8)
-            pdf.setTextColor(255, 215, 0)
-            pdf.text('Sa', centerX - 4, footerY + 8)
-            pdf.setTextColor(76, 175, 80)
-            pdf.text('Place', centerX + 4, footerY + 8)
+            // Load and add logo image
+            try {
+                const logoImg = await new Promise<HTMLImageElement>((resolve, reject) => {
+                    const img = new Image()
+                    img.crossOrigin = 'anonymous'
+                    img.onload = () => resolve(img)
+                    img.onerror = reject
+                    img.src = '/logo-sunulamb.png'
+                })
+                
+                // Calculate logo dimensions (max width 50mm, maintain aspect ratio)
+                const maxLogoWidth = 50
+                const maxLogoHeight = 10
+                const aspectRatio = logoImg.width / logoImg.height
+                let logoWidth = maxLogoWidth
+                let logoHeight = logoWidth / aspectRatio
+                
+                if (logoHeight > maxLogoHeight) {
+                    logoHeight = maxLogoHeight
+                    logoWidth = logoHeight * aspectRatio
+                }
+                
+                // Convert image to data URL
+                const canvas = document.createElement('canvas')
+                canvas.width = logoImg.width
+                canvas.height = logoImg.height
+                const ctx = canvas.getContext('2d')
+                if (ctx) {
+                    ctx.drawImage(logoImg, 0, 0)
+                    const logoDataUrl = canvas.toDataURL('image/png')
+                    
+                    // Center the logo in footer
+                    const logoX = (pageWidth - logoWidth) / 2
+                    const logoY = footerY + (14 - logoHeight) / 2
+                    pdf.addImage(logoDataUrl, 'PNG', logoX, logoY, logoWidth, logoHeight)
+                }
+            } catch (error) {
+                // Fallback to text if image fails to load
+                pdf.setTextColor(255, 255, 255)
+                pdf.setFontSize(12)
+                pdf.setFont('helvetica', 'bold')
+                const centerX = pageWidth / 2
+                pdf.text('Jel', centerX - 13, footerY + 9)
+                pdf.setTextColor(255, 215, 0)
+                pdf.text('Sa', centerX - 4, footerY + 9)
+                pdf.setTextColor(76, 175, 80)
+                pdf.text('Place', centerX + 4, footerY + 9)
+            }
 
             // Download the PDF
             pdf.save(`ticket-${id}.pdf`)

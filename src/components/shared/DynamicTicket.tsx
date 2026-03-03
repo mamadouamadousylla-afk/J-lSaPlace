@@ -230,16 +230,17 @@ export default function DynamicTicket({
         setIsDownloading(true)
         
         try {
+            // Compact ticket size (like a real ticket card)
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: [100, 250] // Increased height for QR and footer
+                format: [85, 180] // Compact ticket size
             })
 
-            const pageWidth = 100
-            const pageHeight = 250
-            const margin = 8
-            const headerHeight = 80
+            const pageWidth = 85
+            const pageHeight = 180
+            const margin = 6
+            const headerHeight = 60
 
             // ========== CREATE HEADER WITH CANVAS ==========
             const headerImage = await createHeaderWithGradient()
@@ -247,170 +248,164 @@ export default function DynamicTicket({
             if (headerImage) {
                 pdf.addImage(headerImage, 'PNG', 0, 0, pageWidth, headerHeight)
             } else {
-                // Fallback solid color
                 const { start } = config.gradientColors
                 pdf.setFillColor(parseInt(start.slice(1, 3), 16), parseInt(start.slice(3, 5), 16), parseInt(start.slice(5, 7), 16))
                 pdf.rect(0, 0, pageWidth, headerHeight, 'F')
             }
 
-            // ========== BRAND BADGES ==========
-            // Category badge (top left)
+            // ========== BRAND BADGES (smaller) ==========
+            // Category badge
             pdf.setFillColor(0, 0, 0)
-            pdf.roundedRect(margin, 10, 30, 10, 5, 5, 'F')
+            pdf.roundedRect(margin, 8, 24, 7, 3, 3, 'F')
             pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(9)
+            pdf.setFontSize(7)
             pdf.setFont('helvetica', 'bold')
-            pdf.text(config.label.toUpperCase(), margin + 15, 17, { align: 'center' })
+            pdf.text(config.label.toUpperCase(), margin + 12, 13, { align: 'center' })
 
-            // Brand badge (top right)
+            // Brand badge
             pdf.setFillColor(0, 0, 0)
-            pdf.roundedRect(pageWidth - margin - 35, 10, 35, 10, 5, 5, 'F')
+            pdf.roundedRect(pageWidth - margin - 28, 8, 28, 7, 3, 3, 'F')
             pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(8)
-            pdf.text('Jel', pageWidth - margin - 28, 17)
+            pdf.setFontSize(6)
+            pdf.text('Jel', pageWidth - margin - 23, 13)
             pdf.setTextColor(255, 215, 0)
-            pdf.text('Sa', pageWidth - margin - 19, 17)
+            pdf.text('Sa', pageWidth - margin - 16, 13)
             pdf.setTextColor(76, 175, 80)
-            pdf.text('Place', pageWidth - margin - 13, 17)
+            pdf.text('Place', pageWidth - margin - 11, 13)
 
             // ========== TITLE ON HEADER ==========
             pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(18)
+            pdf.setFontSize(14)
             pdf.setFont('helvetica', 'bold')
             const titleLines = pdf.splitTextToSize(title, pageWidth - margin * 2)
-            const titleY = headerHeight - 10 - (titleLines.length - 1) * 7
+            const titleY = headerHeight - 8 - (titleLines.length - 1) * 5
             pdf.text(titleLines, margin, titleY)
 
             // ========== WHITE CARD BODY ==========
-            let yPos = headerHeight + 5
+            let yPos = headerHeight + 3
             
-            // White rounded card
             pdf.setFillColor(255, 255, 255)
-            pdf.roundedRect(3, yPos, pageWidth - 6, pageHeight - headerHeight - 20, 8, 8, 'F')
+            pdf.roundedRect(2, yPos, pageWidth - 4, pageHeight - headerHeight - 16, 6, 6, 'F')
 
-            yPos += 18
+            yPos += 12
 
-            // ========== DATE & TIME ==========
-            pdf.setTextColor(150, 150, 150)
-            pdf.setFontSize(8)
+            // ========== DATE & TIME (compact) ==========
+            pdf.setTextColor(140, 140, 140)
+            pdf.setFontSize(6)
             pdf.setFont('helvetica', 'normal')
             pdf.text('DATE', margin + 2, yPos)
-            pdf.text('HEURE', pageWidth / 2 + 5, yPos)
+            pdf.text('HEURE', pageWidth / 2 + 3, yPos)
 
-            yPos += 6
+            yPos += 4
             pdf.setTextColor(0, 0, 0)
-            pdf.setFontSize(12)
+            pdf.setFontSize(9)
             pdf.setFont('helvetica', 'bold')
             pdf.text(date, margin + 2, yPos)
-            pdf.text(time, pageWidth / 2 + 5, yPos)
+            pdf.text(time, pageWidth / 2 + 3, yPos)
 
             // ========== LOCATION ==========
-            yPos += 12
-            pdf.setTextColor(150, 150, 150)
-            pdf.setFontSize(8)
+            yPos += 8
+            pdf.setTextColor(140, 140, 140)
+            pdf.setFontSize(6)
             pdf.setFont('helvetica', 'normal')
             pdf.text('LIEU', margin + 2, yPos)
 
-            yPos += 6
+            yPos += 4
             pdf.setTextColor(0, 0, 0)
-            pdf.setFontSize(11)
+            pdf.setFontSize(9)
             pdf.setFont('helvetica', 'bold')
             const locationLines = pdf.splitTextToSize(location, pageWidth - margin * 2 - 4)
             pdf.text(locationLines, margin + 2, yPos)
 
             // ========== ZONE ==========
-            yPos += 12
-            pdf.setTextColor(150, 150, 150)
-            pdf.setFontSize(8)
+            yPos += 8
+            pdf.setTextColor(140, 140, 140)
+            pdf.setFontSize(6)
             pdf.setFont('helvetica', 'normal')
             pdf.text('ZONE', margin + 2, yPos)
 
-            yPos += 6
+            yPos += 4
             pdf.setTextColor(76, 175, 80)
-            pdf.setFontSize(12)
+            pdf.setFontSize(9)
             pdf.setFont('helvetica', 'bold')
             pdf.text(`${zoneConfig.icon} ${zoneConfig.label}`, margin + 2, yPos)
 
-            // ========== ROW & SEAT ==========
+            // ========== ROW & SEAT (compact) ==========
             if (row || seat) {
-                yPos += 14
-                const boxHeight = 25
+                yPos += 8
+                const boxHeight = 18
                 
-                // Background box
                 pdf.setFillColor(245, 245, 245)
-                pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, boxHeight, 5, 5, 'F')
+                pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, boxHeight, 4, 4, 'F')
 
-                // Row
                 if (row) {
-                    pdf.setTextColor(150, 150, 150)
-                    pdf.setFontSize(9)
+                    pdf.setTextColor(140, 140, 140)
+                    pdf.setFontSize(7)
                     pdf.setFont('helvetica', 'normal')
-                    pdf.text('RANGEE', margin + 18, yPos + 9)
+                    pdf.text('RANGEE', margin + 14, yPos + 6)
                     
                     pdf.setTextColor(76, 175, 80)
-                    pdf.setFontSize(20)
+                    pdf.setFontSize(16)
                     pdf.setFont('helvetica', 'bold')
-                    pdf.text(row, margin + 18, yPos + 21)
+                    pdf.text(row, margin + 14, yPos + 15)
                 }
 
-                // Divider
                 if (row && seat) {
                     pdf.setDrawColor(200, 200, 200)
-                    pdf.setLineWidth(0.3)
-                    pdf.line(pageWidth / 2, yPos + 6, pageWidth / 2, yPos + boxHeight - 6)
+                    pdf.setLineWidth(0.2)
+                    pdf.line(pageWidth / 2, yPos + 4, pageWidth / 2, yPos + boxHeight - 4)
                 }
 
-                // Seat
                 if (seat) {
-                    pdf.setTextColor(150, 150, 150)
-                    pdf.setFontSize(9)
+                    pdf.setTextColor(140, 140, 140)
+                    pdf.setFontSize(7)
                     pdf.setFont('helvetica', 'normal')
-                    pdf.text('SIEGE', pageWidth / 2 + 15, yPos + 9)
+                    pdf.text('SIEGE', pageWidth / 2 + 10, yPos + 6)
                     
                     pdf.setTextColor(76, 175, 80)
-                    pdf.setFontSize(20)
+                    pdf.setFontSize(16)
                     pdf.setFont('helvetica', 'bold')
-                    pdf.text(seat, pageWidth / 2 + 15, yPos + 21)
+                    pdf.text(seat, pageWidth / 2 + 10, yPos + 15)
                 }
 
-                yPos += boxHeight + 10
+                yPos += boxHeight + 6
             } else {
-                yPos += 6
+                yPos += 4
             }
 
             // ========== TICKET ID ==========
             pdf.setFillColor(250, 250, 250)
-            pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, 14, 4, 4, 'F')
+            pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, 10, 3, 3, 'F')
             
-            pdf.setTextColor(150, 150, 150)
-            pdf.setFontSize(8)
+            pdf.setTextColor(140, 140, 140)
+            pdf.setFontSize(6)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('TICKET ID', margin + 6, yPos + 5)
+            pdf.text('TICKET ID', margin + 4, yPos + 4)
             
             pdf.setTextColor(80, 80, 80)
-            pdf.setFontSize(10)
+            pdf.setFontSize(8)
             pdf.setFont('helvetica', 'bold')
-            pdf.text(id, margin + 6, yPos + 11)
+            pdf.text(id, margin + 4, yPos + 8)
 
             // ========== HOLDER ==========
             if (holderName) {
-                yPos += 18
+                yPos += 12
                 pdf.setFillColor(250, 250, 250)
-                pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, 14, 4, 4, 'F')
+                pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, 10, 3, 3, 'F')
                 
-                pdf.setTextColor(150, 150, 150)
-                pdf.setFontSize(8)
+                pdf.setTextColor(140, 140, 140)
+                pdf.setFontSize(6)
                 pdf.setFont('helvetica', 'normal')
-                pdf.text('TITULAIRE', margin + 6, yPos + 5)
+                pdf.text('TITULAIRE', margin + 4, yPos + 4)
                 
                 pdf.setTextColor(0, 0, 0)
-                pdf.setFontSize(11)
+                pdf.setFontSize(8)
                 pdf.setFont('helvetica', 'bold')
-                pdf.text(holderName, margin + 6, yPos + 11)
+                pdf.text(holderName, margin + 4, yPos + 8)
             }
 
             // ========== QR CODE ==========
-            yPos += 12
+            yPos += 15
             
             const qrDataUrl = await QRCode.toDataURL(qrValue, {
                 width: 400,
@@ -418,41 +413,37 @@ export default function DynamicTicket({
                 color: { dark: '#000000', light: '#ffffff' }
             })
 
-            const qrSize = 28 // Smaller to fit completely above footer
+            const qrSize = 26
             const qrX = (pageWidth - qrSize) / 2
 
-            // White background
             pdf.setFillColor(255, 255, 255)
             pdf.roundedRect(qrX - 4, yPos - 2, qrSize + 8, qrSize + 8, 3, 3, 'F')
 
-            // Border
             pdf.setDrawColor(200, 200, 200)
-            pdf.setLineWidth(0.3)
+            pdf.setLineWidth(0.2)
             pdf.roundedRect(qrX - 1, yPos + 1, qrSize + 2, qrSize + 2, 2, 2, 'S')
 
-            // QR code image
             pdf.addImage(qrDataUrl, 'PNG', qrX, yPos + 2, qrSize, qrSize)
 
-            // Label
             pdf.setTextColor(120, 120, 120)
-            pdf.setFontSize(7)
+            pdf.setFontSize(6)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 10, { align: 'center' })
+            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 8, { align: 'center' })
 
             // ========== FOOTER ==========
-            const footerY = pageHeight - 14
+            const footerY = pageHeight - 12
             pdf.setFillColor(0, 0, 0)
-            pdf.rect(0, footerY, pageWidth, 14, 'F')
+            pdf.rect(0, footerY, pageWidth, 12, 'F')
 
             pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(14)
+            pdf.setFontSize(12)
             pdf.setFont('helvetica', 'bold')
             const centerX = pageWidth / 2
-            pdf.text('Jel', centerX - 15, footerY + 10)
+            pdf.text('Jel', centerX - 13, footerY + 8)
             pdf.setTextColor(255, 215, 0)
-            pdf.text('Sa', centerX - 5, footerY + 10)
+            pdf.text('Sa', centerX - 4, footerY + 8)
             pdf.setTextColor(76, 175, 80)
-            pdf.text('Place', centerX + 5, footerY + 10)
+            pdf.text('Place', centerX + 4, footerY + 8)
 
             // Download
             pdf.save(`ticket-${id}.pdf`)

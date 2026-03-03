@@ -221,12 +221,7 @@ export default function DynamicTicket({
         })
     }
 
-    const handleDownload = async () => {
-        if (onDownload) {
-            onDownload()
-            return
-        }
-
+    const handleDownload = async (): Promise<boolean> => {
         setIsDownloading(true)
         
         try {
@@ -431,11 +426,19 @@ export default function DynamicTicket({
             pdf.setTextColor(76, 175, 80)
             pdf.text('Place', centerX + 4, footerY + 8)
 
-            // Download
+            // Download the PDF
             pdf.save(`ticket-${id}.pdf`)
+            
+            // Call onDownload callback after successful download
+            if (onDownload) {
+                onDownload()
+            }
+            
+            return true
         } catch (error) {
             console.error('Error generating PDF:', error)
             alert('Erreur lors de la génération du PDF.')
+            return false
         } finally {
             setIsDownloading(false)
         }

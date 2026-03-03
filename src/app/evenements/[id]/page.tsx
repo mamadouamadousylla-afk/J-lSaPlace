@@ -96,20 +96,27 @@ export default function EventDetail() {
         }
 
         // Vérifier si Google Maps est déjà chargé
-        if (window.google) {
+        if (window.google && window.google.maps) {
             initMap()
-        } else {
-            // Charger le script Google Maps
-            const script = document.createElement('script')
-            script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=initEventMap`
-            script.async = true
-            script.defer = true
-            
-            // Exposer la fonction de callback globalement
-            ;(window as any).initEventMap = initMap
-            
-            document.head.appendChild(script)
+            return
         }
+
+        // Vérifier si le script est déjà en cours de chargement
+        const existingScript = document.getElementById('google-maps-script-event')
+        if (existingScript) {
+            existingScript.addEventListener('load', initMap)
+            return
+        }
+
+        // Charger le script Google Maps
+        const script = document.createElement('script')
+        script.id = 'google-maps-script-event'
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}`
+        script.async = true
+        script.defer = true
+        script.onload = initMap
+        
+        document.head.appendChild(script)
     }, [event, mapLoaded])
 
     const [isBookingOpen, setIsBookingOpen] = useState(false)

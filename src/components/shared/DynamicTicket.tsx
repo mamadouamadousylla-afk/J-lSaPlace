@@ -410,7 +410,7 @@ export default function DynamicTicket({
             }
 
             // ========== QR CODE ==========
-            yPos += 15
+            yPos += 12
             
             const qrDataUrl = await QRCode.toDataURL(qrValue, {
                 width: 400,
@@ -418,17 +418,17 @@ export default function DynamicTicket({
                 color: { dark: '#000000', light: '#ffffff' }
             })
 
-            const qrSize = 35 // Smaller size to fit completely
+            const qrSize = 28 // Smaller to fit completely above footer
             const qrX = (pageWidth - qrSize) / 2
 
             // White background
             pdf.setFillColor(255, 255, 255)
-            pdf.roundedRect(qrX - 5, yPos - 3, qrSize + 10, qrSize + 10, 4, 4, 'F')
+            pdf.roundedRect(qrX - 4, yPos - 2, qrSize + 8, qrSize + 8, 3, 3, 'F')
 
             // Border
             pdf.setDrawColor(200, 200, 200)
-            pdf.setLineWidth(0.4)
-            pdf.roundedRect(qrX - 2, yPos, qrSize + 4, qrSize + 4, 2, 2, 'S')
+            pdf.setLineWidth(0.3)
+            pdf.roundedRect(qrX - 1, yPos + 1, qrSize + 2, qrSize + 2, 2, 2, 'S')
 
             // QR code image
             pdf.addImage(qrDataUrl, 'PNG', qrX, yPos + 2, qrSize, qrSize)
@@ -437,22 +437,22 @@ export default function DynamicTicket({
             pdf.setTextColor(120, 120, 120)
             pdf.setFontSize(7)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 12, { align: 'center' })
+            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 10, { align: 'center' })
 
             // ========== FOOTER ==========
-            const footerY = pageHeight - 18
+            const footerY = pageHeight - 14
             pdf.setFillColor(0, 0, 0)
-            pdf.rect(0, footerY, pageWidth, 18, 'F')
+            pdf.rect(0, footerY, pageWidth, 14, 'F')
 
             pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(18)
+            pdf.setFontSize(14)
             pdf.setFont('helvetica', 'bold')
             const centerX = pageWidth / 2
-            pdf.text('Jel', centerX - 18, footerY + 12)
+            pdf.text('Jel', centerX - 15, footerY + 10)
             pdf.setTextColor(255, 215, 0)
-            pdf.text('Sa', centerX - 6, footerY + 12)
+            pdf.text('Sa', centerX - 5, footerY + 10)
             pdf.setTextColor(76, 175, 80)
-            pdf.text('Place', centerX + 6, footerY + 12)
+            pdf.text('Place', centerX + 5, footerY + 10)
 
             // Download
             pdf.save(`ticket-${id}.pdf`)

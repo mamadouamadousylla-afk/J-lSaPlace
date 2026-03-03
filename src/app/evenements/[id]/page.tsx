@@ -8,12 +8,23 @@ import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { useFavorites } from "@/context/FavoritesContext"
 import BookingModal from "@/components/shared/BookingModal"
+import Link from "next/link"
 
 // Google Maps types
 declare global {
     interface Window {
         google: any;
     }
+}
+
+interface SimilarEvent {
+    id: string
+    title: string
+    date: string
+    image_url: string
+    price_vip: number
+    location: string
+    category: string
 }
 
 interface EventData {
@@ -118,6 +129,23 @@ export default function EventDetail() {
         
         document.head.appendChild(script)
     }, [event, mapLoaded])
+
+    const [similarEvents, setSimilarEvents] = useState<SimilarEvent[]>([])
+
+    useEffect(() => {
+        if (!event?.category || !id) return
+        async function loadSimilar() {
+            const { data } = await supabase
+                .from("events")
+                .select("id, title, date, image_url, price_vip, location, category")
+                .eq("status", "published")
+                .eq("category", event!.category)
+                .neq("id", id)
+                .limit(6)
+            if (data) setSimilarEvents(data)
+        }
+        loadSimilar()
+    }, [event, id])
 
     const [isBookingOpen, setIsBookingOpen] = useState(false)
     const { toggleFavorite, isFavorite } = useFavorites()
@@ -285,6 +313,52 @@ export default function EventDetail() {
                                     Itinéraire
                                 </a>
                             </div>
+                        </div>
+                    </section>
+                )}
+
+                {/* Événements similaires */}
+                {similarEvents.length > 0 && (
+                    <section className="px-2 space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h2 className="text-xl font-poppins font-bold text-gray-900">
+                                Dans la même catégorie
+                            </h2>
+                            <span className="text-xs font-bold px-3 py-1 rounded-full bg-[#2D75B6]/10 text-[#2D75B6] uppercase tracking-wide">
+                                {event.category}
+                            </span>
+                        </div>
+                        <div className="flex gap-4 overflow-x-auto no-scrollbar -mx-2 px-2 pb-2">
+                            {similarEvents.map((ev, idx) => (
+                                <motion.div
+                                    key={ev.id}
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: idx * 0.05 }}
+                                    className="flex-shrink-0 w-52"
+                                >
+                                    <Link href={`/evenements/${ev.id}`}>
+                                        <div className="bg-white rounded-2xl overflow-hidden shadow-md border border-gray-100 hover:shadow-lg transition-shadow">
+                                            <div className="relative h-32 w-full">
+                                                <img
+                                                    src={ev.image_url || "/hero-combat.png"}
+                                                    alt={ev.title}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                                                <span className="absolute bottom-2 left-2 text-white text-[10px] font-bold bg-[#2D75B6] px-2 py-0.5 rounded-full">
+                                                    {ev.date}
+                                                </span>
+                                            </div>
+                                            <div className="p-3 space-y-1">
+                                                <p className="text-sm font-bold text-gray-900 line-clamp-2 leading-tight">{ev.title}</p>
+                                                <p className="text-xs text-gray-400 font-medium truncate">{ev.location}</p>
+                                                <p className="text-xs font-bold text-[#2D75B6]">à partir de {formatPrice(ev.price_vip)}</p>
+                                            </div>
+                                        </div>
+                                    </Link>
+                                </motion.div>
+                            ))}
                         </div>
                     </section>
                 )}

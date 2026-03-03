@@ -10,6 +10,7 @@ import { supabase } from "@/lib/supabase"
 interface TicketData extends DynamicTicketProps {
     status: "upcoming" | "past"
     downloaded?: boolean
+    db_id?: string
 }
 
 function TicketsContent() {
@@ -23,17 +24,59 @@ function TicketsContent() {
     const [activeTab, setActiveTab] = useState("active")
     const [displayTickets, setDisplayTickets] = useState<TicketData[]>([])
     const [loading, setLoading] = useState(true)
+    const [user, setUser] = useState<any>(null)
 
     useEffect(() => {
         async function loadTickets() {
             setLoading(true)
             
-            // Load tickets from localStorage
+            // Get current user
+            const { data: { user } } = await supabase.auth.getUser()
+            setUser(user)
+            
+            // Load tickets from localStorage (for non-logged users or fallback)
             const saved = localStorage.getItem("sunulamb_tickets")
             let currentTickets: TicketData[] = saved ? JSON.parse(saved) : []
 
-            // If new purchase detected in URL
-            if (id && qty && cat) {
+            // If user is logged in, load tickets from Supabase
+            if (user) {
+                const { data: dbTickets, error } = await supabase
+                    .from("tickets")
+                    .select(`
+                        *,
+                        events:event_id (*)
+                    `)
+                    .eq("user_id", user.id)
+                    .order("created_at", { ascending: false })
+
+                if (dbTickets && !error) {
+                    // Convert DB tickets to TicketData format
+                    const formattedTickets: TicketData[] = dbTickets.map((t: any) => ({
+                        id: t.qr_code,
+                        title: t.events?.title || "Événement",
+                        date: t.events?.date || "",
+                        time: t.events?.time || "",
+                        location: t.events?.location || "",
+                        category: t.events?.category || "SPORT",
+                        zone: t.zone,
+                        row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
+                        seat: String(Math.floor(Math.random() * 100) + 1),
+                        imageUrl: t.events?.image_url,
+                        holderName: user.user_metadata?.full_name || "Titulaire",
+                        status: t.status === "confirmed" ? "upcoming" : "past",
+                        downloaded: false,
+                        db_id: t.id
+                    }))
+                    
+                    // Merge with local tickets (avoid duplicates)
+                    const existingIds = new Set(currentTickets.map(t => t.id))
+                    const newTickets = formattedTickets.filter(t => !existingIds.has(t.id))
+                    currentTickets = [...newTickets, ...currentTickets]
+                }
+            }
+
+            // If new purchase detected in URL (from payment flow)
+            if (id && qty && cat && !user) {
                 // Fetch event details from Supabase
                 const { data: eventData, error } = await supabase
                     .from("events")

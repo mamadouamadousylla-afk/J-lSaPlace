@@ -4,7 +4,8 @@ import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, CreditCard, Smartphone, CheckCircle2, Lock } from "lucide-react"
 import { formatPrice, cn } from "@/lib/utils"
-import { useState } from "react"
+import { useState, useEffect } from "react"
+import { supabase } from "@/lib/supabase"
 
 const paymentMethods = [
     { id: "wave", name: "Wave", color: "bg-[#00AEEF]", textColor: "text-white", logo: "/wave-logo.png" },
@@ -19,21 +20,114 @@ export default function PaymentPage() {
     const [selectedMethod, setSelectedMethod] = useState(paymentMethods[0])
     const [isLoading, setIsLoading] = useState(false)
     const [isSuccess, setIsSuccess] = useState(false)
+    const [eventData, setEventData] = useState<any>(null)
+    const [user, setUser] = useState<any>(null)
 
+    const eventId = params.id as string
     const qty = parseInt(searchParams.get("qty") || "1")
     const catId = searchParams.get("cat") || "tribune"
     const price = catId === "vip" ? 15000 : catId === "tribune" ? 5000 : 2000
     const total = price * qty
 
-    const handlePayment = () => {
+    // Load event data and user
+    useEffect(() => {
+        async function loadData() {
+            // Get current user
+            const { data: { user } } = await supabase.auth.getUser()
+            setUser(user)
+
+            // Get event data
+            if (eventId) {
+                const { data } = await supabase
+                    .from("events")
+                    .select("*")
+                    .eq("id", eventId)
+                    .single()
+                setEventData(data)
+            }
+        }
+        loadData()
+    }, [eventId])
+
+    const handlePayment = async () => {
         setIsLoading(true)
-        // Simulate payment
-        setTimeout(() => {
-            setIsLoading(false)
-            setIsSuccess(true)
-            setTimeout(() => {
-                router.push(`/mon-compte/tickets?qty=${qty}&cat=${catId}`)
-            }, 3000)
+        
+        // Simulate payment processing
+        setTimeout(async () => {
+            try {
+                // Get current user
+                const { data: { user } } = await supabase.auth.getUser()
+                
+                if (!user) {
+                    // If not logged in, still allow local purchase
+                    setIsLoading(false)
+                    setIsSuccess(true)
+                    setTimeout(() => {
+                        router.push(`/mon-compte/tickets?id=${eventId}&qty=${qty}&cat=${catId}`)
+                    }, 3000)
+                    return
+                }
+
+                // Create tickets for each quantity
+                const tickets = []
+                for (let i = 0; i < qty; i++) {
+                    const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${catId.toUpperCase()}-${i + 1}`
+                    
+                    const { data: ticket, error } = await supabase
+                        .from("tickets")
+                        .insert({
+                            user_id: user.id,
+                            event_id: eventId,
+                            zone: catId.toUpperCase(),
+                            quantity: 1,
+                            total_price: price,
+                            qr_code: qrCode,
+                            payment_ref: `PAY-${Date.now()}-${i}`,
+                            payment_method: selectedMethod.id,
+                            status: "confirmed"
+                        })
+                        .select()
+                        .single()
+
+                    if (error) {
+                        console.error("Error creating ticket:", error)
+                    } else {
+                        tickets.push(ticket)
+                    }
+                }
+
+                // Create payment record
+                const fee = Math.round(total * 0.03) // 3% fee
+                await supabase
+                    .from("payments")
+                    .insert({
+                        user_id: user.id,
+                        event_id: eventId,
+                        ticket_id: tickets[0]?.id,
+                        amount: total,
+                        fee: fee,
+                        payment_method: selectedMethod.id,
+                        status: "completed",
+                        phone_number: user.phone || null,
+                        payment_reference: `REF-${Date.now()}`,
+                        metadata: {
+                            event_title: eventData?.title,
+                            zone: catId,
+                            quantity: qty,
+                            tickets_created: tickets.length
+                        }
+                    })
+
+                setIsLoading(false)
+                setIsSuccess(true)
+                
+                setTimeout(() => {
+                    router.push(`/mon-compte/tickets?id=${eventId}&qty=${qty}&cat=${catId}`)
+                }, 3000)
+            } catch (error) {
+                console.error("Payment processing error:", error)
+                setIsLoading(false)
+            }
         }, 2000)
     }
 

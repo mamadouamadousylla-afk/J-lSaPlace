@@ -272,7 +272,10 @@ export default function AdminEvents() {
         if (filter === 'active') {
             query = query.in("status", ["published", "active"])
         } else if (filter === 'draft') {
-            query = query.eq("status", "draft")
+            query = query.eq("status", "deleted")
+        } else {
+            // 'all' — exclude deleted
+            query = query.neq("status", "deleted")
         }
 
         if (debouncedSearchTerm) {
@@ -464,10 +467,10 @@ export default function AdminEvents() {
     const handleDelete = async (id: string) => {
         if (confirm("Êtes-vous sûr de vouloir supprimer cet événement ?")) {
             try {
-                const { error } = await supabase.from("events").delete().eq("id", id)
+                const { error } = await supabase.from("events").update({ status: "deleted" }).eq("id", id)
                 if (error) throw error;
 
-                // Optimistic update
+                // Remove from current view (optimistic update)
                 setEvents(events.filter(ev => ev.id !== id))
             } catch (error: any) {
                 alert("Erreur lors de la suppression : " + error.message)
@@ -535,13 +538,13 @@ export default function AdminEvents() {
                         }`}
                         onClick={() => setFilter('draft')}
                     >
-                        Brouillons
+                        Supprimés
                     </button>
                 </div>
 
                 <div className="flex items-center gap-5 text-[13px] font-medium text-gray-500">
                     <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#1A8744]"></div> En cours</div>
-                    <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-gray-300"></div> Brouillon</div>
+                    <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-gray-300"></div> Supprimé</div>
                     <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#3B82F6]"></div> Épuisé</div>
                 </div>
             </div>
@@ -658,14 +661,19 @@ export default function AdminEvents() {
                                                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
                                                 className="absolute right-0 top-12 w-48 bg-white rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.15)] border border-gray-100 py-2 z-50 overflow-hidden"
                                             >
-                                                {event.status !== 'published' && (
+                                                {event.status !== 'published' && event.status !== 'deleted' && (
                                                     <button onClick={() => { handleStatusChange(event.id, 'published'); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-medium text-gray-700">Mettre en ligne</button>
                                                 )}
-                                                {event.status !== 'draft' && (
+                                                {event.status !== 'draft' && event.status !== 'deleted' && (
                                                     <button onClick={() => { handleStatusChange(event.id, 'draft'); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-medium text-gray-700">Placer en brouillon</button>
                                                 )}
-                                                {event.status !== 'archived' && (
+                                                {event.status !== 'archived' && event.status !== 'deleted' && (
                                                     <button onClick={() => { handleStatusChange(event.id, 'archived'); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 hover:bg-gray-50 text-sm font-medium text-gray-700">Archiver</button>
+                                                )}
+                                                {event.status === 'deleted' && (
+                                                    <button onClick={() => { handleStatusChange(event.id, 'published'); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 hover:bg-green-50 text-sm font-bold text-green-700 flex items-center gap-2">
+                                                        ♻️ Restaurer
+                                                    </button>
                                                 )}
                                                 <div className="h-px bg-gray-100 my-1"></div>
                                                 <button onClick={() => { handleDelete(event.id); setOpenDropdownId(null); }} className="w-full text-left px-4 py-2 hover:bg-red-50 text-sm font-bold text-red-600 flex items-center gap-2">

@@ -391,7 +391,7 @@ export default function DynamicTicket({
             // Skip holder to save space
 
             // ========== QR CODE ==========
-            yPos += 6
+            yPos += 10
             
             const qrDataUrl = await QRCode.toDataURL(qrValue, {
                 width: 400,

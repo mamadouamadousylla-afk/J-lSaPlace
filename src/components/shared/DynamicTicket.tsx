@@ -391,7 +391,7 @@ export default function DynamicTicket({
             // Skip holder to save space
 
             // ========== QR CODE ==========
-            yPos += 10
+            yPos += 14
             
             const qrDataUrl = await QRCode.toDataURL(qrValue, {
                 width: 400,
@@ -399,22 +399,22 @@ export default function DynamicTicket({
                 color: { dark: '#000000', light: '#ffffff' }
             })
 
-            const qrSize = 24
+            const qrSize = 30
             const qrX = (pageWidth - qrSize) / 2
 
             pdf.setFillColor(255, 255, 255)
-            pdf.roundedRect(qrX - 3, yPos - 2, qrSize + 6, qrSize + 6, 3, 3, 'F')
+            pdf.roundedRect(qrX - 4, yPos - 3, qrSize + 8, qrSize + 8, 4, 4, 'F')
 
             pdf.setDrawColor(200, 200, 200)
-            pdf.setLineWidth(0.2)
+            pdf.setLineWidth(0.3)
             pdf.roundedRect(qrX - 1, yPos, qrSize + 2, qrSize + 2, 2, 2, 'S')
 
             pdf.addImage(qrDataUrl, 'PNG', qrX, yPos + 1, qrSize, qrSize)
 
             pdf.setTextColor(120, 120, 120)
-            pdf.setFontSize(6)
+            pdf.setFontSize(7)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 7, { align: 'center' })
+            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 9, { align: 'center' })
 
             // ========== FOOTER ==========
             const footerY = pageHeight - 12

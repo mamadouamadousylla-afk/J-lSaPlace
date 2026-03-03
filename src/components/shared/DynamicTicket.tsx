@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Calendar, MapPin, Download, Music, Mic2, Users, Presentation, Sparkles } from "lucide-react"
+import { Download, Music, Mic2, Users, Presentation, Sparkles } from "lucide-react"
 import Qoder from "./Qoder"
 import jsPDF from "jspdf"
 import QRCode from "qrcode"
@@ -323,7 +323,7 @@ export default function DynamicTicket({
             pdf.setTextColor(76, 175, 80)
             pdf.setFontSize(9)
             pdf.setFont('helvetica', 'bold')
-            pdf.text(`${zoneConfig.icon} ${zoneConfig.label}`, margin + 2, yPos)
+            pdf.text(zoneConfig.label, margin + 2, yPos)
 
             // ========== ROW & SEAT (compact) ==========
             if (row || seat) {
@@ -525,19 +525,13 @@ export default function DynamicTicket({
                 <div className="p-5 space-y-5">
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-3">
-                            <div className="flex items-start gap-2">
-                                <Calendar className="w-4 h-4 mt-0.5" style={{ color: config.accentColor }} />
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</p>
-                                    <p className="text-sm font-bold text-gray-900">{date}</p>
-                                </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Date</p>
+                                <p className="text-sm font-bold text-gray-900">{date}</p>
                             </div>
-                            <div className="flex items-start gap-2">
-                                <MapPin className="w-4 h-4 mt-0.5" style={{ color: config.accentColor }} />
-                                <div>
-                                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lieu</p>
-                                    <p className="text-sm font-bold text-gray-900 line-clamp-1">{location}</p>
-                                </div>
+                            <div>
+                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Lieu</p>
+                                <p className="text-sm font-bold text-gray-900 line-clamp-1">{location}</p>
                             </div>
                         </div>
                         <div className="space-y-3">
@@ -547,12 +541,9 @@ export default function DynamicTicket({
                             </div>
                             <div>
                                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Zone</p>
-                                <div className="flex items-center gap-1.5">
-                                    <span>{zoneConfig.icon}</span>
-                                    <p className="text-sm font-bold" style={{ color: config.textColor }}>
-                                        {zoneConfig.label}
-                                    </p>
-                                </div>
+                                <p className="text-sm font-bold" style={{ color: config.textColor }}>
+                                    {zoneConfig.label}
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -579,13 +570,6 @@ export default function DynamicTicket({
                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Ticket ID</p>
                         <p className="text-xs font-mono font-bold text-gray-600">{id}</p>
                     </div>
-
-                    {holderName && (
-                        <div className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Titulaire</p>
-                            <p className="text-sm font-bold text-gray-900">{holderName}</p>
-                        </div>
-                    )}
 
                     {/* QR Code */}
                     {!compact && (

@@ -507,10 +507,12 @@ export default function DynamicTicket({
                     </div>
                     
                     <div className="absolute top-4 right-4">
-                        <div className="flex items-center gap-0.5 px-2 py-1 rounded-full bg-black/40 backdrop-blur-sm">
-                            <span className="text-xs font-black text-white">Jel</span>
-                            <span className="text-xs font-black text-yellow-400">Sa</span>
-                            <span className="text-xs font-black text-green-400">Place</span>
+                        <div className="px-2 py-1 rounded-full bg-black/40 backdrop-blur-sm">
+                            <img 
+                                src="/logo jel sa passe.png" 
+                                alt="Jël Sa Place" 
+                                className="h-5 w-auto object-contain"
+                            />
                         </div>
                     </div>
                     

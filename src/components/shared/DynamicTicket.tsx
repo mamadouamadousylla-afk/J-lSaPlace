@@ -423,7 +423,7 @@ export default function DynamicTicket({
                     img.crossOrigin = 'anonymous'
                     img.onload = () => resolve(img)
                     img.onerror = reject
-                    img.src = '/logo-jel-sa-place.png'
+                    img.src = '/logo jel sa passe.png'
                 })
                 
                 // Calculate logo dimensions (max width 50mm, maintain aspect ratio)

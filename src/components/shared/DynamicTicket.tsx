@@ -412,9 +412,9 @@ export default function DynamicTicket({
             pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 6, { align: 'center' })
 
             // ========== FOOTER with Logo ==========
-            const footerY = pageHeight - 14
+            const footerY = pageHeight - 10
             pdf.setFillColor(0, 0, 0)
-            pdf.rect(0, footerY, pageWidth, 14, 'F')
+            pdf.rect(0, footerY, pageWidth, 10, 'F')
 
             // Load and add logo image
             try {
@@ -426,9 +426,9 @@ export default function DynamicTicket({
                     img.src = '/logo jel sa passe.png'
                 })
                 
-                // Calculate logo dimensions (max width 35mm, maintain aspect ratio)
-                const maxLogoWidth = 35
-                const maxLogoHeight = 8
+                // Calculate logo dimensions (max width 30mm, maintain aspect ratio)
+                const maxLogoWidth = 30
+                const maxLogoHeight = 6
                 const aspectRatio = logoImg.width / logoImg.height
                 let logoWidth = maxLogoWidth
                 let logoHeight = logoWidth / aspectRatio
@@ -449,7 +449,7 @@ export default function DynamicTicket({
                     
                     // Center the logo in footer
                     const logoX = (pageWidth - logoWidth) / 2
-                    const logoY = footerY + (14 - logoHeight) / 2
+                    const logoY = footerY + (10 - logoHeight) / 2
                     pdf.addImage(logoDataUrl, 'PNG', logoX, logoY, logoWidth, logoHeight)
                 }
             } catch (error) {

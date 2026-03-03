@@ -414,7 +414,7 @@ export default function DynamicTicket({
             pdf.setTextColor(120, 120, 120)
             pdf.setFontSize(7)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 9, { align: 'center' })
+            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 6, { align: 'center' })
 
             // ========== FOOTER ==========
             const footerY = pageHeight - 12

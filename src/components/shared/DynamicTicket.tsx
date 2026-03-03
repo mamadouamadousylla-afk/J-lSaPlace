@@ -282,12 +282,12 @@ export default function DynamicTicket({
             pdf.text(titleLines, margin, titleY)
 
             // ========== WHITE CARD BODY ==========
-            let yPos = headerHeight + 2
+            let yPos = headerHeight + 1
             
             pdf.setFillColor(255, 255, 255)
             pdf.roundedRect(2, yPos, pageWidth - 4, pageHeight - headerHeight - 14, 6, 6, 'F')
 
-            yPos += 8
+            yPos += 6
 
             // ========== DATE & TIME (compact) ==========
             pdf.setTextColor(140, 140, 140)
@@ -304,7 +304,7 @@ export default function DynamicTicket({
             pdf.text(time, pageWidth / 2 + 3, yPos)
 
             // ========== LOCATION ==========
-            yPos += 7
+            yPos += 6
             pdf.setTextColor(140, 140, 140)
             pdf.setFontSize(6)
             pdf.setFont('helvetica', 'normal')
@@ -318,7 +318,7 @@ export default function DynamicTicket({
             pdf.text(locationLines, margin + 2, yPos)
 
             // ========== ZONE ==========
-            yPos += 7
+            yPos += 6
             pdf.setTextColor(140, 140, 140)
             pdf.setFontSize(6)
             pdf.setFont('helvetica', 'normal')
@@ -332,8 +332,8 @@ export default function DynamicTicket({
 
             // ========== ROW & SEAT (compact) ==========
             if (row || seat) {
-                yPos += 7
-                const boxHeight = 16
+                yPos += 6
+                const boxHeight = 15
                 
                 pdf.setFillColor(245, 245, 245)
                 pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, boxHeight, 4, 4, 'F')
@@ -347,7 +347,7 @@ export default function DynamicTicket({
                     pdf.setTextColor(76, 175, 80)
                     pdf.setFontSize(14)
                     pdf.setFont('helvetica', 'bold')
-                    pdf.text(row, margin + 14, yPos + 13)
+                    pdf.text(row, margin + 14, yPos + 12)
                 }
 
                 if (row && seat) {
@@ -365,12 +365,12 @@ export default function DynamicTicket({
                     pdf.setTextColor(76, 175, 80)
                     pdf.setFontSize(14)
                     pdf.setFont('helvetica', 'bold')
-                    pdf.text(seat, pageWidth / 2 + 10, yPos + 13)
+                    pdf.text(seat, pageWidth / 2 + 10, yPos + 12)
                 }
 
-                yPos += boxHeight + 5
+                yPos += boxHeight + 4
             } else {
-                yPos += 3
+                yPos += 2
             }
 
             // ========== TICKET ID ==========
@@ -391,7 +391,7 @@ export default function DynamicTicket({
             // Skip holder to save space
 
             // ========== QR CODE ==========
-            yPos += 8
+            yPos += 6
             
             const qrDataUrl = await QRCode.toDataURL(qrValue, {
                 width: 400,

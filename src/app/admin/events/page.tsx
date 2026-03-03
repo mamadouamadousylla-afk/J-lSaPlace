@@ -164,7 +164,8 @@ export default function AdminEvents() {
         price_tribune: 5000,
         price_pelouse: 2000,
         image_url: "",
-        status: "published"
+        status: "published",
+        featured: false
     }
     
     // State for image upload
@@ -437,7 +438,8 @@ export default function AdminEvents() {
             price_tribune: event.price_tribune || 5000,
             price_pelouse: event.price_pelouse || 2000,
             image_url: event.image_url || "",
-            status: event.status || "published"
+            status: event.status || "published",
+            featured: event.featured || false
         })
         setImageFile(null); // Reset image file when editing
         setImagePreview(event.image_url || null); // Set preview to current image
@@ -576,7 +578,14 @@ export default function AdminEvents() {
 
                             {/* 2. Title & Info */}
                             <div className="flex-1 min-w-[200px]">
-                                <h3 className="font-bold text-gray-900 text-[17px] mb-2 truncate font-poppins">{event.title}</h3>
+                                <div className="flex items-center gap-2 mb-1">
+                                    <h3 className="font-bold text-gray-900 text-[17px] truncate font-poppins">{event.title}</h3>
+                                    {event.featured && (
+                                        <span className="flex-shrink-0 text-xs font-bold px-2 py-0.5 bg-amber-100 text-amber-700 rounded-full flex items-center gap-1">
+                                            <span>⭐</span> Carrousel
+                                        </span>
+                                    )}
+                                </div>
                                 <div className="flex items-center gap-4 text-[13px] text-gray-400 font-medium">
                                     <div className="flex items-center gap-1.5">
                                         <Calendar className="w-4 h-4" />
@@ -804,7 +813,7 @@ export default function AdminEvents() {
                                                 </label>
                                                 <input 
                                                     required 
-                                                    value={formData[`price_${seatType.key}` as keyof typeof formData]} 
+                                                    value={formData[`price_${seatType.key}` as keyof typeof formData] as number} 
                                                     onChange={e => setFormData({ 
                                                         ...formData, 
                                                         [`price_${seatType.key}`]: parseInt(e.target.value) || 0 
@@ -972,6 +981,32 @@ export default function AdminEvents() {
                                         <div className="hidden">
                                             <input value={formData.month_label} onChange={e => setFormData({ ...formData, month_label: e.target.value })} />
                                             <input value={formData.time} onChange={e => setFormData({ ...formData, time: e.target.value })} />
+                                        </div>
+
+                                        {/* Carrousel Populaire */}
+                                        <div className="col-span-2">
+                                            <div className="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center">
+                                                        <span className="text-xl">⭐</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-gray-900 text-sm">Afficher dans le carrousel Populaire</p>
+                                                        <p className="text-xs text-gray-500 mt-0.5">L&apos;événement apparaîtra en vedette sur la page d&apos;accueil</p>
+                                                    </div>
+                                                </div>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setFormData({ ...formData, featured: !formData.featured })}
+                                                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-300 focus:outline-none ${
+                                                        formData.featured ? 'bg-amber-500' : 'bg-gray-300'
+                                                    }`}
+                                                >
+                                                    <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+                                                        formData.featured ? 'translate-x-6' : 'translate-x-1'
+                                                    }`} />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </form>

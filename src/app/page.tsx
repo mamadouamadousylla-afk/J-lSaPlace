@@ -5,6 +5,7 @@ import Header from "@/components/layout/Header"
 import Hero from "@/components/home/Hero"
 import CategoryFilter from "@/components/home/CategoryFilter"
 import TimelineEventList from "@/components/home/TimelineEventList"
+import FeaturedCarousel from "@/components/home/FeaturedCarousel"
 
 export default function Home() {
   const [selectedCategory, setSelectedCategory] = useState("all")
@@ -22,6 +23,8 @@ export default function Home() {
           setSearchQuery("") // Clear search when changing category
         }}
       />
+      {/* Featured Carousel - only shown when no filter/search active */}
+      {!searchQuery && selectedCategory === "all" && <FeaturedCarousel />}
       <TimelineEventList
         selectedCategory={selectedCategory}
         searchQuery={searchQuery}

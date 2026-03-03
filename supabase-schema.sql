@@ -70,7 +70,8 @@ create table if not exists public.events (
     promoter_logo   text,
     promoter_description text,
     latitude        decimal(10, 8),
-    longitude       decimal(11, 8)
+    longitude       decimal(11, 8),
+    featured        boolean not null default false
 );
 
 -- =============================================

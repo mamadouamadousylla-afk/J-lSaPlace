@@ -9,20 +9,20 @@ import QRCode from "qrcode"
 
 // Brand colors from Jël Sa Place logo
 export const BRAND_COLORS = {
-    jel: "#FFFFFF",      // White for "Jël"
-    sa: "#FFD700",       // Yellow for "Sa"
-    place: "#4CAF50",    // Green for "Place"
+    jel: "#FFFFFF",
+    sa: "#FFD700",
+    place: "#4CAF50",
     black: "#000000",
     darkBg: "#1A1A1A",
     gradient: "from-white via-yellow-400 to-green-500"
 }
 
-// Category configurations with Jël Sa Place branding
+// Category configurations
 export const CATEGORY_CONFIG: Record<string, {
     label: string
     icon: React.ReactNode
     gradient: string
-    gradientColors: [string, string, string]
+    gradientColors: { start: string; middle: string; end: string }
     bgGradient: string
     accentColor: string
     textColor: string
@@ -33,7 +33,7 @@ export const CATEGORY_CONFIG: Record<string, {
         label: "Sport",
         icon: <Sparkles className="w-5 h-5" />,
         gradient: "from-green-500 via-emerald-500 to-teal-600",
-        gradientColors: ["#22C55E", "#10B981", "#0D9488"],
+        gradientColors: { start: "#22C55E", middle: "#10B981", end: "#0D9488" },
         bgGradient: "from-green-500/10 via-emerald-500/10 to-teal-600/10",
         accentColor: BRAND_COLORS.place,
         textColor: "#059669",
@@ -48,7 +48,7 @@ export const CATEGORY_CONFIG: Record<string, {
         label: "Musique",
         icon: <Music className="w-5 h-5" />,
         gradient: "from-yellow-400 via-amber-500 to-orange-500",
-        gradientColors: ["#FBBF24", "#F59E0B", "#F97316"],
+        gradientColors: { start: "#FBBF24", middle: "#F59E0B", end: "#F97316" },
         bgGradient: "from-yellow-400/10 via-amber-500/10 to-orange-500/10",
         accentColor: BRAND_COLORS.sa,
         textColor: "#D97706",
@@ -63,7 +63,7 @@ export const CATEGORY_CONFIG: Record<string, {
         label: "Humour",
         icon: <Mic2 className="w-5 h-5" />,
         gradient: "from-yellow-300 via-amber-400 to-yellow-500",
-        gradientColors: ["#FDE047", "#FBBF24", "#EAB308"],
+        gradientColors: { start: "#FDE047", middle: "#FBBF24", end: "#EAB308" },
         bgGradient: "from-yellow-300/10 via-amber-400/10 to-yellow-500/10",
         accentColor: "#FBBF24",
         textColor: "#B45309",
@@ -78,7 +78,7 @@ export const CATEGORY_CONFIG: Record<string, {
         label: "Loisirs",
         icon: <Users className="w-5 h-5" />,
         gradient: "from-green-400 via-emerald-500 to-teal-600",
-        gradientColors: ["#4ADE80", "#10B981", "#0D9488"],
+        gradientColors: { start: "#4ADE80", middle: "#10B981", end: "#0D9488" },
         bgGradient: "from-green-400/10 via-emerald-500/10 to-teal-600/10",
         accentColor: "#10B981",
         textColor: "#059669",
@@ -93,7 +93,7 @@ export const CATEGORY_CONFIG: Record<string, {
         label: "Conférence",
         icon: <Presentation className="w-5 h-5" />,
         gradient: "from-green-500 via-teal-500 to-cyan-600",
-        gradientColors: ["#22C55E", "#14B8A6", "#0891B2"],
+        gradientColors: { start: "#22C55E", middle: "#14B8A6", end: "#0891B2" },
         bgGradient: "from-green-500/10 via-teal-500/10 to-cyan-600/10",
         accentColor: "#14B8A6",
         textColor: "#0D9488",
@@ -145,6 +145,82 @@ export default function DynamicTicket({
     const zoneConfig = config.zoneLabels[zone?.toLowerCase()] || { label: zone, icon: "🎫" }
     const qrValue = qrCode || id
 
+    // Create header image with gradient overlay using Canvas
+    const createHeaderWithGradient = async (): Promise<string | null> => {
+        return new Promise(async (resolve) => {
+            try {
+                const canvas = document.createElement('canvas')
+                const ctx = canvas.getContext('2d')
+                if (!ctx) {
+                    resolve(null)
+                    return
+                }
+
+                // Set canvas size (proportional to PDF)
+                const width = 400
+                const height = 300
+                canvas.width = width
+                canvas.height = height
+
+                // Load event image
+                const img = new Image()
+                img.crossOrigin = 'anonymous'
+                
+                img.onload = () => {
+                    // Draw image
+                    ctx.drawImage(img, 0, 0, width, height)
+
+                    // Create gradient overlay with transparency
+                    const gradient = ctx.createLinearGradient(0, 0, 0, height)
+                    const { start, middle, end } = config.gradientColors
+                    
+                    // Add color stops with opacity (0.6 = 60% opacity)
+                    gradient.addColorStop(0, start + '99')     // 60% opacity
+                    gradient.addColorStop(0.5, middle + '99')  // 60% opacity
+                    gradient.addColorStop(1, end + '99')       // 60% opacity
+
+                    // Draw gradient overlay
+                    ctx.fillStyle = gradient
+                    ctx.fillRect(0, 0, width, height)
+
+                    // Add dark gradient at bottom for text
+                    const darkGradient = ctx.createLinearGradient(0, height - 100, 0, height)
+                    darkGradient.addColorStop(0, 'rgba(0,0,0,0)')
+                    darkGradient.addColorStop(1, 'rgba(0,0,0,0.8)')
+                    ctx.fillStyle = darkGradient
+                    ctx.fillRect(0, height - 100, width, 100)
+
+                    // Convert to data URL
+                    resolve(canvas.toDataURL('image/png'))
+                }
+                
+                img.onerror = () => {
+                    // Fallback: create gradient without image
+                    const gradient = ctx.createLinearGradient(0, 0, 0, height)
+                    const { start, middle, end } = config.gradientColors
+                    gradient.addColorStop(0, start)
+                    gradient.addColorStop(0.5, middle)
+                    gradient.addColorStop(1, end)
+                    ctx.fillStyle = gradient
+                    ctx.fillRect(0, 0, width, height)
+                    
+                    const darkGradient = ctx.createLinearGradient(0, height - 100, 0, height)
+                    darkGradient.addColorStop(0, 'rgba(0,0,0,0)')
+                    darkGradient.addColorStop(1, 'rgba(0,0,0,0.8)')
+                    ctx.fillStyle = darkGradient
+                    ctx.fillRect(0, height - 100, width, 100)
+                    
+                    resolve(canvas.toDataURL('image/png'))
+                }
+                
+                img.src = imageUrl || config.defaultImage
+            } catch (e) {
+                console.error('Error creating header:', e)
+                resolve(null)
+            }
+        })
+    }
+
     const handleDownload = async () => {
         if (onDownload) {
             onDownload()
@@ -157,279 +233,227 @@ export default function DynamicTicket({
             const pdf = new jsPDF({
                 orientation: 'portrait',
                 unit: 'mm',
-                format: [100, 220]
+                format: [100, 230]
             })
 
             const pageWidth = 100
-            const pageHeight = 220
+            const pageHeight = 230
             const margin = 8
-            let yPos = 0
-            const headerHeight = 75
+            const headerHeight = 80
 
-            // ========== LOAD EVENT IMAGE ==========
-            const imgSrc = imageUrl || config.defaultImage
-            let imageData: string | null = null
+            // ========== CREATE HEADER WITH CANVAS ==========
+            const headerImage = await createHeaderWithGradient()
             
-            try {
-                const img = new Image()
-                img.crossOrigin = 'anonymous'
-                
-                imageData = await new Promise<string>((resolve) => {
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas')
-                        canvas.width = img.width
-                        canvas.height = img.height
-                        const ctx = canvas.getContext('2d')
-                        if (ctx) {
-                            ctx.drawImage(img, 0, 0)
-                            resolve(canvas.toDataURL('image/jpeg', 0.95))
-                        } else {
-                            resolve('')
-                        }
-                    }
-                    img.onerror = () => resolve('')
-                    img.src = imgSrc
-                })
-            } catch (e) {
-                console.log('Could not load image:', e)
-            }
-
-            // ========== DRAW HEADER IMAGE ==========
-            if (imageData) {
-                try {
-                    pdf.addImage(imageData, 'JPEG', 0, 0, pageWidth, headerHeight)
-                } catch (e) {
-                    pdf.setFillColor(76, 175, 80)
-                    pdf.rect(0, 0, pageWidth, headerHeight, 'F')
-                }
+            if (headerImage) {
+                pdf.addImage(headerImage, 'PNG', 0, 0, pageWidth, headerHeight)
             } else {
-                pdf.setFillColor(76, 175, 80)
+                // Fallback solid color
+                const { start } = config.gradientColors
+                pdf.setFillColor(parseInt(start.slice(1, 3), 16), parseInt(start.slice(3, 5), 16), parseInt(start.slice(5, 7), 16))
                 pdf.rect(0, 0, pageWidth, headerHeight, 'F')
-            }
-
-            // ========== GRADIENT OVERLAY (LIGHT - IMAGE VISIBLE) ==========
-            // Draw a very light gradient overlay so image remains visible
-            const [color1, color2, color3] = config.gradientColors
-            
-            // Light gradient overlay - only 1 pass for transparency effect
-            const gradientSteps = 15
-            for (let i = 0; i < gradientSteps; i++) {
-                const ratio = i / gradientSteps
-                
-                let r, g, b
-                if (ratio < 0.5) {
-                    const localRatio = ratio * 2
-                    r = Math.round(parseInt(color1.slice(1, 3), 16) * (1 - localRatio) + parseInt(color2.slice(1, 3), 16) * localRatio)
-                    g = Math.round(parseInt(color1.slice(3, 5), 16) * (1 - localRatio) + parseInt(color2.slice(3, 5), 16) * localRatio)
-                    b = Math.round(parseInt(color1.slice(5, 7), 16) * (1 - localRatio) + parseInt(color2.slice(5, 7), 16) * localRatio)
-                } else {
-                    const localRatio = (ratio - 0.5) * 2
-                    r = Math.round(parseInt(color2.slice(1, 3), 16) * (1 - localRatio) + parseInt(color3.slice(1, 3), 16) * localRatio)
-                    g = Math.round(parseInt(color2.slice(3, 5), 16) * (1 - localRatio) + parseInt(color3.slice(3, 5), 16) * localRatio)
-                    b = Math.round(parseInt(color2.slice(5, 7), 16) * (1 - localRatio) + parseInt(color3.slice(5, 7), 16) * localRatio)
-                }
-
-                // Single light pass - image shows through
-                pdf.setFillColor(r, g, b)
-                const rectHeight = headerHeight / gradientSteps
-                const rectY = i * rectHeight
-                pdf.rect(0, rectY, pageWidth, rectHeight + 1, 'F')
-            }
-
-            // Dark gradient at bottom for text readability
-            for (let i = 0; i < 8; i++) {
-                const rectY = headerHeight - 20 + (i * 2.5)
-                pdf.setFillColor(0, 0, 0)
-                pdf.rect(0, rectY, pageWidth, 3, 'F')
             }
 
             // ========== BRAND BADGES ==========
             // Category badge (top left)
             pdf.setFillColor(0, 0, 0)
-            pdf.roundedRect(margin, 10, 28, 9, 4, 4, 'F')
+            pdf.roundedRect(margin, 10, 30, 10, 5, 5, 'F')
             pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(8)
+            pdf.setFontSize(9)
             pdf.setFont('helvetica', 'bold')
-            pdf.text(config.label.toUpperCase(), margin + 14, 16, { align: 'center' })
+            pdf.text(config.label.toUpperCase(), margin + 15, 17, { align: 'center' })
 
             // Brand badge (top right)
             pdf.setFillColor(0, 0, 0)
-            pdf.roundedRect(pageWidth - margin - 32, 10, 32, 9, 4, 4, 'F')
+            pdf.roundedRect(pageWidth - margin - 35, 10, 35, 10, 5, 5, 'F')
             pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(7)
-            pdf.text('Jel', pageWidth - margin - 26, 16)
+            pdf.setFontSize(8)
+            pdf.text('Jel', pageWidth - margin - 28, 17)
             pdf.setTextColor(255, 215, 0)
-            pdf.text('Sa', pageWidth - margin - 18, 16)
+            pdf.text('Sa', pageWidth - margin - 19, 17)
             pdf.setTextColor(76, 175, 80)
-            pdf.text('Place', pageWidth - margin - 13, 16)
+            pdf.text('Place', pageWidth - margin - 13, 17)
 
-            // ========== TITLE ==========
+            // ========== TITLE ON HEADER ==========
             pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(16)
+            pdf.setFontSize(18)
             pdf.setFont('helvetica', 'bold')
             const titleLines = pdf.splitTextToSize(title, pageWidth - margin * 2)
-            const titleY = headerHeight - 8 - (titleLines.length - 1) * 6
+            const titleY = headerHeight - 10 - (titleLines.length - 1) * 7
             pdf.text(titleLines, margin, titleY)
 
             // ========== WHITE CARD BODY ==========
-            yPos = headerHeight + 3
+            let yPos = headerHeight + 5
+            
+            // White rounded card
             pdf.setFillColor(255, 255, 255)
-            pdf.roundedRect(2, yPos, pageWidth - 4, pageHeight - headerHeight - 18, 8, 8, 'F')
+            pdf.roundedRect(3, yPos, pageWidth - 6, pageHeight - headerHeight - 20, 8, 8, 'F')
 
-            yPos += 15
+            yPos += 18
 
-            // Date & Time
-            pdf.setTextColor(160, 160, 160)
+            // ========== DATE & TIME ==========
+            pdf.setTextColor(150, 150, 150)
             pdf.setFontSize(8)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('DATE', margin, yPos)
+            pdf.text('DATE', margin + 2, yPos)
             pdf.text('HEURE', pageWidth / 2 + 5, yPos)
 
-            yPos += 5
+            yPos += 6
             pdf.setTextColor(0, 0, 0)
-            pdf.setFontSize(11)
+            pdf.setFontSize(12)
             pdf.setFont('helvetica', 'bold')
-            pdf.text(date, margin, yPos)
+            pdf.text(date, margin + 2, yPos)
             pdf.text(time, pageWidth / 2 + 5, yPos)
 
-            // Location
-            yPos += 10
-            pdf.setTextColor(160, 160, 160)
+            // ========== LOCATION ==========
+            yPos += 12
+            pdf.setTextColor(150, 150, 150)
             pdf.setFontSize(8)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('LIEU', margin, yPos)
+            pdf.text('LIEU', margin + 2, yPos)
 
-            yPos += 5
+            yPos += 6
             pdf.setTextColor(0, 0, 0)
-            pdf.setFontSize(10)
-            pdf.setFont('helvetica', 'bold')
-            const locationLines = pdf.splitTextToSize(location, pageWidth - margin * 2)
-            pdf.text(locationLines, margin, yPos)
-
-            // Zone
-            yPos += 10
-            pdf.setTextColor(160, 160, 160)
-            pdf.setFontSize(8)
-            pdf.setFont('helvetica', 'normal')
-            pdf.text('ZONE', margin, yPos)
-
-            yPos += 5
-            pdf.setTextColor(76, 175, 80)
             pdf.setFontSize(11)
             pdf.setFont('helvetica', 'bold')
-            pdf.text(`${zoneConfig.icon} ${zoneConfig.label}`, margin, yPos)
+            const locationLines = pdf.splitTextToSize(location, pageWidth - margin * 2 - 4)
+            pdf.text(locationLines, margin + 2, yPos)
 
-            // Row & Seat
+            // ========== ZONE ==========
+            yPos += 12
+            pdf.setTextColor(150, 150, 150)
+            pdf.setFontSize(8)
+            pdf.setFont('helvetica', 'normal')
+            pdf.text('ZONE', margin + 2, yPos)
+
+            yPos += 6
+            pdf.setTextColor(76, 175, 80)
+            pdf.setFontSize(12)
+            pdf.setFont('helvetica', 'bold')
+            pdf.text(`${zoneConfig.icon} ${zoneConfig.label}`, margin + 2, yPos)
+
+            // ========== ROW & SEAT ==========
             if (row || seat) {
-                yPos += 12
-                const boxHeight = 22
+                yPos += 14
+                const boxHeight = 25
+                
+                // Background box
                 pdf.setFillColor(245, 245, 245)
-                pdf.roundedRect(margin, yPos, pageWidth - margin * 2, boxHeight, 4, 4, 'F')
+                pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, boxHeight, 5, 5, 'F')
 
+                // Row
                 if (row) {
-                    pdf.setTextColor(160, 160, 160)
-                    pdf.setFontSize(8)
+                    pdf.setTextColor(150, 150, 150)
+                    pdf.setFontSize(9)
                     pdf.setFont('helvetica', 'normal')
-                    pdf.text('RANGEE', margin + 15, yPos + 8)
+                    pdf.text('RANGEE', margin + 18, yPos + 9)
+                    
                     pdf.setTextColor(76, 175, 80)
-                    pdf.setFontSize(18)
+                    pdf.setFontSize(20)
                     pdf.setFont('helvetica', 'bold')
-                    pdf.text(row, margin + 15, yPos + 18)
+                    pdf.text(row, margin + 18, yPos + 21)
                 }
 
+                // Divider
                 if (row && seat) {
                     pdf.setDrawColor(200, 200, 200)
                     pdf.setLineWidth(0.3)
-                    pdf.line(pageWidth / 2, yPos + 5, pageWidth / 2, yPos + boxHeight - 5)
+                    pdf.line(pageWidth / 2, yPos + 6, pageWidth / 2, yPos + boxHeight - 6)
                 }
 
+                // Seat
                 if (seat) {
-                    pdf.setTextColor(160, 160, 160)
-                    pdf.setFontSize(8)
+                    pdf.setTextColor(150, 150, 150)
+                    pdf.setFontSize(9)
                     pdf.setFont('helvetica', 'normal')
-                    pdf.text('SIEGE', pageWidth / 2 + 15, yPos + 8)
+                    pdf.text('SIEGE', pageWidth / 2 + 15, yPos + 9)
+                    
                     pdf.setTextColor(76, 175, 80)
-                    pdf.setFontSize(18)
+                    pdf.setFontSize(20)
                     pdf.setFont('helvetica', 'bold')
-                    pdf.text(seat, pageWidth / 2 + 15, yPos + 18)
+                    pdf.text(seat, pageWidth / 2 + 15, yPos + 21)
                 }
 
-                yPos += boxHeight + 8
+                yPos += boxHeight + 10
             } else {
-                yPos += 5
+                yPos += 6
             }
 
-            // Ticket ID
+            // ========== TICKET ID ==========
             pdf.setFillColor(250, 250, 250)
-            pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 12, 3, 3, 'F')
-            pdf.setTextColor(160, 160, 160)
+            pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, 14, 4, 4, 'F')
+            
+            pdf.setTextColor(150, 150, 150)
             pdf.setFontSize(8)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('TICKET ID', margin + 5, yPos + 5)
+            pdf.text('TICKET ID', margin + 6, yPos + 5)
+            
             pdf.setTextColor(80, 80, 80)
-            pdf.setFontSize(9)
+            pdf.setFontSize(10)
             pdf.setFont('helvetica', 'bold')
-            pdf.text(id, margin + 5, yPos + 10)
+            pdf.text(id, margin + 6, yPos + 11)
 
-            // Holder
+            // ========== HOLDER ==========
             if (holderName) {
-                yPos += 16
+                yPos += 18
                 pdf.setFillColor(250, 250, 250)
-                pdf.roundedRect(margin, yPos, pageWidth - margin * 2, 12, 3, 3, 'F')
-                pdf.setTextColor(160, 160, 160)
+                pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, 14, 4, 4, 'F')
+                
+                pdf.setTextColor(150, 150, 150)
                 pdf.setFontSize(8)
                 pdf.setFont('helvetica', 'normal')
-                pdf.text('TITULAIRE', margin + 5, yPos + 5)
+                pdf.text('TITULAIRE', margin + 6, yPos + 5)
+                
                 pdf.setTextColor(0, 0, 0)
-                pdf.setFontSize(10)
+                pdf.setFontSize(11)
                 pdf.setFont('helvetica', 'bold')
-                pdf.text(holderName, margin + 5, yPos + 10)
+                pdf.text(holderName, margin + 6, yPos + 11)
             }
 
             // ========== QR CODE ==========
-            yPos += 22
+            yPos += 25
             
             const qrDataUrl = await QRCode.toDataURL(qrValue, {
-                width: 300,
+                width: 400,
                 margin: 1,
                 color: { dark: '#000000', light: '#ffffff' }
             })
 
-            const qrSize = 40
+            const qrSize = 45
             const qrX = (pageWidth - qrSize) / 2
 
-            // QR background
+            // White background
             pdf.setFillColor(255, 255, 255)
-            pdf.roundedRect(qrX - 5, yPos - 3, qrSize + 10, qrSize + 10, 4, 4, 'F')
+            pdf.roundedRect(qrX - 6, yPos - 4, qrSize + 12, qrSize + 12, 5, 5, 'F')
 
-            // QR border
+            // Border
             pdf.setDrawColor(230, 230, 230)
             pdf.setLineWidth(0.5)
             pdf.roundedRect(qrX - 3, yPos - 1, qrSize + 6, qrSize + 6, 3, 3, 'S')
 
-            // QR code
+            // QR code image
             pdf.addImage(qrDataUrl, 'PNG', qrX, yPos, qrSize, qrSize)
 
             // Label
             pdf.setTextColor(140, 140, 140)
-            pdf.setFontSize(7)
+            pdf.setFontSize(8)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 10, { align: 'center' })
+            pdf.text('Scannez pour valider', pageWidth / 2, yPos + qrSize + 12, { align: 'center' })
 
             // ========== FOOTER ==========
-            const footerY = pageHeight - 14
+            const footerY = pageHeight - 16
             pdf.setFillColor(0, 0, 0)
-            pdf.rect(0, footerY, pageWidth, 14, 'F')
+            pdf.rect(0, footerY, pageWidth, 16, 'F')
 
             pdf.setTextColor(255, 255, 255)
-            pdf.setFontSize(14)
+            pdf.setFontSize(16)
             pdf.setFont('helvetica', 'bold')
-            pdf.text('Jel', 35, footerY + 9)
+            pdf.text('Jel', 32, footerY + 11)
             pdf.setTextColor(255, 215, 0)
-            pdf.text('Sa', 45, footerY + 9)
+            pdf.text('Sa', 43, footerY + 11)
             pdf.setTextColor(76, 175, 80)
-            pdf.text('Place', 55, footerY + 9)
+            pdf.text('Place', 54, footerY + 11)
 
+            // Download
             pdf.save(`ticket-${id}.pdf`)
         } catch (error) {
             console.error('Error generating PDF:', error)
@@ -454,7 +478,7 @@ export default function DynamicTicket({
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                     
                     <div className="absolute top-4 left-4">
-                        <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20`}>
+                        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 backdrop-blur-md border border-white/20">
                             <span className="text-white">{config.icon}</span>
                             <span className="text-xs font-bold text-white uppercase tracking-wider">
                                 {config.label}
@@ -580,7 +604,7 @@ export default function DynamicTicket({
                 </div>
             </div>
 
-            <div className={`absolute -bottom-4 left-4 right-4 h-8 rounded-[2rem] bg-green-500 opacity-20 blur-xl`} />
+            <div className="absolute -bottom-4 left-4 right-4 h-8 rounded-[2rem] bg-green-500 opacity-20 blur-xl" />
         </div>
     )
 }

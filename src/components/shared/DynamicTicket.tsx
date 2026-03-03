@@ -284,33 +284,56 @@ export default function DynamicTicket({
 
             yPos += 6
 
-            // ========== DATE & TIME (compact) ==========
+            // ========== DATE & TIME (compact) with icons ==========
+            // Calendar icon for DATE
+            pdf.setDrawColor(76, 175, 80)
+            pdf.setLineWidth(0.5)
+            pdf.roundedRect(margin + 2, yPos - 4, 4, 4, 0.5, 0.5, 'S')
+            pdf.line(margin + 2, yPos - 2.5, margin + 6, yPos - 2.5)
+            
             pdf.setTextColor(140, 140, 140)
             pdf.setFontSize(6)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('DATE', margin + 2, yPos)
-            pdf.text('HEURE', pageWidth / 2 + 3, yPos)
+            pdf.text('DATE', margin + 8, yPos)
+            
+            // Clock icon for HEURE
+            pdf.setDrawColor(76, 175, 80)
+            pdf.setLineWidth(0.5)
+            pdf.circle(pageWidth / 2 + 1, yPos - 2, 2, 'S')
+            pdf.line(pageWidth / 2 + 1, yPos - 2, pageWidth / 2 + 1.8, yPos - 2.8)
+            pdf.line(pageWidth / 2 + 1, yPos - 2, pageWidth / 2 + 1, yPos - 3.5)
+            
+            pdf.text('HEURE', pageWidth / 2 + 5, yPos)
 
             yPos += 4
             pdf.setTextColor(0, 0, 0)
             pdf.setFontSize(9)
             pdf.setFont('helvetica', 'bold')
-            pdf.text(date, margin + 2, yPos)
-            pdf.text(time, pageWidth / 2 + 3, yPos)
+            pdf.text(date, margin + 8, yPos)
+            pdf.text(time, pageWidth / 2 + 5, yPos)
 
-            // ========== LOCATION ==========
+            // ========== LOCATION with icon ==========
             yPos += 6
+            
+            // Location pin icon
+            pdf.setFillColor(76, 175, 80)
+            pdf.setDrawColor(76, 175, 80)
+            // Pin head (circle)
+            pdf.ellipse(margin + 3.5, yPos - 3, 1.5, 1.5, 'F')
+            // Pin body (triangle-like)
+            pdf.triangle(margin + 2, yPos - 2, margin + 5, yPos - 2, margin + 3.5, yPos + 0.5, 'F')
+            
             pdf.setTextColor(140, 140, 140)
             pdf.setFontSize(6)
             pdf.setFont('helvetica', 'normal')
-            pdf.text('LIEU', margin + 2, yPos)
+            pdf.text('LIEU', margin + 8, yPos)
 
             yPos += 4
             pdf.setTextColor(0, 0, 0)
             pdf.setFontSize(9)
             pdf.setFont('helvetica', 'bold')
-            const locationLines = pdf.splitTextToSize(location, pageWidth - margin * 2 - 4)
-            pdf.text(locationLines, margin + 2, yPos)
+            const locationLines = pdf.splitTextToSize(location, pageWidth - margin * 2 - 10)
+            pdf.text(locationLines, margin + 8, yPos)
 
             // ========== ZONE ==========
             yPos += 6

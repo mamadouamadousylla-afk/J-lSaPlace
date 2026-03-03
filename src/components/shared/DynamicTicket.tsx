@@ -387,25 +387,11 @@ export default function DynamicTicket({
             pdf.setFont('helvetica', 'bold')
             pdf.text(id, margin + 4, yPos + 8)
 
-            // ========== HOLDER ==========
-            if (holderName) {
-                yPos += 11
-                pdf.setFillColor(250, 250, 250)
-                pdf.roundedRect(margin + 2, yPos, pageWidth - margin * 2 - 4, 10, 3, 3, 'F')
-                
-                pdf.setTextColor(140, 140, 140)
-                pdf.setFontSize(6)
-                pdf.setFont('helvetica', 'normal')
-                pdf.text('TITULAIRE', margin + 4, yPos + 4)
-                
-                pdf.setTextColor(0, 0, 0)
-                pdf.setFontSize(8)
-                pdf.setFont('helvetica', 'bold')
-                pdf.text(holderName, margin + 4, yPos + 8)
-            }
+            // ========== HOLDER (removed) ==========
+            // Skip holder to save space
 
             // ========== QR CODE ==========
-            yPos += 12
+            yPos += 8
             
             const qrDataUrl = await QRCode.toDataURL(qrValue, {
                 width: 400,

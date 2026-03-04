@@ -64,7 +64,7 @@ create table if not exists public.events (
     image_url       text,
     description     text,
     tag             text,
-    status          text not null default 'published' check (status in ('published','cancelled','sold_out')),
+    status          text not null default 'published' check (status in ('published','cancelled','sold_out','draft','archived','deleted')),
     created_at      timestamptz not null default now(),
     promoter        text,
     promoter_logo   text,

@@ -40,13 +40,8 @@ export async function POST(request: NextRequest) {
                 error.message.includes("provider")
             ) {
                 console.log("SMS provider not available, using development mode")
-                // Return success for development - in production, configure SMS provider
-                return NextResponse.json({ 
-                    success: true, 
-                    message: "OTP envoyé (mode développement)",
-                    dev_otp: "123456", // Only for development
-                    dev_mode: true
-                })
+                // SMS provider not available
+                return NextResponse.json({ error: "Service SMS temporairement indisponible" }, { status: 503 })
             }
             
             console.error("Erreur envoi OTP:", error)

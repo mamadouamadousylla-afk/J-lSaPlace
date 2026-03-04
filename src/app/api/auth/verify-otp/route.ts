@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
         console.log("[VERIFY OTP] Phone:", formattedPhone, "Token:", token, "Store result:", otpResult.valid, "Store size:", otpStore.size)
         console.log("[VERIFY OTP] Store keys:", Array.from(otpStore.keys()))
 
-        // Development mode: accept "123456" as valid OTP or check store
-        if (token === "123456" || otpResult.valid) {
-            console.log("[VERIFY OTP] Success - token:", token, "storeValid:", otpResult.valid)
+        // Check OTP from store
+        if (otpResult.valid) {
+            console.log("[VERIFY OTP] Success - storeValid:", otpResult.valid)
             
             // Try to find existing user
             const { data: existingUsers } = await supabase

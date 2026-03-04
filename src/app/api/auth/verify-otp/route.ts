@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
-import { verifyOTP } from "@/lib/otp-store"
+import { verifyOTP, otpStore } from "@/lib/otp-store"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -19,10 +19,13 @@ export async function POST(request: NextRequest) {
 
         // Check OTP from shared store
         const otpResult = verifyOTP(formattedPhone, token)
+        
+        console.log("[VERIFY OTP] Phone:", formattedPhone, "Token:", token, "Store result:", otpResult.valid, "Store size:", otpStore.size)
+        console.log("[VERIFY OTP] Store keys:", Array.from(otpStore.keys()))
 
-        // Development mode: accept "123456" as valid OTP
+        // Development mode: accept "123456" as valid OTP or check store
         if (token === "123456" || otpResult.valid) {
-            console.log("OTP verified successfully")
+            console.log("[VERIFY OTP] Success - token:", token, "storeValid:", otpResult.valid)
             
             // Try to find existing user
             const { data: existingUsers } = await supabase

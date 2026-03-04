@@ -79,13 +79,24 @@ export default function AdminSidebar() {
             </nav>
 
             {/* Footer actions */}
-            <div className="p-4 border-t border-gray-100">
+            <div className="p-4 border-t border-gray-100 space-y-2">
                 <button
                     onClick={() => router.push('/')}
+                    className="flex relative items-center gap-3 px-4 py-3 w-full rounded-2xl text-gray-600 hover:bg-gray-100 font-bold text-sm transition-all text-left"
+                >
+                    <LogOut className="w-5 h-5 text-gray-400" />
+                    Voir le site
+                </button>
+                <button
+                    onClick={() => {
+                        localStorage.removeItem("admin_auth")
+                        localStorage.removeItem("admin_email")
+                        router.push("/admin/login")
+                    }}
                     className="flex relative items-center gap-3 px-4 py-3 w-full rounded-2xl text-red-600 hover:bg-red-50 font-bold text-sm transition-all text-left"
                 >
                     <LogOut className="w-5 h-5 text-red-400" />
-                    Quitter l'Admin
+                    Déconnexion
                 </button>
             </div>
 

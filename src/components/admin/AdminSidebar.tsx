@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSiteSettings } from "@/context/SettingsContext"
+import NotificationBell from "./NotificationBell"
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Vue d'ensemble", href: "/admin", exact: true },
@@ -33,13 +34,14 @@ export default function AdminSidebar() {
     return (
         <aside className="fixed left-0 top-0 bottom-0 w-64 bg-white border-r border-gray-100 flex flex-col z-50">
             {/* Logo area */}
-            <div className="h-20 flex items-center px-8 border-b border-gray-100">
+            <div className="h-20 flex items-center justify-between px-6 border-b border-gray-100">
                 <div className="flex items-center gap-2">
                     <img src={site.logo_url || "/logo-sunulamb.png"} alt={site.name || "SunuLamb"} className="h-6 w-auto" />
                     <span className="font-poppins font-black text-xs text-gray-500 tracking-widest uppercase">
                         Admin
                     </span>
                 </div>
+                <NotificationBell />
             </div>
 
             {/* Navigation */}

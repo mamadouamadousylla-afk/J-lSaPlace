@@ -278,3 +278,119 @@ insert into public.payments (user_id, event_id, amount, fee, payment_method, sta
 ((select id from public.users offset 3 limit 1), (select id from public.events offset 2 limit 1), 25000, 750, 'free', 'completed', '774567890'),
 ((select id from public.users offset 4 limit 1), (select id from public.events limit 1), 10000, 300, 'card', 'failed', '775678901');
 
+-- =============================================
+-- Table: admin_notifications (notifications pour l'admin)
+-- =============================================
+create table if not exists public.admin_notifications (
+    id              uuid primary key default uuid_generate_v4(),
+    type            text not null check (type in ('ticket_purchased', 'payment_received', 'event_created', 'user_registered', 'system')),
+    title           text not null,
+    message         text not null,
+    data            jsonb,              -- données additionnelles (ticket_id, user_id, etc.)
+    is_read         boolean not null default false,
+    created_at      timestamptz not null default now()
+);
+
+-- Index pour les notifications non lues
+create index if not exists idx_notifications_unread on public.admin_notifications(is_read, created_at desc);
+create index if not exists idx_notifications_type on public.admin_notifications(type);
+
+-- Activer RLS
+alter table public.admin_notifications enable row level security;
+
+-- Politiques RLS pour notifications
+-- Tout le monde peut lire (pour l'admin)
+create policy "Allow public read on notifications" on public.admin_notifications
+    for select to anon, authenticated using (true);
+
+-- Tout le monde peut insérer (pour créer des notifications)
+create policy "Allow public insert on notifications" on public.admin_notifications
+    for insert to anon, authenticated with check (true);
+
+-- Tout le monde peut mettre à jour (pour marquer comme lu)
+create policy "Allow public update on notifications" on public.admin_notifications
+    for update to anon, authenticated using (true) with check (true);
+
+-- =============================================
+-- Fonction: Créer une notification quand un ticket est acheté
+-- =============================================
+create or replace function create_ticket_notification()
+returns trigger as $$
+declare
+    event_title text;
+    user_name text;
+begin
+    -- Récupérer les infos de l'événement et de l'utilisateur
+    select e.title, u.full_name into event_title, user_name
+    from public.events e
+    left join public.users u on u.id = new.user_id
+    where e.id = new.event_id;
+
+    -- Créer la notification
+    insert into public.admin_notifications (type, title, message, data)
+    values (
+        'ticket_purchased',
+        'Nouveau ticket vendu',
+        coalesce(user_name, 'Un utilisateur') || ' a acheté ' || new.quantity || ' ticket(s) ' || new.zone || ' pour "' || coalesce(event_title, 'un événement') || '"',
+        jsonb_build_object(
+            'ticket_id', new.id,
+            'event_id', new.event_id,
+            'user_id', new.user_id,
+            'zone', new.zone,
+            'quantity', new.quantity,
+            'total_price', new.total_price
+        )
+    );
+
+    return new;
+end;
+$$ language plpgsql security definer;
+
+-- Trigger sur la table tickets
+drop trigger if exists on_ticket_created on public.tickets;
+create trigger on_ticket_created
+    after insert on public.tickets
+    for each row execute function create_ticket_notification();
+
+-- =============================================
+-- Fonction: Créer une notification quand un paiement est reçu
+-- =============================================
+create or replace function create_payment_notification()
+returns trigger as $$
+declare
+    event_title text;
+    user_name text;
+begin
+    -- Récupérer les infos
+    select e.title, u.full_name into event_title, user_name
+    from public.events e
+    left join public.users u on u.id = new.user_id
+    where e.id = new.event_id;
+
+    -- Créer la notification seulement si le paiement est complété
+    if new.status = 'completed' then
+        insert into public.admin_notifications (type, title, message, data)
+        values (
+            'payment_received',
+            'Paiement reçu',
+            'Paiement de ' || new.amount || ' FCFA via ' || upper(new.payment_method) || ' pour "' || coalesce(event_title, 'un événement') || '"',
+            jsonb_build_object(
+                'payment_id', new.id,
+                'event_id', new.event_id,
+                'user_id', new.user_id,
+                'amount', new.amount,
+                'payment_method', new.payment_method
+            )
+        );
+    end if;
+
+    return new;
+end;
+$$ language plpgsql security definer;
+
+-- Trigger sur la table payments
+drop trigger if exists on_payment_completed on public.payments;
+create trigger on_payment_completed
+    after insert or update on public.payments
+    for each row execute function create_payment_notification();
+

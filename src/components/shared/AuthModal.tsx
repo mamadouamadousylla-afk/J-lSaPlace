@@ -32,6 +32,8 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
     const [companyName, setCompanyName] = useState("")
     const [contactName, setContactName] = useState("")
     const [promoPhone, setPromoPhone] = useState("")
+    const [promoPassword, setPromoPassword] = useState("")
+    const [showPromoPassword, setShowPromoPassword] = useState(false)
     const [promoEmail, setPromoEmail] = useState("")
     const [promoDesc, setPromoDesc] = useState("")
     const [promoWebsite, setPromoWebsite] = useState("")
@@ -176,6 +178,8 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
         setCompanyName("")
         setContactName("")
         setPromoPhone("")
+        setPromoPassword("")
+        setShowPromoPassword(false)
         setPromoEmail("")
         setPromoDesc("")
         setPromoWebsite("")
@@ -189,27 +193,79 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
             setError("Veuillez remplir les champs obligatoires")
             return
         }
+        if (!promoPassword || promoPassword.length < 6) {
+            setError("Le mot de passe doit contenir au moins 6 caractères")
+            return
+        }
         setLoading(true)
         setError(null)
         try {
-            const stored = localStorage.getItem("user_session")
-            const user = stored ? JSON.parse(stored) : null
-            const res = await fetch("/api/promoters", {
+            const formattedPhone = promoPhone.startsWith("+") ? promoPhone : `+221${promoPhone}`
+            const nameParts = contactName.trim().split(" ")
+            const firstName = nameParts[0] || contactName
+            const lastName = nameParts.slice(1).join(" ") || contactName
+
+            // Step 1: Create user account
+            const regRes = await fetch('/api/auth/register', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    user_id: user?.id || null,
+                    phone: formattedPhone,
+                    firstName,
+                    lastName,
+                    password: promoPassword
+                })
+            })
+            const regData = await regRes.json()
+
+            let userId: string | null = null
+
+            if (!regRes.ok) {
+                // If account already exists, try to get userId via login
+                if (regRes.status === 409) {
+                    const loginRes = await fetch('/api/auth/login', {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ phone: formattedPhone, password: promoPassword })
+                    })
+                    const loginData = await loginRes.json()
+                    if (loginRes.ok) {
+                        userId = loginData.user?.id || null
+                    } else {
+                        setError("Ce numéro est déjà utilisé. Vérifiez votre mot de passe.")
+                        setLoading(false)
+                        return
+                    }
+                } else {
+                    setError(regData.error || "Erreur lors de la création du compte")
+                    setLoading(false)
+                    return
+                }
+            } else {
+                userId = regData.user?.id || null
+                // Save user session
+                if (typeof window !== "undefined" && regData.user) {
+                    localStorage.setItem("user_session", JSON.stringify(regData.user))
+                }
+            }
+
+            // Step 2: Submit promoter request
+            const promoRes = await fetch("/api/promoters", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    user_id: userId,
                     company_name: companyName,
                     contact_name: contactName,
-                    phone: promoPhone.startsWith("+") ? promoPhone : `+221${promoPhone}`,
+                    phone: formattedPhone,
                     email: promoEmail || null,
                     description: promoDesc || null,
                     website: promoWebsite || null
                 })
             })
-            const data = await res.json()
-            if (!res.ok) {
-                setError(data.error || "Erreur lors de l'envoi")
+            const promoData = await promoRes.json()
+            if (!promoRes.ok) {
+                setError(promoData.error || "Erreur lors de l'envoi")
             } else {
                 setPromoterSuccess(true)
             }
@@ -350,8 +406,12 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                     </div>
                                     <h3 className="text-lg font-bold text-gray-900">Demande envoyée !</h3>
                                     <p className="text-sm text-gray-500">
-                                        Votre demande de compte promoteur est en cours d'examen par l'administrateur. Vous serez notifié une fois approuvé.
+                                        Votre demande est en cours d'examen. Une fois approuvé, connectez-vous sur :
                                     </p>
+                                    <div className="px-4 py-3 bg-orange-50 border border-orange-200 rounded-xl">
+                                        <p className="font-bold text-orange-600 text-sm">/promoteur/login</p>
+                                        <p className="text-xs text-orange-500 mt-0.5">avec votre numéro + mot de passe</p>
+                                    </div>
                                     <button onClick={handleClose} className="px-6 py-3 bg-[#2D75B6] text-white font-bold rounded-xl">
                                         Fermer
                                     </button>
@@ -405,6 +465,21 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                             className="w-full px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 text-gray-900 text-sm" />
                                     </div>
 
+                                    {/* Password */}
+                                    <div className="space-y-1.5">
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Mot de passe *</label>
+                                        <div className="relative">
+                                            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                            <input type={showPromoPassword ? "text" : "password"} placeholder="Créez un mot de passe" value={promoPassword} onChange={e => setPromoPassword(e.target.value)}
+                                                className="w-full pl-11 pr-12 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 text-gray-900 text-sm" />
+                                            <button type="button" onClick={() => setShowPromoPassword(!showPromoPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                                                {showPromoPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                        <p className="text-[10px] text-gray-400">Vous utiliserez ce mot de passe pour accéder à votre espace promoteur</p>
+                                    </div>
+
                                     {/* Description */}
                                     <div className="space-y-1.5">
                                         <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Description (optionnel)</label>
@@ -424,9 +499,9 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                         </p>
                                     </div>
 
-                                    <button onClick={handlePromoterSubmit} disabled={loading || !companyName || !contactName || !promoPhone}
+                                    <button onClick={handlePromoterSubmit} disabled={loading || !companyName || !contactName || !promoPhone || !promoPassword}
                                         className={cn("w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all",
-                                            loading || !companyName || !contactName || !promoPhone
+                                            loading || !companyName || !contactName || !promoPhone || !promoPassword
                                                 ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                                 : "bg-orange-500 text-white shadow-lg shadow-orange-500/20")}>
                                         {loading ? <><Loader2 className="w-5 h-5 animate-spin" />Envoi...</> : <>Envoyer la demande <ArrowRight className="w-5 h-5" /></>}

@@ -4,8 +4,20 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase } from "@/lib/supabase"
 import type { User, Session } from "@supabase/supabase-js"
 
+interface CustomUser {
+    id: string
+    full_name: string
+    first_name: string
+    last_name: string
+    phone: string
+    email?: string
+    points?: number
+    avatar_url?: string
+    created_at: string
+}
+
 interface AuthContextType {
-    user: User | null
+    user: User | CustomUser | null
     session: Session | null
     loading: boolean
     sendOTP: (phone: string) => Promise<{ error?: string }>
@@ -16,15 +28,21 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<User | null>(null)
+    const [user, setUser] = useState<User | CustomUser | null>(null)
     const [session, setSession] = useState<Session | null>(null)
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        // Get initial session
+        // Check custom session from localStorage first
+        const stored = localStorage.getItem("user_session")
+        if (stored) {
+            try { setUser(JSON.parse(stored)) } catch {}
+        }
+
+        // Get initial Supabase session
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session)
-            setUser(session?.user ?? null)
+            if (session?.user) setUser(session.user)
             setLoading(false)
         })
 
@@ -32,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             (_event, session) => {
                 setSession(session)
-                setUser(session?.user ?? null)
+                if (session?.user) setUser(session.user)
             }
         )
 
@@ -68,6 +86,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     const signOut = async () => {
+        localStorage.removeItem("user_session")
+        setUser(null)
         await supabase.auth.signOut()
     }
 

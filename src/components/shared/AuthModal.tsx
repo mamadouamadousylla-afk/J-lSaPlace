@@ -36,50 +36,69 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
             setError("Numéro de téléphone invalide")
             return
         }
-        
-        // For signup, require first and last name
-        if (mode === 'signup' && (!firstName.trim() || !lastName.trim())) {
+
+        // ── LOGIN: verify phone + password directly, no OTP ──
+        if (mode === 'login') {
+            if (!password) {
+                setError("Mot de passe requis")
+                return
+            }
+            setLoading(true)
+            setError(null)
+            try {
+                const res = await fetch("/api/auth/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ phone: `+221${phone}`, password })
+                })
+                const data = await res.json()
+                if (!res.ok) {
+                    setError(data.error || "Identifiants incorrects")
+                    setLoading(false)
+                    return
+                }
+                if (typeof window !== "undefined") {
+                    localStorage.setItem("user_session", JSON.stringify(data.user))
+                }
+                onSuccess?.()
+                onClose()
+                setPhone(""); setPassword(""); setStep('phone')
+            } catch {
+                setError("Erreur de connexion")
+            }
+            setLoading(false)
+            return
+        }
+
+        // ── SIGNUP: validate fields then send OTP ──
+        if (!firstName.trim() || !lastName.trim()) {
             setError("Veuillez remplir tous les champs")
             return
         }
-        
-        // For signup, require password
-        if (mode === 'signup' && (!password || password.length < 6)) {
+        if (!password || password.length < 6) {
             setError("Le mot de passe doit contenir au moins 6 caractères")
             return
         }
-        
         setLoading(true)
         setError(null)
-        
         try {
-            const endpoint = '/api/auth/sms-otp'
-            const body = { 
-                phone: `+221${phone}`, 
-                firstName: mode === 'signup' ? firstName : undefined, 
-                lastName: mode === 'signup' ? lastName : undefined,
-                password: mode === 'signup' ? password : undefined
-            }
-            
-            const res = await fetch(endpoint, {
+            const res = await fetch('/api/auth/sms-otp', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(body)
+                body: JSON.stringify({ phone: `+221${phone}`, firstName, lastName, password })
             })
-            
             const data = await res.json()
-            
             if (!res.ok) {
                 setError(data.error || "Erreur lors de l'envoi")
                 setLoading(false)
                 return
             }
-            
+            // Dev mode: auto-fill OTP
+            if (data.dev_otp) setOtp(data.dev_otp)
             setStep('otp')
-        } catch (err) {
+        } catch {
             setError("Erreur de connexion")
         }
-        
         setLoading(false)
     }
 

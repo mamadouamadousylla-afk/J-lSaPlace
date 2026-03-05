@@ -90,18 +90,18 @@ export default function NewEventPage() {
 
         let imageUrl = ""
         if (imageFile) {
-            const ext = imageFile.name.split(".").pop()
-            const filename = `event_${Date.now()}.${ext}`
-            const { data: uploadData, error: uploadError } = await supabase.storage
-                .from("events")
-                .upload(filename, imageFile, { upsert: true })
-            if (uploadError) {
-                setError("Erreur lors de l'upload de l'image")
-                setLoading(false)
-                return
+            const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
+            const filename = `events/${Date.now()}_${sanitizedName}`
+            const { error: uploadError } = await supabase.storage
+                .from("event-images")
+                .upload(filename, imageFile, { cacheControl: "3600", upsert: false })
+            if (!uploadError) {
+                const { data: urlData } = supabase.storage.from("event-images").getPublicUrl(filename)
+                imageUrl = urlData.publicUrl
+            } else {
+                console.warn("Image upload failed:", uploadError.message)
+                // Continue without image — don't block event creation
             }
-            const { data: urlData } = supabase.storage.from("events").getPublicUrl(filename)
-            imageUrl = urlData.publicUrl
         }
 
         // Format month label from date

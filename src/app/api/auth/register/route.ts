@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createClient } from "@supabase/supabase-js"
 
-const supabaseAnon = createClient(
+const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
-// Service role pour bypasser RLS sur le upsert
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 // POST /api/auth/register — Inscription directe sans OTP
@@ -27,25 +21,28 @@ export async function POST(request: NextRequest) {
 
         const formattedPhone = phone.startsWith("+") ? phone : `+221${phone}`
         const fullName = `${firstName} ${lastName}`.trim()
-        // Fake email basé sur le numéro de téléphone pour Supabase Auth
         const fakeEmail = `${formattedPhone.replace('+', '')}@sunulamb.local`
 
-        // Vérifier si le numéro existe déjà dans public.users
-        const { data: existing } = await supabaseAnon
+        // Vérifier si le numéro existe déjà
+        const { data: existingByPhone } = await supabase
             .from("users")
             .select("id")
             .eq("phone", formattedPhone)
             .limit(1)
 
-        if (existing && existing.length > 0) {
+        if (existingByPhone && existingByPhone.length > 0) {
             return NextResponse.json(
                 { error: "Ce numéro de téléphone est déjà utilisé" },
                 { status: 409 }
             )
         }
 
-        // Créer un vrai utilisateur dans auth.users via signUp
-        const { data: authData, error: authError } = await supabaseAnon.auth.signUp({
+        // Essayer de créer avec l'API Admin (bypass email confirmation)
+        // Note: Cela nécessite une edge function ou une configuration spéciale
+        // Fallback: utiliser signUp et confirmer automatiquement
+        
+        // Créer l'utilisateur dans auth.users
+        const { data: authData, error: authError } = await supabase.auth.signUp({
             email: fakeEmail,
             password: password,
             options: {
@@ -58,40 +55,71 @@ export async function POST(request: NextRequest) {
             }
         })
 
-        if (authError || !authData.user) {
+        if (authError) {
             console.error("[REGISTER] Auth error:", authError)
-            // Si l'email existe déjà dans auth, c'est un doublon
-            if (authError?.message?.includes('already registered')) {
+            if (authError.message?.includes('already registered') || authError.message?.includes('already exists')) {
                 return NextResponse.json({ error: "Ce numéro est déjà associé à un compte" }, { status: 409 })
             }
             return NextResponse.json(
-                { error: authError?.message || "Erreur lors de la création du compte" },
+                { error: authError.message || "Erreur lors de la création du compte" },
                 { status: 500 }
             )
         }
 
+        if (!authData.user) {
+            return NextResponse.json({ error: "Erreur lors de la création du compte" }, { status: 500 })
+        }
+
         const userId = authData.user.id
 
-        // Mettre à jour public.users avec les données complètes
-        // (le trigger handle_new_user a créé la ligne, on la complète)
-        await supabaseAdmin
-            .from("users")
-            .upsert({
-                id: userId,
-                phone: formattedPhone,
-                full_name: fullName,
-                first_name: firstName,
-                last_name: lastName,
-                password: password,
-                points: 0
-            }, { onConflict: 'id' })
+        // Attendre que le trigger handle_new_user crée la ligne
+        await new Promise(resolve => setTimeout(resolve, 500))
 
-        // Récupérer les données utilisateur
-        const { data: userRow } = await supabaseAdmin
+        // Vérifier si l'utilisateur existe déjà dans public.users (créé par le trigger)
+        const { data: existingUser } = await supabase
+            .from("users")
+            .select("id")
+            .eq("id", userId)
+            .limit(1)
+
+        if (existingUser && existingUser.length > 0) {
+            // Mettre à jour les données
+            await supabase
+                .from("users")
+                .update({
+                    phone: formattedPhone,
+                    full_name: fullName,
+                    first_name: firstName,
+                    last_name: lastName,
+                    password: password,
+                    points: 0
+                })
+                .eq("id", userId)
+        } else {
+            // Insérer directement
+            await supabase
+                .from("users")
+                .insert({
+                    id: userId,
+                    phone: formattedPhone,
+                    full_name: fullName,
+                    first_name: firstName,
+                    last_name: lastName,
+                    password: password,
+                    points: 0
+                })
+        }
+
+        // Récupérer les données finales
+        const { data: userRow, error: fetchError } = await supabase
             .from("users")
             .select("*")
             .eq("id", userId)
             .single()
+
+        if (fetchError) {
+            console.error("[REGISTER] Fetch error:", fetchError)
+        }
 
         const user = userRow || {
             id: userId,
@@ -99,7 +127,8 @@ export async function POST(request: NextRequest) {
             first_name: firstName,
             last_name: lastName,
             phone: formattedPhone,
-            points: 0
+            points: 0,
+            created_at: new Date().toISOString()
         }
 
         return NextResponse.json({

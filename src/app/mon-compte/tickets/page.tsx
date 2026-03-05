@@ -49,55 +49,52 @@ function TicketsContent() {
 
     useEffect(() => {
         async function loadTickets() {
-            if (!user) {
-                setLoading(false)
-                return
-            }
-            
             setLoading(true)
             
             // Load tickets from localStorage (for non-logged users or fallback)
             const saved = localStorage.getItem("sunulamb_tickets")
             let currentTickets: TicketData[] = saved ? JSON.parse(saved) : []
 
-            // If user is logged in, load tickets from Supabase
-            const userId = user.id
-            const { data: dbTickets, error } = await supabase
-                .from("tickets")
-                .select(`
-                    *,
-                    events:event_id (*)
-                `)
-                .eq("user_id", userId)
-                .order("created_at", { ascending: false })
+            // If user is logged in, also load tickets from Supabase
+            if (user) {
+                const userId = user.id
+                const { data: dbTickets, error } = await supabase
+                    .from("tickets")
+                    .select(`
+                        *,
+                        events:event_id (*)
+                    `)
+                    .eq("user_id", userId)
+                    .order("created_at", { ascending: false })
 
-            if (dbTickets && !error) {
-                // Convert DB tickets to TicketData format
-                const formattedTickets: TicketData[] = dbTickets.map((t: any) => ({
-                    id: t.qr_code,
-                    title: t.events?.title || "Événement",
-                    date: t.events?.date || "",
-                    time: t.events?.time || "",
-                    location: t.events?.location || "",
-                    category: t.events?.category || "SPORT",
-                    zone: t.zone,
-                    row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
-                    seat: String(Math.floor(Math.random() * 100) + 1),
-                    imageUrl: t.events?.image_url,
-                    holderName: user.full_name || "Titulaire",
-                    status: t.status === "confirmed" ? "upcoming" : "past",
-                    downloaded: false,
-                    db_id: t.id
-                }))
-                
-                // Merge with local tickets (avoid duplicates)
-                const existingIds = new Set(currentTickets.map(t => t.id))
-                const newTickets = formattedTickets.filter(t => !existingIds.has(t.id))
-                currentTickets = [...newTickets, ...currentTickets]
+                if (dbTickets && !error) {
+                    // Convert DB tickets to TicketData format
+                    const formattedTickets: TicketData[] = dbTickets.map((t: any) => ({
+                        id: t.qr_code,
+                        title: t.events?.title || "Événement",
+                        date: t.events?.date || "",
+                        time: t.events?.time || "",
+                        location: t.events?.location || "",
+                        category: t.events?.category || "SPORT",
+                        zone: t.zone,
+                        row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
+                        seat: String(Math.floor(Math.random() * 100) + 1),
+                        imageUrl: t.events?.image_url,
+                        holderName: user.full_name || "Titulaire",
+                        status: t.status === "confirmed" ? "upcoming" : "past",
+                        downloaded: false,
+                        db_id: t.id
+                    }))
+                    
+                    // Merge with local tickets (avoid duplicates)
+                    const existingIds = new Set(currentTickets.map(t => t.id))
+                    const newTickets = formattedTickets.filter(t => !existingIds.has(t.id))
+                    currentTickets = [...newTickets, ...currentTickets]
+                }
             }
 
-            // If new purchase detected in URL (from payment flow)
-            if (id && qty && cat && !user) {
+            // If new purchase detected in URL (from payment flow) - works for both guests and logged users
+            if (id && qty && cat) {
                 // Fetch event details from Supabase
                 const { data: eventData, error } = await supabase
                     .from("events")
@@ -130,7 +127,7 @@ function TicketsContent() {
                             row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
                             seat: String(Math.floor(Math.random() * 100) + 1),
                             imageUrl: eventData.image_url,
-                            holderName: "Titulaire",
+                            holderName: user?.full_name || "Titulaire",
                             status: "upcoming",
                             downloaded: false
                         }
@@ -178,60 +175,11 @@ function TicketsContent() {
         return t.status === activeTab
     })
 
-    // ── NOT LOGGED IN: Show auth required screen ──
-    if (!user && !loading) {
-        return (
-            <>
-                <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-                    {/* Header */}
-                    <header className="px-6 py-6 flex items-center justify-between bg-black sticky top-0 z-30">
-                        <button
-                            onClick={() => router.back()}
-                            className="p-3 rounded-full bg-white/10 border border-white/20"
-                        >
-                            <ChevronLeft className="w-6 h-6 text-white" />
-                        </button>
-                        <div className="flex items-center gap-1">
-                            <span className="text-xl font-black text-white">Jël</span>
-                            <span className="text-xl font-black text-yellow-400">Sa</span>
-                            <span className="text-xl font-black text-green-400">Place</span>
-                        </div>
-                        <div className="w-12" />
-                    </header>
+    // ── NOT LOGGED IN: Check if coming from purchase flow ──
+    // If user has tickets in localStorage or URL params, show tickets without requiring login
+    const hasGuestTickets = displayTickets.length > 0 || (id && qty && cat)
 
-                    <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
-                        <div className="w-20 h-20 bg-[#2D75B6]/10 rounded-full flex items-center justify-center">
-                            <Lock className="w-10 h-10 text-[#2D75B6]" />
-                        </div>
-                        <div className="text-center space-y-2">
-                            <h2 className="text-2xl font-bold text-gray-900">Connexion requise</h2>
-                            <p className="text-gray-500 text-sm">
-                                Connectez-vous pour voir vos billets et votre historique d'achats
-                            </p>
-                        </div>
-                        <button
-                            onClick={() => setShowAuthModal(true)}
-                            className="px-8 py-4 bg-[#2D75B6] text-white font-bold rounded-2xl shadow-lg hover:scale-[1.02] transition-transform"
-                        >
-                            Se connecter
-                        </button>
-                    </div>
-                </div>
-
-                <AuthModal
-                    isOpen={showAuthModal}
-                    onClose={() => setShowAuthModal(false)}
-                    mode="login"
-                    onSuccess={() => {
-                        // Reload to check auth
-                        window.location.reload()
-                    }}
-                />
-            </>
-        )
-    }
-
-    // ── LOGGED IN: Show tickets ──
+    // ── Show tickets (logged in or guest with tickets) ──
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pb-32">
             {/* Header with Jël Sa Place branding */}
@@ -248,12 +196,44 @@ function TicketsContent() {
                     <span className="text-xl font-black text-green-400">Place</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <button className="p-3 rounded-full bg-white/10 border border-white/20 relative">
-                        <Bell className="w-6 h-6 text-white" />
-                        <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-black" />
-                    </button>
+                    {!user ? (
+                        <button 
+                            onClick={() => setShowAuthModal(true)}
+                            className="px-4 py-2 bg-white/10 text-white text-sm font-bold rounded-full border border-white/20 hover:bg-white/20 transition-colors"
+                        >
+                            Se connecter
+                        </button>
+                    ) : (
+                        <button className="p-3 rounded-full bg-white/10 border border-white/20 relative">
+                            <Bell className="w-6 h-6 text-white" />
+                            <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-green-400 rounded-full border-2 border-black" />
+                        </button>
+                    )}
                 </div>
             </header>
+
+            {/* Guest banner - show if not logged in but has tickets */}
+            {!user && hasGuestTickets && (
+                <div className="mx-4 mt-4 p-4 bg-blue-50 border border-blue-200 rounded-2xl">
+                    <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <Lock className="w-5 h-5 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                            <p className="font-bold text-blue-900 text-sm">Achat sans compte</p>
+                            <p className="text-blue-700 text-xs mt-0.5">
+                                Vos billets sont sauvegardés sur cet appareil. Connectez-vous pour les sécuriser dans votre compte.
+                            </p>
+                            <button 
+                                onClick={() => setShowAuthModal(true)}
+                                className="mt-2 text-blue-600 text-xs font-bold hover:underline"
+                            >
+                                Créer un compte →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="px-4 py-6 space-y-6">
                 {/* Tabs - Only Active and History */}

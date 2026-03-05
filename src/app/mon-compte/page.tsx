@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { User, Settings, CreditCard, Bell, LogOut, ChevronRight, Trophy, Lock, UserPlus } from "lucide-react"
+import { User, Settings, CreditCard, Bell, LogOut, ChevronRight, Trophy, Lock, UserPlus, X, Building2 } from "lucide-react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import AuthModal from "@/components/shared/AuthModal"
@@ -30,6 +30,7 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true)
     const [showAuthModal, setShowAuthModal] = useState(false)
     const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
+    const [showSignupTypeModal, setShowSignupTypeModal] = useState(false)
 
     // Check if user is logged in
     useEffect(() => {
@@ -61,6 +62,10 @@ export default function ProfilePage() {
     const openSignup = () => {
         setAuthMode('signup')
         setShowAuthModal(true)
+    }
+
+    const openSignupType = () => {
+        setShowSignupTypeModal(true)
     }
 
     if (loading) {
@@ -129,7 +134,7 @@ export default function ProfilePage() {
 
                             {/* Signup Button */}
                             <button
-                                onClick={openSignup}
+                                onClick={openSignupType}
                                 className="w-full py-4 bg-white/20 backdrop-blur text-white font-bold rounded-2xl flex items-center justify-center gap-3 border border-white/30 hover:bg-white/30 transition-colors"
                             >
                                 <UserPlus className="w-5 h-5" />
@@ -170,6 +175,22 @@ export default function ProfilePage() {
                     mode={authMode}
                     onSuccess={() => {
                         // User will be set by useEffect when localStorage changes
+                    }}
+                />
+
+                {/* Signup Type Selection Modal */}
+                <SignupTypeModal
+                    isOpen={showSignupTypeModal}
+                    onClose={() => setShowSignupTypeModal(false)}
+                    onSelectStandard={() => {
+                        setShowSignupTypeModal(false)
+                        setAuthMode('signup')
+                        setShowAuthModal(true)
+                    }}
+                    onSelectPromoter={() => {
+                        setShowSignupTypeModal(false)
+                        // Redirect to promoter signup
+                        window.location.href = '/promoteur/login'
                     }}
                 />
             </>
@@ -288,4 +309,118 @@ export default function ProfilePage() {
 
 function cn(...inputs: any[]) {
     return inputs.filter(Boolean).join(" ")
+}
+
+// Signup Type Selection Modal Component
+interface SignupTypeModalProps {
+    isOpen: boolean
+    onClose: () => void
+    onSelectStandard: () => void
+    onSelectPromoter: () => void
+}
+
+function SignupTypeModal({ isOpen, onClose, onSelectStandard, onSelectPromoter }: SignupTypeModalProps) {
+    if (!isOpen) return null
+
+    return (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+            {/* Backdrop */}
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={onClose}
+                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+
+            {/* Modal */}
+            <motion.div
+                initial={{ y: 100, opacity: 0, scale: 0.95 }}
+                animate={{ y: 0, opacity: 1, scale: 1 }}
+                exit={{ y: 100, opacity: 0, scale: 0.95 }}
+                className="relative w-full max-w-md bg-white rounded-[2.5rem] overflow-hidden shadow-2xl"
+            >
+                {/* Header */}
+                <div className="p-6 pb-4 flex items-center justify-between border-b border-gray-100">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-[#2D75B6] flex items-center justify-center">
+                            <UserPlus className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900">Créer un compte</h2>
+                            <p className="text-sm text-gray-500">Choisissez votre type de compte</p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                        <X className="w-5 h-5 text-gray-400" />
+                    </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                    {/* Standard Account */}
+                    <button
+                        onClick={onSelectStandard}
+                        className="w-full p-5 rounded-2xl border-2 border-gray-100 hover:border-[#2D75B6] hover:bg-[#2D75B6]/5 transition-all group text-left"
+                    >
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-[#2D75B6]/10 flex items-center justify-center group-hover:bg-[#2D75B6]/20 transition-colors">
+                                <User className="w-6 h-6 text-[#2D75B6]" />
+                            </div>
+                            <div className="flex-1">
+                                <h3 className="font-bold text-gray-900 text-lg">Compte Standard</h3>
+                                <p className="text-gray-500 text-sm mt-1">
+                                    Pour les spectateurs qui veulent acheter des billets et suivre leurs événements
+                                </p>
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    <span className="px-2 py-1 bg-gray-100 rounded-lg text-xs text-gray-600">Acheter des billets</span>
+                                    <span className="px-2 py-1 bg-gray-100 rounded-lg text-xs text-gray-600">Historique</span>
+                                    <span className="px-2 py-1 bg-gray-100 rounded-lg text-xs text-gray-600">Points fidélité</span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+
+                    {/* Promoter Account */}
+                    <button
+                        onClick={onSelectPromoter}
+                        className="w-full p-5 rounded-2xl border-2 border-orange-100 hover:border-orange-500 hover:bg-orange-50 transition-all group text-left"
+                    >
+                        <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                                <Building2 className="w-6 h-6 text-orange-600" />
+                            </div>
+                            <div className="flex-1">
+                                <div className="flex items-center gap-2">
+                                    <h3 className="font-bold text-gray-900 text-lg">Compte Promoteur</h3>
+                                    <span className="px-2 py-0.5 bg-orange-500 text-white text-[10px] font-bold rounded-full">PRO</span>
+                                </div>
+                                <p className="text-gray-500 text-sm mt-1">
+                                    Pour les organisateurs d'événements qui veulent créer et gérer leurs propres événements
+                                </p>
+                                <div className="flex flex-wrap gap-2 mt-3">
+                                    <span className="px-2 py-1 bg-orange-100 rounded-lg text-xs text-orange-700">Créer événements</span>
+                                    <span className="px-2 py-1 bg-orange-100 rounded-lg text-xs text-orange-700">Statistiques</span>
+                                    <span className="px-2 py-1 bg-orange-100 rounded-lg text-xs text-orange-700">Gestion billets</span>
+                                </div>
+                            </div>
+                        </div>
+                    </button>
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 pt-0">
+                    <p className="text-center text-xs text-gray-400">
+                        Vous avez déjà un compte ?{' '}
+                        <button onClick={() => { onClose(); }} className="text-[#2D75B6] font-bold hover:underline">
+                            Se connecter
+                        </button>
+                    </p>
+                </div>
+            </motion.div>
+        </div>
+    )
 }

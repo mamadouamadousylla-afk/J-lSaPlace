@@ -47,9 +47,6 @@ export default function NewEventPage() {
         price_vip: 15000,
         price_tribune: 5000,
         price_pelouse: 2000,
-        seats_vip: 100,
-        seats_tribune: 300,
-        seats_pelouse: 500,
         status: "published",
     })
 
@@ -121,9 +118,6 @@ export default function NewEventPage() {
             price_vip: form.price_vip,
             price_tribune: form.price_tribune,
             price_pelouse: form.price_pelouse,
-            seats_vip: form.seats_vip,
-            seats_tribune: form.seats_tribune,
-            seats_pelouse: form.seats_pelouse,
             image_url: imageUrl,
             status: form.status,
             featured: false,
@@ -240,27 +234,18 @@ export default function NewEventPage() {
 
             {/* Pricing */}
             <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
-                <h2 className="font-bold text-gray-900">Tarifs & Places</h2>
+                <h2 className="font-bold text-gray-900">Tarifs</h2>
                 {[
                     { key: "vip", label: "VIP" },
                     { key: "tribune", label: "Tribune" },
                     { key: "pelouse", label: "Pelouse" },
                 ].map(({ key, label }) => (
-                    <div key={key} className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{label} — Prix (FCFA)</label>
-                            <input type="number" min={0}
-                                value={(form as any)[`price_${key}`]}
-                                onChange={e => set(`price_${key}`, parseInt(e.target.value) || 0)}
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:border-orange-400 focus:outline-none" />
-                        </div>
-                        <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{label} — Nb Places</label>
-                            <input type="number" min={0}
-                                value={(form as any)[`seats_${key}`]}
-                                onChange={e => set(`seats_${key}`, parseInt(e.target.value) || 0)}
-                                className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:border-orange-400 focus:outline-none" />
-                        </div>
+                    <div key={key} className="space-y-1.5">
+                        <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">{label} — Prix (FCFA)</label>
+                        <input type="number" min={0}
+                            value={(form as any)[`price_${key}`]}
+                            onChange={e => set(`price_${key}`, parseInt(e.target.value) || 0)}
+                            className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:border-orange-400 focus:outline-none" />
                     </div>
                 ))}
             </div>

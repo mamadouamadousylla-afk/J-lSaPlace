@@ -70,7 +70,7 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
             return
         }
 
-        // ── SIGNUP: validate fields then send OTP ──
+        // ── SIGNUP: create account directly, no OTP ──
         if (!firstName.trim() || !lastName.trim()) {
             setError("Veuillez remplir tous les champs")
             return
@@ -82,20 +82,24 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
         setLoading(true)
         setError(null)
         try {
-            const res = await fetch('/api/auth/sms-otp', {
+            const res = await fetch('/api/auth/register', {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ phone: `+221${phone}`, firstName, lastName, password })
             })
             const data = await res.json()
             if (!res.ok) {
-                setError(data.error || "Erreur lors de l'envoi")
+                setError(data.error || "Erreur lors de la création du compte")
                 setLoading(false)
                 return
             }
-            // Dev mode: auto-fill OTP
-            if (data.dev_otp) setOtp(data.dev_otp)
-            setStep('otp')
+            // Save session and close
+            if (typeof window !== "undefined") {
+                localStorage.setItem("user_session", JSON.stringify(data.user))
+            }
+            onSuccess?.()
+            onClose()
+            setPhone(""); setPassword(""); setFirstName(""); setLastName(""); setStep('phone')
         } catch {
             setError("Erreur de connexion")
         }
@@ -400,11 +404,11 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                     {loading ? (
                                         <>
                                             <Loader2 className="w-5 h-5 animate-spin" />
-                                            Envoi en cours...
+                                            {mode === 'signup' ? "Création du compte..." : "Connexion..."}
                                         </>
                                     ) : (
                                         <>
-                                            Suivant
+                                            {mode === 'signup' ? "Créer mon compte" : "Se connecter"}
                                             <ArrowRight className="w-5 h-5" />
                                         </>
                                     )}

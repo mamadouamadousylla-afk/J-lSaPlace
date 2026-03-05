@@ -2,10 +2,11 @@
 
 import { useState, Suspense, useEffect } from "react"
 import { motion } from "framer-motion"
-import { ChevronLeft, Bell, Ticket, History, Calendar } from "lucide-react"
+import { ChevronLeft, Bell, Ticket, History, Calendar, Lock } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import DynamicTicket, { DynamicTicketProps } from "@/components/shared/DynamicTicket"
 import { supabase } from "@/lib/supabase"
+import AuthModal from "@/components/shared/AuthModal"
 
 interface TicketData extends DynamicTicketProps {
     status: "upcoming" | "past"
@@ -25,54 +26,74 @@ function TicketsContent() {
     const [displayTickets, setDisplayTickets] = useState<TicketData[]>([])
     const [loading, setLoading] = useState(true)
     const [user, setUser] = useState<any>(null)
+    const [showAuthModal, setShowAuthModal] = useState(false)
+
+    // Check authentication
+    useEffect(() => {
+        const checkAuth = () => {
+            const stored = localStorage.getItem("user_session")
+            if (stored) {
+                try {
+                    setUser(JSON.parse(stored))
+                } catch {
+                    setUser(null)
+                    setShowAuthModal(true)
+                }
+            } else {
+                setUser(null)
+                setShowAuthModal(true)
+            }
+        }
+        checkAuth()
+    }, [])
 
     useEffect(() => {
         async function loadTickets() {
-            setLoading(true)
+            if (!user) {
+                setLoading(false)
+                return
+            }
             
-            // Get current user
-            const { data: { user } } = await supabase.auth.getUser()
-            setUser(user)
+            setLoading(true)
             
             // Load tickets from localStorage (for non-logged users or fallback)
             const saved = localStorage.getItem("sunulamb_tickets")
             let currentTickets: TicketData[] = saved ? JSON.parse(saved) : []
 
             // If user is logged in, load tickets from Supabase
-            if (user) {
-                const { data: dbTickets, error } = await supabase
-                    .from("tickets")
-                    .select(`
-                        *,
-                        events:event_id (*)
-                    `)
-                    .eq("user_id", user.id)
-                    .order("created_at", { ascending: false })
+            const userId = user.id
+            const { data: dbTickets, error } = await supabase
+                .from("tickets")
+                .select(`
+                    *,
+                    events:event_id (*)
+                `)
+                .eq("user_id", userId)
+                .order("created_at", { ascending: false })
 
-                if (dbTickets && !error) {
-                    // Convert DB tickets to TicketData format
-                    const formattedTickets: TicketData[] = dbTickets.map((t: any) => ({
-                        id: t.qr_code,
-                        title: t.events?.title || "Événement",
-                        date: t.events?.date || "",
-                        time: t.events?.time || "",
-                        location: t.events?.location || "",
-                        category: t.events?.category || "SPORT",
-                        zone: t.zone,
-                        row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
-                        seat: String(Math.floor(Math.random() * 100) + 1),
-                        imageUrl: t.events?.image_url,
-                        holderName: user.user_metadata?.full_name || "Titulaire",
-                        status: t.status === "confirmed" ? "upcoming" : "past",
-                        downloaded: false,
-                        db_id: t.id
-                    }))
-                    
-                    // Merge with local tickets (avoid duplicates)
-                    const existingIds = new Set(currentTickets.map(t => t.id))
-                    const newTickets = formattedTickets.filter(t => !existingIds.has(t.id))
-                    currentTickets = [...newTickets, ...currentTickets]
-                }
+            if (dbTickets && !error) {
+                // Convert DB tickets to TicketData format
+                const formattedTickets: TicketData[] = dbTickets.map((t: any) => ({
+                    id: t.qr_code,
+                    title: t.events?.title || "Événement",
+                    date: t.events?.date || "",
+                    time: t.events?.time || "",
+                    location: t.events?.location || "",
+                    category: t.events?.category || "SPORT",
+                    zone: t.zone,
+                    row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
+                    seat: String(Math.floor(Math.random() * 100) + 1),
+                    imageUrl: t.events?.image_url,
+                    holderName: user.full_name || "Titulaire",
+                    status: t.status === "confirmed" ? "upcoming" : "past",
+                    downloaded: false,
+                    db_id: t.id
+                }))
+                
+                // Merge with local tickets (avoid duplicates)
+                const existingIds = new Set(currentTickets.map(t => t.id))
+                const newTickets = formattedTickets.filter(t => !existingIds.has(t.id))
+                currentTickets = [...newTickets, ...currentTickets]
             }
 
             // If new purchase detected in URL (from payment flow)
@@ -115,7 +136,7 @@ function TicketsContent() {
                         }
 
                         // Avoid duplicates
-                        const exists = currentTickets.some(t => 
+                        const exists = currentTickets.some((t: TicketData) => 
                             t.title === newTicket.title && 
                             t.zone === newTicket.zone && 
                             t.date === newTicket.date &&
@@ -134,7 +155,7 @@ function TicketsContent() {
         }
 
         loadTickets()
-    }, [id, qty, cat])
+    }, [id, qty, cat, user])
 
     // Handle download - mark ticket as downloaded and remove from active view
     const handleDownload = (ticketId: string) => {
@@ -157,6 +178,60 @@ function TicketsContent() {
         return t.status === activeTab
     })
 
+    // ── NOT LOGGED IN: Show auth required screen ──
+    if (!user && !loading) {
+        return (
+            <>
+                <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+                    {/* Header */}
+                    <header className="px-6 py-6 flex items-center justify-between bg-black sticky top-0 z-30">
+                        <button
+                            onClick={() => router.back()}
+                            className="p-3 rounded-full bg-white/10 border border-white/20"
+                        >
+                            <ChevronLeft className="w-6 h-6 text-white" />
+                        </button>
+                        <div className="flex items-center gap-1">
+                            <span className="text-xl font-black text-white">Jël</span>
+                            <span className="text-xl font-black text-yellow-400">Sa</span>
+                            <span className="text-xl font-black text-green-400">Place</span>
+                        </div>
+                        <div className="w-12" />
+                    </header>
+
+                    <div className="flex-1 flex flex-col items-center justify-center p-6 space-y-6">
+                        <div className="w-20 h-20 bg-[#2D75B6]/10 rounded-full flex items-center justify-center">
+                            <Lock className="w-10 h-10 text-[#2D75B6]" />
+                        </div>
+                        <div className="text-center space-y-2">
+                            <h2 className="text-2xl font-bold text-gray-900">Connexion requise</h2>
+                            <p className="text-gray-500 text-sm">
+                                Connectez-vous pour voir vos billets et votre historique d'achats
+                            </p>
+                        </div>
+                        <button
+                            onClick={() => setShowAuthModal(true)}
+                            className="px-8 py-4 bg-[#2D75B6] text-white font-bold rounded-2xl shadow-lg hover:scale-[1.02] transition-transform"
+                        >
+                            Se connecter
+                        </button>
+                    </div>
+                </div>
+
+                <AuthModal
+                    isOpen={showAuthModal}
+                    onClose={() => setShowAuthModal(false)}
+                    mode="login"
+                    onSuccess={() => {
+                        // Reload to check auth
+                        window.location.reload()
+                    }}
+                />
+            </>
+        )
+    }
+
+    // ── LOGGED IN: Show tickets ──
     return (
         <div className="flex flex-col min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 pb-32">
             {/* Header with Jël Sa Place branding */}
@@ -320,6 +395,13 @@ function TicketsContent() {
                     </div>
                 )}
             </div>
+
+            {/* Auth Modal */}
+            <AuthModal
+                isOpen={showAuthModal}
+                onClose={() => setShowAuthModal(false)}
+                mode="login"
+            />
         </div>
     )
 }

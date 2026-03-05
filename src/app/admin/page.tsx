@@ -157,8 +157,8 @@ export default function AdminOverview() {
                             AM
                         </div>
                         <div className="hidden sm:block">
-                            <p className="text-sm font-bold text-gray-900">Alex Morgan</p>
-                            <p className="text-xs text-gray-500">Super Admin</p>
+                            <p className="text-sm font-bold text-gray-900">Administrateur</p>
+                            <p className="text-xs text-gray-500">Super Administrateur</p>
                         </div>
                     </div>
                 </div>
@@ -363,7 +363,7 @@ export default function AdminOverview() {
                                         {ticket.total_price ? formatPrice(ticket.total_price) : '5,000 FCFA'}
                                     </td>
                                     <td className="px-6 py-5 text-gray-500">
-                                        {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Oct 23, 2023'}
+                                        {ticket.created_at ? new Date(ticket.created_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }) : '23 oct. 2023'}
                                     </td>
                                     <td className="px-6 py-5 text-gray-500">
                                         Orange Money
@@ -387,7 +387,7 @@ export default function AdminOverview() {
                                         </td>
                                         <td className="px-6 py-5 text-gray-500 font-medium">Grand Combat de Lutte</td>
                                         <td className="px-6 py-5 font-bold text-gray-900">15,000 FCFA</td>
-                                        <td className="px-6 py-5 text-gray-500">Oct 24, 2023</td>
+                                        <td className="px-6 py-5 text-gray-500">24 oct. 2023</td>
                                         <td className="px-6 py-5 text-gray-500">Orange Money</td>
                                         <td className="px-8 py-5 text-right">
                                             <span className="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase bg-[#D1F7C4] text-[#1A8744]">SUCCÈS</span>
@@ -402,7 +402,7 @@ export default function AdminOverview() {
                                         </td>
                                         <td className="px-6 py-5 text-gray-500 font-medium">Concert de Gala</td>
                                         <td className="px-6 py-5 font-bold text-gray-900">5,000 FCFA</td>
-                                        <td className="px-6 py-5 text-gray-500">Oct 23, 2023</td>
+                                        <td className="px-6 py-5 text-gray-500">23 oct. 2023</td>
                                         <td className="px-6 py-5 text-gray-500">Wave</td>
                                         <td className="px-8 py-5 text-right">
                                             <span className="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase bg-[#FCEFCE] text-[#C4801C]">EN ATTENTE</span>
@@ -417,7 +417,7 @@ export default function AdminOverview() {
                                         </td>
                                         <td className="px-6 py-5 text-gray-500 font-medium">Lamb Championship</td>
                                         <td className="px-6 py-5 font-bold text-gray-900">25,000 FCFA</td>
-                                        <td className="px-6 py-5 text-gray-500">Oct 22, 2023</td>
+                                        <td className="px-6 py-5 text-gray-500">22 oct. 2023</td>
                                         <td className="px-6 py-5 text-gray-500">Transfert Bancaire</td>
                                         <td className="px-8 py-5 text-right">
                                             <span className="px-3 py-1.5 rounded-full text-[10px] font-bold tracking-widest uppercase bg-[#D1F7C4] text-[#1A8744]">SUCCÈS</span>

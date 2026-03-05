@@ -81,8 +81,8 @@ export default function GlobalSettingsPage() {
                         <div className="flex items-center">
                             <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold">AD</div>
                             <div className="ml-3">
-                                <p className="text-sm font-medium">Admin User</p>
-                                <p className="text-xs text-white/60">Super Admin</p>
+                                <p className="text-sm font-medium">Administrateur</p>
+                                <p className="text-xs text-white/60">Super Administrateur</p>
                             </div>
                         </div>
                     </div>

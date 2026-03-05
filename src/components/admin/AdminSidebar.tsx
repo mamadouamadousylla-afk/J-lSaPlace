@@ -108,7 +108,7 @@ export default function AdminSidebar() {
                 </div>
                 <div>
                     <p className="text-xs font-bold text-gray-900">Hakim Sylla</p>
-                    <p className="text-[10px] text-gray-500 font-medium">Super Admin</p>
+                    <p className="text-[10px] text-gray-500 font-medium">Super Administrateur</p>
                 </div>
             </div>
         </aside>

@@ -28,7 +28,7 @@ function TicketsContent() {
     const [user, setUser] = useState<any>(null)
     const [showAuthModal, setShowAuthModal] = useState(false)
 
-    // Check authentication
+    // Check authentication (optional - allows guest checkout)
     useEffect(() => {
         const checkAuth = () => {
             const stored = localStorage.getItem("user_session")
@@ -37,11 +37,9 @@ function TicketsContent() {
                     setUser(JSON.parse(stored))
                 } catch {
                     setUser(null)
-                    setShowAuthModal(true)
                 }
             } else {
                 setUser(null)
-                setShowAuthModal(true)
             }
         }
         checkAuth()

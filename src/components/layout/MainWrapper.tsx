@@ -5,8 +5,8 @@ import { usePathname } from "next/navigation"
 export default function MainWrapper({ children }: { children: React.ReactNode }) {
     const pathname = usePathname()
 
-    // Don't constrain the width for admin pages
-    if (pathname?.startsWith('/admin')) {
+    // Don't constrain the width for admin or promoteur pages
+    if (pathname?.startsWith('/admin') || pathname?.startsWith('/promoteur')) {
         return <>{children}</>
     }
 

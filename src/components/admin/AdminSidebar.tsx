@@ -11,7 +11,8 @@ import {
     CreditCard,
     Settings,
     LogOut,
-    ShieldCheck
+    ShieldCheck,
+    Building2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSiteSettings } from "@/context/SettingsContext"
@@ -23,6 +24,7 @@ const menuItems = [
     { icon: Ticket, label: "Ventes & Tickets", href: "/admin/tickets" },
     { icon: CreditCard, label: "Paiements", href: "/admin/payments" },
     { icon: Users, label: "Utilisateurs", href: "/admin/utilisateurs" },
+    { icon: Building2, label: "Promoteurs", href: "/admin/promoteurs" },
     { icon: Settings, label: "Paramètres", href: "/admin/settings" },
 ]
 

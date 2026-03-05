@@ -394,3 +394,43 @@ create trigger on_payment_completed
     after insert or update on public.payments
     for each row execute function create_payment_notification();
 
+-- =============================================
+-- Table: promoters
+-- =============================================
+create table if not exists public.promoters (
+    id              uuid primary key default uuid_generate_v4(),
+    user_id         uuid references public.users(id) on delete cascade,
+    company_name    text not null,
+    contact_name    text not null,
+    phone           text not null,
+    email           text,
+    description     text,
+    website         text,
+    logo_url        text,
+    status          text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
+    admin_note      text,
+    approved_at     timestamptz,
+    approved_by     text,
+    created_at      timestamptz not null default now(),
+    updated_at      timestamptz not null default now()
+);
+
+-- RLS policies for promoters
+alter table public.promoters enable row level security;
+
+create policy "Promoteurs peuvent voir leur propre profil"
+    on public.promoters for select
+    using (true);
+
+create policy "Promoteurs peuvent inserer leur propre profil"
+    on public.promoters for insert
+    with check (true);
+
+create policy "Promoteurs peuvent modifier leur propre profil"
+    on public.promoters for update
+    using (true);
+
+-- Add promoter_id column to events table (if not exists)
+alter table public.events add column if not exists promoter_id uuid references public.promoters(id) on delete set null;
+
+

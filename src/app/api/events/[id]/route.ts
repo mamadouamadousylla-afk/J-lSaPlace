@@ -4,14 +4,15 @@ import { createServerClient } from "@/lib/supabase"
 // GET /api/events/[id] — Get a single event by ID
 export async function GET(
     request: NextRequest,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     const supabase = createServerClient()
+    const { id } = await params
 
     const { data, error } = await supabase
         .from("events")
         .select("*")
-        .eq("id", params.id)
+        .eq("id", id)
         .single()
 
     if (error || !data) {

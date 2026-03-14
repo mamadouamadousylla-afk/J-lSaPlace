@@ -19,7 +19,7 @@ function StatistiquesContent() {
     const [promoter, setPromoter] = useState<any>(null)
     const [events, setEvents] = useState<any[]>([])
     const [currentEvent, setCurrentEvent] = useState<any>(null)
-    const [stats, setStats] = useState({ tickets: 0, revenue: 0, vip: 0, tribune: 0, pelouse: 0 })
+    const [stats, setStats] = useState({ tickets: 0, revenue: 0, zones: [] as any[] })
     const [tickets, setTickets] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [showEventPicker, setShowEventPicker] = useState(false)
@@ -57,17 +57,42 @@ function StatistiquesContent() {
             .from("tickets")
             .select("*")
             .eq("event_id", event.id)
+            .in("status", ["confirmed", "used"])
         const t = ticketData || []
         setTickets(t)
-        const revenue = t.reduce((sum: number, tk: any) => sum + (tk.price || 0), 0)
-        const vip = t.filter((tk: any) => tk.seat_type === "vip").length
-        const tribune = t.filter((tk: any) => tk.seat_type === "tribune").length
-        const pelouse = t.filter((tk: any) => tk.seat_type === "pelouse").length
-        setStats({ tickets: t.length, revenue, vip, tribune, pelouse })
+
+        const revenue = t.reduce((sum: number, tk: any) => sum + (tk.total_price || 0), 0)
+
+        // Group by zone
+        const pricing = event.pricing || {}
+        const pricingLabels = event.pricing_labels || {}
+        const seats = event.seats || {}
+
+        const zoneStats = Object.keys(pricing).map(key => {
+            const sold = t.filter((tk: any) => tk.zone?.toLowerCase() === key.toLowerCase()).length
+            return {
+                label: pricingLabels[key] || key.toUpperCase(),
+                sold,
+                total: seats[key] || 0,
+                price: pricing[key] || 0,
+                color: key.toLowerCase() === "vip" ? "bg-yellow-400" : "bg-blue-400"
+            }
+        })
+
+        // Fallback for old events without dynamic pricing
+        if (zoneStats.length === 0) {
+            zoneStats.push(
+                { label: "VIP", sold: t.filter(tk => tk.zone?.toLowerCase() === "vip").length, total: event.seats_vip || 0, price: event.price_vip || 0, color: "bg-yellow-400" },
+                { label: "Tribune", sold: t.filter(tk => tk.zone?.toLowerCase() === "tribune").length, total: event.seats_tribune || 0, price: event.price_tribune || 0, color: "bg-blue-400" },
+                { label: "Pelouse", sold: t.filter(tk => tk.zone?.toLowerCase() === "pelouse").length, total: event.seats_pelouse || 0, price: event.price_pelouse || 0, color: "bg-green-400" }
+            )
+        }
+
+        setStats({ tickets: t.length, revenue, zones: zoneStats })
         setLoading(false)
     }
 
-    const totalSeats = (currentEvent?.seats_vip || 0) + (currentEvent?.seats_tribune || 0) + (currentEvent?.seats_pelouse || 0)
+    const totalSeats = stats.zones.reduce((sum, z) => sum + z.total, 0) || (currentEvent?.seats_vip || 0) + (currentEvent?.seats_tribune || 0) + (currentEvent?.seats_pelouse || 0)
     const fillRate = totalSeats > 0 ? Math.round((stats.tickets / totalSeats) * 100) : 0
     const fmt = (n: number) => new Intl.NumberFormat("fr-FR").format(n)
 
@@ -157,11 +182,7 @@ function StatistiquesContent() {
 
                     <div className="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
                         <h3 className="font-bold text-gray-900">Ventes par catégorie</h3>
-                        {[
-                            { label: "VIP", sold: stats.vip, total: currentEvent?.seats_vip || 0, price: currentEvent?.price_vip || 0, color: "bg-yellow-400" },
-                            { label: "Tribune", sold: stats.tribune, total: currentEvent?.seats_tribune || 0, price: currentEvent?.price_tribune || 0, color: "bg-blue-400" },
-                            { label: "Pelouse", sold: stats.pelouse, total: currentEvent?.seats_pelouse || 0, price: currentEvent?.price_pelouse || 0, color: "bg-green-400" },
-                        ].map(({ label, sold, total, price, color }) => {
+                        {stats.zones.map(({ label, sold, total, price, color }) => {
                             const pct = total > 0 ? Math.round((sold / total) * 100) : 0
                             return (
                                 <div key={label} className="space-y-2">

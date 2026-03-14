@@ -58,11 +58,11 @@ export default function PromoterLoginPage() {
                     .limit(1)
 
                 if (pending && pending.length > 0 && pending[0].status === "pending") {
-                    setError("Votre compte promoteur est en cours de validation par l'administrateur.")
+                    setError("Votre compte partenaire est en cours de validation par l'administrateur.")
                 } else if (pending && pending.length > 0 && pending[0].status === "rejected") {
-                    setError("Votre demande de compte promoteur a été rejetée. Contactez l'administrateur.")
+                    setError("Votre demande de compte partenaire a été rejetée. Contactez l'administrateur.")
                 } else {
-                    setError("Aucun compte promoteur approuvé trouvé pour ce numéro.")
+                    setError("Aucun compte partenaire approuvé trouvé pour ce numéro.")
                 }
                 setLoading(false)
                 return
@@ -96,7 +96,7 @@ export default function PromoterLoginPage() {
                         <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
                             <Building2 className="w-8 h-8 text-white" />
                         </div>
-                        <h1 className="text-2xl font-black text-white">Espace Promoteur</h1>
+                        <h1 className="text-2xl font-black text-white">Espace Partenaire</h1>
                         <p className="text-white/70 text-sm mt-1">Connectez-vous à votre espace</p>
                     </div>
 
@@ -157,8 +157,8 @@ export default function PromoterLoginPage() {
                         </button>
 
                         <p className="text-center text-xs text-gray-400">
-                            Pas encore promoteur ?{" "}
-                            <a href="/" className="text-orange-500 font-bold hover:underline">Créer une demande</a>
+                            Pas encore partenaire ?{" "}
+                            <a href="/promoteur/inscription" className="text-orange-500 font-bold hover:underline">Créer une demande</a>
                         </p>
                     </div>
                 </div>

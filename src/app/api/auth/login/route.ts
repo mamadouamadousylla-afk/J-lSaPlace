@@ -30,6 +30,22 @@ export async function POST(request: NextRequest) {
 
         const user = users[0]
 
+        // Check if user is a promoter — block frontend login for promoters
+        const { data: promoters } = await supabase
+            .from("promoters")
+            .select("id, status")
+            .eq("user_id", user.id)
+            .in("status", ["approved", "pending"])
+            .limit(1)
+
+        if (promoters && promoters.length > 0) {
+            if (promoters[0].status === "approved") {
+                return NextResponse.json({ error: "Compte Partenaire détecté. Veuillez vous connecter via l'espace Partenaire." }, { status: 403 })
+            } else {
+                return NextResponse.json({ error: "Votre demande de compte Partenaire est en attente d'approbation." }, { status: 403 })
+            }
+        }
+
         // Check password (plain comparison — in production use bcrypt)
         if (user.password !== password) {
             return NextResponse.json({ error: "Mot de passe incorrect" }, { status: 401 })

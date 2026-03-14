@@ -331,13 +331,13 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                 <h2 className="text-xl font-bold text-gray-900">
                                     {mode === 'login' ? 'Connexion' 
                                     : step === 'signup-type' ? 'Choisir un type de compte'
-                                    : step === 'promoter-form' ? 'Compte Promoteur'
+                                    : step === 'promoter-form' ? 'Compte Partenaire'
                                     : 'Créer un compte'}
                                 </h2>
                                 <p className="text-sm text-gray-500">
                                     {mode === 'login' ? 'Connectez-vous pour continuer'
                                     : step === 'signup-type' ? 'Sélectionnez votre type de compte'
-                                    : step === 'promoter-form' ? 'Demande de compte promoteur'
+                                    : step === 'promoter-form' ? 'Demande de compte Partenaire'
                                     : 'Inscrivez-vous pour continuer'}
                                 </p>
                             </div>
@@ -380,7 +380,7 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                         <Building2 className="w-6 h-6 text-orange-500" />
                                     </div>
                                     <div>
-                                        <h3 className="font-bold text-gray-900">Compte Promoteur</h3>
+                                        <h3 className="font-bold text-gray-900">Compte Partenaire</h3>
                                         <p className="text-xs text-gray-500 mt-0.5">Créez et gérez vos événements de lutte</p>
                                         <span className="inline-flex items-center mt-1 px-2 py-0.5 rounded-full bg-yellow-100 text-yellow-700 text-[10px] font-bold">
                                             Approbation admin requise
@@ -477,7 +477,7 @@ export default function AuthModal({ isOpen, onClose, mode: initialMode = 'login'
                                                 {showPromoPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                             </button>
                                         </div>
-                                        <p className="text-[10px] text-gray-400">Vous utiliserez ce mot de passe pour accéder à votre espace promoteur</p>
+                                        <p className="text-[10px] text-gray-400">Vous utiliserez ce mot de passe pour accéder à votre espace partenaire</p>
                                     </div>
 
                                     {/* Description */}

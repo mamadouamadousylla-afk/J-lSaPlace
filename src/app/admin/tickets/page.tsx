@@ -13,9 +13,11 @@ import QRScanner from "@/components/admin/QRScanner"
 
 export default function AdminTickets() {
     const [tickets, setTickets] = useState<any[]>([])
+    const [events, setEvents] = useState<any[]>([])
     const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState("")
     const [activeFilter, setActiveFilter] = useState("all")
+    const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
     const [openMenuId, setOpenMenuId] = useState<string | null>(null)
     const [currentPage, setCurrentPage] = useState(1)
     const [showScanner, setShowScanner] = useState(false)
@@ -39,16 +41,27 @@ export default function AdminTickets() {
 
     useEffect(() => {
         loadTickets()
+        loadEvents()
 
-        const channel = supabase
+        // Subscribe to tickets changes
+        const ticketsChannel = supabase
             .channel('tickets-realtime')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'tickets' }, () => {
                 loadTickets()
             })
             .subscribe()
 
+        // Subscribe to events changes (for new events created by promoters)
+        const eventsChannel = supabase
+            .channel('events-realtime')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'events' }, () => {
+                loadEvents()
+            })
+            .subscribe()
+
         return () => {
-            supabase.removeChannel(channel)
+            supabase.removeChannel(ticketsChannel)
+            supabase.removeChannel(eventsChannel)
         }
     }, [])
 
@@ -77,7 +90,8 @@ export default function AdminTickets() {
                 total_price,
                 status,
                 created_at,
-                events ( title, date ),
+                event_id,
+                events ( id, title, date ),
                 users ( full_name, phone )
             `)
             .order("created_at", { ascending: false })
@@ -95,6 +109,17 @@ export default function AdminTickets() {
         setLoading(false)
     }
 
+    async function loadEvents() {
+        const { data } = await supabase
+            .from("events")
+            .select("id, title, date")
+            .order("created_at", { ascending: false })
+        
+        if (data) {
+            setEvents(data)
+        }
+    }
+
     // Filter tickets
     const filteredTickets = tickets.filter(ticket => {
         const matchesSearch = searchTerm === "" ||
@@ -102,11 +127,13 @@ export default function AdminTickets() {
             ticket.users?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             ticket.events?.title?.toLowerCase().includes(searchTerm.toLowerCase())
 
-        if (activeFilter === "all") return matchesSearch
-        if (activeFilter === "vip") return matchesSearch && ticket.zone?.toLowerCase().includes('vip')
-        if (activeFilter === "pending") return matchesSearch && ticket.status === 'pending'
+        const matchesEvent = !selectedEventId || ticket.events?.id === selectedEventId
+
+        if (activeFilter === "all") return matchesSearch && matchesEvent
+        if (activeFilter === "vip") return matchesSearch && matchesEvent && ticket.zone?.toLowerCase().includes('vip')
+        if (activeFilter === "pending") return matchesSearch && matchesEvent && ticket.status === 'pending'
         
-        return matchesSearch
+        return matchesSearch && matchesEvent
     })
 
     // Pagination
@@ -487,30 +514,57 @@ export default function AdminTickets() {
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex items-center gap-2 mb-6">
-                {[
-                    { id: "all", label: "Tous les tickets", count: stats.total },
-                    { id: "vip", label: "VIP uniquement", count: tickets.filter(t => t.zone?.toLowerCase().includes('vip')).length },
-                    { id: "pending", label: "En attente", count: stats.pending }
-                ].map((tab) => (
-                    <button
-                        key={tab.id}
-                        onClick={() => { setActiveFilter(tab.id); setCurrentPage(1) }}
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
-                            activeFilter === tab.id
-                                ? "bg-white shadow-sm text-gray-900"
-                                : "text-gray-500 hover:text-gray-700"
-                        )}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div className="flex flex-wrap items-center gap-2">
+                    {/* Event Selector */}
+                    <select
+                        value={selectedEventId || ""}
+                        onChange={(e) => { setSelectedEventId(e.target.value || null); setCurrentPage(1) }}
+                        className="px-4 py-2 rounded-full border border-gray-200 bg-white text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     >
-                        {tab.label}
-                        {activeFilter === tab.id && (
-                            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
-                                {formatNumber(tab.count)}
-                            </span>
-                        )}
+                        <option value="">Tous les événements</option>
+                        {events.map((event) => (
+                            <option key={event.id} value={event.id}>
+                                {event.title} ({event.date})
+                            </option>
+                        ))}
+                    </select>
+
+                    {/* Filter Tabs */}
+                    {[
+                        { id: "all", label: "Tous les tickets", count: filteredTickets.length },
+                        { id: "vip", label: "VIP uniquement", count: filteredTickets.filter(t => t.zone?.toLowerCase().includes('vip')).length },
+                        { id: "pending", label: "En attente", count: filteredTickets.filter(t => t.status === 'pending').length }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => { setActiveFilter(tab.id); setCurrentPage(1) }}
+                            className={cn(
+                                "flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                                activeFilter === tab.id
+                                    ? "bg-white shadow-sm text-gray-900"
+                                    : "text-gray-500 hover:text-gray-700"
+                            )}
+                        >
+                            {tab.label}
+                            {activeFilter === tab.id && (
+                                <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">
+                                    {formatNumber(tab.count)}
+                                </span>
+                            )}
+                        </button>
+                    ))}
+                </div>
+
+                {selectedEventId && (
+                    <button
+                        onClick={() => { setSelectedEventId(null); setCurrentPage(1) }}
+                        className="text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                    >
+                        <X className="w-3 h-3" />
+                        Effacer le filtre
                     </button>
-                ))}
+                )}
             </div>
 
             {/* Tickets Table */}

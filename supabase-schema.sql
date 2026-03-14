@@ -59,6 +59,9 @@ create table if not exists public.events (
     price_vip       int not null default 15000,
     price_tribune   int not null default 5000,
     price_pelouse   int not null default 2000,
+    pricing         jsonb default '{}', -- Prix dynamiques par zone (VIP, Tribune couverte, etc.)
+    pricing_labels  jsonb default '{}', -- Labels des zones pour l'affichage
+    seats           jsonb default '{}', -- Nombre de places par zone
     location        text not null,
     address         text,
     image_url       text,
@@ -79,16 +82,21 @@ create table if not exists public.events (
 -- =============================================
 create table if not exists public.tickets (
     id              uuid primary key default uuid_generate_v4(),
-    user_id         uuid references public.users on delete cascade not null,
+    user_id         uuid references public.users on delete cascade,
     event_id        uuid references public.events on delete restrict not null,
-    zone            text not null check (zone in ('VIP','TRIBUNE','PELOUSE')),
+    zone            text not null,
     quantity        int not null default 1 check (quantity > 0),
     total_price     int not null,
     qr_code         text unique not null,
     payment_ref     text,
     payment_method  text,  -- wave | orange | free
     status          text not null default 'pending' check (status in ('pending','confirmed','used','cancelled')),
-    created_at      timestamptz not null default now()
+    created_at      timestamptz not null default now(),
+    buyer_name      text,
+    buyer_phone     text,
+    buyer_email     text,
+    seat_number     text,
+    seat_type       text
 );
 
 -- =============================================

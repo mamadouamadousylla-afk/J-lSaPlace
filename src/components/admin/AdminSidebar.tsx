@@ -24,7 +24,7 @@ const menuItems = [
     { icon: Ticket, label: "Ventes & Tickets", href: "/admin/tickets" },
     { icon: CreditCard, label: "Paiements", href: "/admin/payments" },
     { icon: Users, label: "Utilisateurs", href: "/admin/utilisateurs" },
-    { icon: Building2, label: "Promoteurs", href: "/admin/promoteurs" },
+    { icon: Building2, label: "Partenaires", href: "/admin/promoteurs" },
     { icon: Settings, label: "Paramètres", href: "/admin/settings" },
 ]
 

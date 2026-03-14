@@ -254,7 +254,7 @@ export default function GlobalSettingsPage() {
                                                 type="checkbox"
                                             />
                                             <label className="text-sm text-gray-700">
-                                                Activer les paiements automatiques aux promoteurs
+                                                Activer les paiements automatiques aux partenaires
                                             </label>
                                         </div>
                                     </div>

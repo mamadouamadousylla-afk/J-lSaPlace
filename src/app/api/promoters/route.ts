@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
                     return NextResponse.json({ error: "Votre demande est déjà en cours de traitement" }, { status: 409 })
                 }
                 if (ex.status === "approved") {
-                    return NextResponse.json({ error: "Votre compte promoteur est déjà approuvé" }, { status: 409 })
+                    return NextResponse.json({ error: "Votre compte partenaire est déjà approuvé" }, { status: 409 })
                 }
             }
         }

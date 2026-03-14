@@ -74,8 +74,8 @@ export default function AdminPromotersPage() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-poppins font-black text-gray-900">Promoteurs</h1>
-                    <p className="text-gray-500 mt-1">Gérez les demandes de comptes promoteurs</p>
+                    <h1 className="text-3xl font-poppins font-black text-gray-900">Partenaires</h1>
+                    <p className="text-gray-500 mt-1">Gérez les demandes de comptes partenaires</p>
                 </div>
                 {filter === "pending" && pendingCount > 0 && (
                     <div className="flex items-center gap-2 px-4 py-2 bg-yellow-100 text-yellow-700 rounded-xl font-bold">
@@ -108,7 +108,7 @@ export default function AdminPromotersPage() {
             ) : promoters.length === 0 ? (
                 <div className="text-center py-16">
                     <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-gray-500 font-medium">Aucun promoteur {filter !== "all" ? `(${filter === "pending" ? "en attente" : filter === "approved" ? "approuvé" : "rejeté"})` : ""}</p>
+                    <p className="text-gray-500 font-medium">Aucun partenaire {filter !== "all" ? `(${filter === "pending" ? "en attente" : filter === "approved" ? "approuvé" : "rejeté"})` : ""}</p>
                 </div>
             ) : (
                 <div className="grid gap-4">
@@ -215,7 +215,7 @@ export default function AdminPromotersPage() {
                         className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
                     >
                         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                            <h2 className="text-xl font-bold text-gray-900">Détails du promoteur</h2>
+                            <h2 className="text-xl font-bold text-gray-900">Détails du partenaire</h2>
                             <button onClick={() => setSelected(null)} className="p-2 hover:bg-gray-100 rounded-full">
                                 <X className="w-5 h-5 text-gray-400" />
                             </button>

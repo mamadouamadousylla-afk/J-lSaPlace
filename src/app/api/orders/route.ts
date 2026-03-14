@@ -12,24 +12,36 @@ async function getAuthUser(request: NextRequest) {
     return user
 }
 
+// Helper: normalize zone name to match database keys
+function normalizeZoneKey(zone: string): string {
+    const zoneMap: Record<string, string> = {
+        "VIP": "vip",
+        "TRIBUNE": "tribune",
+        "PELOUSE": "pelouse",
+        "TRIBUNE_COUVERTE": "tribune_couverte",
+        "TRIBUNE_DÉCOUVERTE": "tribune_decouverte",
+        "TRIBUNE_DECOUVERTE": "tribune_decouverte",
+        "TICKET_SIMPLE": "ticket_simple",
+        "LOGE_PRESTIGE": "loge_prestige",
+    }
+    return zoneMap[zone.toUpperCase()] || zone.toLowerCase()
+}
+
 // POST /api/orders — Create a new ticket order
 export async function POST(request: NextRequest) {
     const user = await getAuthUser(request)
-    if (!user) {
-        return NextResponse.json({ error: "Non autorisé" }, { status: 401 })
-    }
-
+    
     const supabase = createServerClient()
-    const { event_id, zone, quantity } = await request.json()
+    const { event_id, zone, quantity, buyerInfo } = await request.json()
 
     if (!event_id || !zone || !quantity) {
         return NextResponse.json({ error: "event_id, zone et quantity sont requis" }, { status: 400 })
     }
 
-    // Get event to calculate price
+    // Get event with pricing and seats info
     const { data: event } = await supabase
         .from("events")
-        .select("price_vip, price_tribune, price_pelouse, status")
+        .select("price_vip, price_tribune, price_pelouse, pricing, pricing_labels, seats, status")
         .eq("id", event_id)
         .single()
 
@@ -41,17 +53,59 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: "Cet événement n'est plus disponible" }, { status: 400 })
     }
 
-    const zonePrices: Record<string, number> = {
-        VIP: event.price_vip,
-        TRIBUNE: event.price_tribune,
-        PELOUSE: event.price_pelouse
+    const zoneKey = normalizeZoneKey(zone)
+    const zoneUpper = zone.toUpperCase()
+    
+    // Get price from new pricing JSONB or fall back to old columns
+    let unitPrice = 0
+    if (event.pricing && event.pricing[zoneKey]) {
+        unitPrice = event.pricing[zoneKey]
+    } else {
+        // Fallback to old columns
+        const zonePrices: Record<string, number> = {
+            VIP: event.price_vip,
+            TRIBUNE: event.price_tribune,
+            PELOUSE: event.price_pelouse
+        }
+        unitPrice = zonePrices[zoneUpper] || 0
     }
 
-    const zoneUpper = zone.toUpperCase()
-    const unitPrice = zonePrices[zoneUpper]
-
     if (!unitPrice) {
-        return NextResponse.json({ error: "Zone invalide. Choisissez VIP, TRIBUNE ou PELOUSE" }, { status: 400 })
+        return NextResponse.json({ error: "Zone invalide ou prix non défini" }, { status: 400 })
+    }
+
+    // Check seat availability
+    let maxSeats = 0
+    if (event.seats && event.seats[zoneKey]) {
+        maxSeats = event.seats[zoneKey]
+    }
+    
+    // If seats are defined, check availability
+    if (maxSeats > 0) {
+        // Count sold tickets for this zone
+        const { data: soldTickets } = await supabase
+            .from("tickets")
+            .select("quantity")
+            .eq("event_id", event_id)
+            .eq("zone", zoneUpper)
+            .in("status", ["confirmed", "used"])
+        
+        const soldCount = (soldTickets || []).reduce((sum, t) => sum + (t.quantity || 1), 0)
+        const remainingSeats = maxSeats - soldCount
+        
+        if (remainingSeats <= 0) {
+            return NextResponse.json({ 
+                error: "Tickets non disponibles pour cette zone",
+                sold_out: true 
+            }, { status: 400 })
+        }
+        
+        if (quantity > remainingSeats) {
+            return NextResponse.json({ 
+                error: `Seulement ${remainingSeats} place(s) disponible(s) pour cette zone`,
+                remaining: remainingSeats
+            }, { status: 400 })
+        }
     }
 
     const total_price = unitPrice * quantity
@@ -62,13 +116,18 @@ export async function POST(request: NextRequest) {
     const { data: ticket, error } = await supabase
         .from("tickets")
         .insert({
-            user_id: user.id,
+            user_id: user?.id || null,
             event_id,
             zone: zoneUpper,
             quantity,
             total_price,
             qr_code,
-            status: "pending"
+            status: "pending",
+            buyer_name: buyerInfo?.firstName && buyerInfo?.lastName 
+                ? `${buyerInfo.firstName} ${buyerInfo.lastName}` 
+                : "Acheteur invité",
+            buyer_phone: buyerInfo?.whatsapp ? `+221${buyerInfo.whatsapp}` : null,
+            buyer_email: buyerInfo?.email || null
         })
         .select()
         .single()

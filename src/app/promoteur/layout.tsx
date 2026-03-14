@@ -4,11 +4,12 @@ import { useEffect, useState } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { LayoutDashboard, CalendarDays, BarChart2, Settings, LogOut, Building2, Menu, X } from "lucide-react"
+import { LayoutDashboard, CalendarDays, BarChart2, Settings, LogOut, Building2, Menu, X, ScanLine } from "lucide-react"
 
 const menuItems = [
     { icon: LayoutDashboard, label: "Tableau de bord", href: "/promoteur" },
     { icon: CalendarDays, label: "Mes Événements", href: "/promoteur/evenements" },
+    { icon: ScanLine, label: "Scanner billets", href: "/promoteur/scanner" },
     { icon: BarChart2, label: "Statistiques", href: "/promoteur/statistiques" },
     { icon: Settings, label: "Mon Profil", href: "/promoteur/profil" },
 ]
@@ -22,8 +23,8 @@ export default function PromoterLayout({ children }: { children: React.ReactNode
     const [loading, setLoading] = useState(true)
     const [mobileMenu, setMobileMenu] = useState(false)
 
-    // Skip auth check for login page
-    const isLoginPage = pathname === "/promoteur/login"
+    // Skip auth check for login and inscription pages
+    const isLoginPage = pathname === "/promoteur/login" || pathname === "/promoteur/inscription"
 
     useEffect(() => {
         if (isLoginPage) {
@@ -76,7 +77,7 @@ export default function PromoterLayout({ children }: { children: React.ReactNode
                             <Building2 className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                            <p className="font-black text-gray-900 text-sm">Espace Promoteur</p>
+                            <p className="font-black text-gray-900 text-sm">Espace Partenaire</p>
                             <p className="text-xs text-gray-400 truncate max-w-[130px]">{promoter?.company_name}</p>
                         </div>
                     </div>
@@ -136,7 +137,7 @@ export default function PromoterLayout({ children }: { children: React.ReactNode
                         <div className="w-8 h-8 bg-orange-500 rounded-lg flex items-center justify-center">
                             <Building2 className="w-4 h-4 text-white" />
                         </div>
-                        <span className="font-black text-gray-900 text-sm">Espace Promoteur</span>
+                        <span className="font-black text-gray-900 text-sm">Espace Partenaire</span>
                     </div>
                     <button onClick={() => setMobileMenu(!mobileMenu)} className="p-2">
                         {mobileMenu ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

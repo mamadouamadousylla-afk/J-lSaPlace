@@ -25,8 +25,21 @@ export default function PaymentPage() {
 
     const eventId = params.id as string
     const qty = parseInt(searchParams.get("qty") || "1")
-    const catId = searchParams.get("cat") || "tribune"
-    const price = catId === "vip" ? 15000 : catId === "tribune" ? 5000 : 2000
+    const catId = searchParams.get("cat") || "vip"
+
+    // Calculate price dynamically from event data
+    const getPrice = () => {
+        if (!eventData) return 0
+        const pricing = eventData.pricing || {}
+        if (pricing[catId]) return pricing[catId]
+
+        // Fallback to old columns
+        if (catId.toLowerCase() === "vip") return eventData.price_vip || 15000
+        if (catId.toLowerCase() === "tribune") return eventData.price_tribune || 5000
+        return eventData.price_pelouse || 2000
+    }
+
+    const price = getPrice()
     const total = price * qty
 
     // Load event data and user
@@ -51,31 +64,72 @@ export default function PaymentPage() {
 
     const handlePayment = async () => {
         setIsLoading(true)
-        
+
         // Simulate payment processing
         setTimeout(async () => {
             try {
                 // Get current user
                 const { data: { user } } = await supabase.auth.getUser()
-                
+
                 if (!user) {
-                    // If not logged in, still allow local purchase
+                    // Guest checkout - still save tickets but without user_id
+                    // Get zone label matching the category
+                    const pricingLabels = eventData?.pricing_labels || {}
+                    const zoneLabel = pricingLabels[catId] || catId.toUpperCase()
+
+                    const zoneSanitized = zoneLabel
+                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                        .replace(/\s+/g, "-")
+                        .toUpperCase()
+
+                    const guestTickets = []
+                    
+                    for (let i = 0; i < qty; i++) {
+                        const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
+
+                        const { data: ticket, error } = await supabase
+                            .from("tickets")
+                            .insert({
+                                user_id: null, // Guest purchase
+                                event_id: eventId,
+                                zone: catId.toUpperCase(),
+                                quantity: 1,
+                                total_price: price,
+                                qr_code: qrCode,
+                                payment_ref: `PAY-${Date.now()}-${i}`,
+                                payment_method: selectedMethod.id,
+                                status: "confirmed",
+                                buyer_name: "Acheteur invité",
+                                buyer_phone: localStorage.getItem("guest_phone") || null
+                            })
+                            .select()
+                            .single()
+
+                        if (!error && ticket) {
+                            guestTickets.push(ticket)
+                        }
+                    }
+
+                    // Save guest info to localStorage for display
+                    if (guestTickets.length > 0) {
+                        localStorage.setItem("guest_tickets", JSON.stringify(guestTickets))
+                    }
+
                     setIsLoading(false)
                     setIsSuccess(true)
                     setTimeout(() => {
-                        router.push(`/mon-compte/tickets?id=${eventId}&qty=${qty}&cat=${catId}`)
+                        router.push(`/mon-compte/tickets?id=${eventId}&qty=${qty}&cat=${catId}&guest=true`)
                     }, 3000)
                     return
                 }
 
                 // Create tickets for each quantity
                 const tickets = []
-                
+
                 // Get zone label matching the category
-                const { CATEGORY_CONFIG } = await import("@/components/shared/DynamicTicket")
-                const categoryKey = (eventData?.category || "SPORT").toUpperCase()
-                const catConfig = CATEGORY_CONFIG[categoryKey]
-                const zoneLabel = catConfig?.zoneLabels?.[catId.toLowerCase()]?.label || catId.toUpperCase()
+                const pricingLabels = eventData?.pricing_labels || {}
+                const zoneLabel = pricingLabels[catId] || catId.toUpperCase()
+
                 const zoneSanitized = zoneLabel
                     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
                     .replace(/\s+/g, "-")
@@ -83,7 +137,7 @@ export default function PaymentPage() {
 
                 for (let i = 0; i < qty; i++) {
                     const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
-                    
+
                     const { data: ticket, error } = await supabase
                         .from("tickets")
                         .insert({
@@ -131,7 +185,7 @@ export default function PaymentPage() {
 
                 setIsLoading(false)
                 setIsSuccess(true)
-                
+
                 setTimeout(() => {
                     router.push(`/mon-compte/tickets?id=${eventId}&qty=${qty}&cat=${catId}`)
                 }, 3000)
@@ -156,8 +210,8 @@ export default function PaymentPage() {
                 <div className="flex justify-between items-start">
                     <div>
                         <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Récapitulatif</p>
-                        <h2 className="font-bold text-lg text-gray-900">Modou Lô vs Sa Thiès</h2>
-                        <p className="text-sm text-gray-500">{qty}x Ticket {catId.toUpperCase()}</p>
+                        <h2 className="font-bold text-lg text-gray-900">{eventData?.title || "Chargement..."}</h2>
+                        <p className="text-sm text-gray-500">{qty}x Ticket {eventData?.pricing_labels?.[catId] || catId.toUpperCase()}</p>
                     </div>
                     <div className="text-right">
                         <p className="font-poppins font-bold text-2xl text-secondary">{formatPrice(total)}</p>

@@ -854,13 +854,13 @@ export default function AdminEvents() {
                                             </p>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Promoteur</label>
-                                            <input value={formData.promoter} onChange={e => setFormData({ ...formData, promoter: e.target.value })} type="text" className="w-full p-3.5 bg-white border border-gray-200 rounded-xl focus:border-[#1A8744] focus:ring-1 focus:ring-[#1A8744] outline-none transition-all shadow-sm" placeholder="Nom du promoteur" />
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Partenaire</label>
+                                            <input value={formData.promoter} onChange={e => setFormData({ ...formData, promoter: e.target.value })} type="text" className="w-full p-3.5 bg-white border border-gray-200 rounded-xl focus:border-[#1A8744] focus:ring-1 focus:ring-[#1A8744] outline-none transition-all shadow-sm" placeholder="Nom du partenaire" />
                                         </div>
 
-                                        {/* Logo du promoteur */}
+                                        {/* Logo du partenaire */}
                                         <div className="col-span-2">
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Logo du Promoteur</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Logo du Partenaire</label>
                                             <div className="flex items-center gap-4">
                                                 <label className="flex-1 flex flex-col items-center justify-center px-6 py-6 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                                                     <input 
@@ -900,7 +900,7 @@ export default function AdminEvents() {
                                                     <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-200 relative bg-white">
                                                         <img 
                                                             src={promoterLogoPreview || formData.promoter_logo} 
-                                                            alt="Logo promoteur" 
+                                                            alt="Logo partenaire" 
                                                             className="w-full h-full object-cover" 
                                                         />
                                                         {promoterLogoPreview && (
@@ -921,15 +921,15 @@ export default function AdminEvents() {
                                             </div>
                                         </div>
 
-                                        {/* Description du promoteur */}
+                                        {/* Description du partenaire */}
                                         <div className="col-span-2">
-                                            <label className="block text-sm font-bold text-gray-700 mb-2">Description du Promoteur</label>
+                                            <label className="block text-sm font-bold text-gray-700 mb-2">Description du Partenaire</label>
                                             <textarea 
                                                 value={formData.promoter_description} 
                                                 onChange={e => setFormData({ ...formData, promoter_description: e.target.value })} 
                                                 rows={3}
                                                 className="w-full p-3.5 bg-white border border-gray-200 rounded-xl focus:border-[#1A8744] focus:ring-1 focus:ring-[#1A8744] outline-none transition-all shadow-sm resize-none" 
-                                                placeholder="Description de l'entreprise ou du promoteur..."
+                                                placeholder="Description du partenaire..."
                                             />
                                         </div>
 

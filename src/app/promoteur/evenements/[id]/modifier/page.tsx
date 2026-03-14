@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { ArrowLeft, Upload, Loader2, Check, Building2, X, Plus, Trash2, Eye, EyeOff } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 
 const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,14 +46,16 @@ const CATEGORY_ZONES: Record<string, { key: string; label: string; placeholder: 
     ],
 }
 
-// Obtenir les zones pour une catégorie
 const getZonesForCategory = (cat: string) => CATEGORY_ZONES[cat] || CATEGORY_ZONES.SPORT
 
-
-export default function NewEventPage() {
+export default function EditEventPage() {
     const router = useRouter()
+    const params = useParams()
+    const eventId = params.id as string
+
     const [promoter, setPromoter] = useState<any>(null)
     const [loading, setLoading] = useState(false)
+    const [loadingEvent, setLoadingEvent] = useState(true)
     const [success, setSuccess] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [imageFile, setImageFile] = useState<File | null>(null)
@@ -68,17 +70,17 @@ export default function NewEventPage() {
         location: "",
         description: "",
         category: "SPORT",
-        prices: {} as Record<string, string>, // Prix dynamiques selon la catégorie
-        seats: {} as Record<string, string>, // Nombre de places par zone
-        disabledZones: [] as string[], // Zones standards désactivées/supprimées
-        customZones: [] as { key: string; label: string; price: string; seats: string }[], // Zones personnalisées
-        status: "published",
+        prices: {} as Record<string, string>,
+        seats: {} as Record<string, string>,
+        disabledZones: [] as string[],
+        customZones: [] as { key: string; label: string; price: string; seats: string }[],
+        status: "published" as "published" | "draft",
+        existingImageUrl: "",
+        existingLogoUrl: "",
     })
 
-    // Générer une clé unique pour les zones personnalisées
     const generateCustomKey = () => `custom_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
 
-    // Activer/désactiver une zone standard
     const toggleZone = (key: string) => {
         setForm(prev => {
             const isCurrentlyEnabled = !prev.disabledZones.includes(key)
@@ -97,10 +99,8 @@ export default function NewEventPage() {
         })
     }
 
-    // Vérifier si une zone est active
     const isZoneEnabled = (key: string) => !form.disabledZones.includes(key)
 
-    // Ajouter une zone personnalisée
     const addCustomZone = () => {
         setForm(prev => ({
             ...prev,
@@ -108,7 +108,6 @@ export default function NewEventPage() {
         }))
     }
 
-    // Supprimer une zone personnalisée
     const removeCustomZone = (key: string) => {
         setForm(prev => ({
             ...prev,
@@ -116,7 +115,6 @@ export default function NewEventPage() {
         }))
     }
 
-    // Mettre à jour une zone personnalisée
     const updateCustomZone = (key: string, field: "label" | "price" | "seats", value: string) => {
         setForm(prev => ({
             ...prev,
@@ -124,15 +122,90 @@ export default function NewEventPage() {
         }))
     }
 
+    // Load event data
     useEffect(() => {
         const stored = localStorage.getItem("promoter_session")
         if (stored) setPromoter(JSON.parse(stored))
-    }, [])
 
-    const set = (key: string, val: any) => setForm(prev => ({ ...prev, [key]: val }))
+        const loadEvent = async () => {
+            const { data, error } = await supabase
+                .from("events")
+                .select("*")
+                .eq("id", eventId)
+                .single()
+
+            if (error || !data) {
+                setLoadingEvent(false)
+                return
+            }
+
+            // Parse date for input
+            let dateForInput = ""
+            if (data.date) {
+                // Try to parse various date formats
+                const parsed = new Date(data.date)
+                if (!isNaN(parsed.getTime())) {
+                    dateForInput = parsed.toISOString().split("T")[0]
+                }
+            }
+
+            // Parse pricing and seats
+            const pricing = data.pricing || {}
+            const pricingLabels = data.pricing_labels || {}
+            const seats = data.seats || {}
+
+            // Build prices and seats objects
+            const pricesObj: Record<string, string> = {}
+            const seatsObj: Record<string, string> = {}
+            const customZonesList: { key: string; label: string; price: string; seats: string }[] = []
+            const disabledZonesList: string[] = []
+
+            const categoryZones = getZonesForCategory(data.category || "SPORT")
+            const categoryZoneKeys = categoryZones.map(z => z.key)
+
+            Object.keys(pricing).forEach(key => {
+                if (categoryZoneKeys.includes(key)) {
+                    pricesObj[key] = String(pricing[key] || "")
+                    seatsObj[key] = String(seats[key] || "")
+                    // If price is 0 or empty, mark as disabled
+                    if (!pricing[key]) {
+                        disabledZonesList.push(key)
+                    }
+                } else {
+                    // Custom zone
+                    customZonesList.push({
+                        key,
+                        label: pricingLabels[key] || key,
+                        price: String(pricing[key] || ""),
+                        seats: String(seats[key] || "")
+                    })
+                }
+            })
+
+            setForm({
+                title: data.title || "",
+                date: dateForInput,
+                time: data.time || "",
+                location: data.location || "",
+                description: data.description || "",
+                category: data.category || "SPORT",
+                prices: pricesObj,
+                seats: seatsObj,
+                disabledZones: disabledZonesList,
+                customZones: customZonesList,
+                status: data.status || "published",
+                existingImageUrl: data.image_url || "",
+                existingLogoUrl: data.promoter_logo || "",
+            })
+            setImagePreview(data.image_url || null)
+            setLogoPreview(data.promoter_logo || null)
+            setLoadingEvent(false)
+        }
+
+        if (eventId) loadEvent()
+    }, [eventId])
 
     const handleCategoryChange = (cat: string) => {
-        // Réinitialiser les prix, places, zones désactivées et zones personnalisées quand on change de catégorie
         setForm(prev => ({ ...prev, category: cat, prices: {}, seats: {}, disabledZones: [], customZones: [] }))
     }
 
@@ -159,22 +232,19 @@ export default function NewEventPage() {
             setError("Veuillez remplir les champs obligatoires (titre, date, lieu)")
             return
         }
-        // Vérifier que tous les prix et places standards actifs sont renseignés
         const zones = getZonesForCategory(form.category)
         const enabledZones = zones.filter(z => isZoneEnabled(z.key))
         const missingPrices = enabledZones.filter(z => !form.prices[z.key])
         const missingSeats = enabledZones.filter(z => !form.seats[z.key])
-        
-        // Vérifier qu'au moins une zone est active
+
         const totalZones = enabledZones.length + form.customZones.length
         if (totalZones === 0) {
             setError("Veuillez activer au moins une zone tarifaire")
             return
         }
-        
-        // Vérifier que les zones personnalisées sont complètes
+
         const incompleteCustomZones = form.customZones.filter(z => !z.label.trim() || !z.price || !z.seats)
-        
+
         if (missingPrices.length > 0) {
             setError(`Veuillez renseigner les prix pour: ${missingPrices.map(z => z.label).join(", ")}`)
             return
@@ -190,8 +260,7 @@ export default function NewEventPage() {
         setLoading(true)
         setError(null)
 
-        // Upload logo
-        let logoUrl = promoter?.logo_url || ""
+        let logoUrl = form.existingLogoUrl
         if (logoFile) {
             const sanitizedLogo = logoFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
             const logoPath = `logos/${Date.now()}_${sanitizedLogo}`
@@ -201,12 +270,10 @@ export default function NewEventPage() {
             if (!logoUploadError) {
                 const { data: logoUrlData } = supabase.storage.from("event-images").getPublicUrl(logoPath)
                 logoUrl = logoUrlData.publicUrl
-            } else {
-                console.warn("Logo upload failed:", logoUploadError.message)
             }
         }
 
-        let imageUrl = ""
+        let imageUrl = form.existingImageUrl
         if (imageFile) {
             const sanitizedName = imageFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')
             const filename = `events/${Date.now()}_${sanitizedName}`
@@ -216,63 +283,52 @@ export default function NewEventPage() {
             if (!uploadError) {
                 const { data: urlData } = supabase.storage.from("event-images").getPublicUrl(filename)
                 imageUrl = urlData.publicUrl
-            } else {
-                console.warn("Image upload failed:", uploadError.message)
-                // Continue without image — don't block event creation
             }
         }
 
-        // Format month label from date
         const months = ["JANVIER", "FÉVRIER", "MARS", "AVRIL", "MAI", "JUIN", "JUILLET", "AOÛT", "SEPTEMBRE", "OCTOBRE", "NOVEMBRE", "DÉCEMBRE"]
         const dateObj = new Date(form.date)
         const monthLabel = months[dateObj.getMonth()]
 
-            // Convertir les prix et places en entiers et créer les objets (uniquement zones actives)
-            const pricing: Record<string, number> = {}
-            const pricingLabels: Record<string, string> = {}
-            const seatsData: Record<string, number> = {}
-            const categoryZones = getZonesForCategory(form.category)
-            
-            // Ajouter uniquement les zones standards actives
-            categoryZones.filter(z => isZoneEnabled(z.key)).forEach(z => {
-                pricing[z.key] = parseInt(form.prices[z.key] || "0") || 0
-                pricingLabels[z.key] = z.label
-                seatsData[z.key] = parseInt(form.seats[z.key] || "0") || 0
-            })
-            
-            // Ajouter les zones personnalisées
-            form.customZones.forEach(z => {
-                pricing[z.key] = parseInt(z.price || "0") || 0
-                pricingLabels[z.key] = z.label
-                seatsData[z.key] = parseInt(z.seats || "0") || 0
-            })
+        const pricing: Record<string, number> = {}
+        const pricingLabels: Record<string, string> = {}
+        const seatsData: Record<string, number> = {}
+        const categoryZones = getZonesForCategory(form.category)
 
-            const { data, error: insertError } = await supabase.from("events").insert({
-                title: form.title,
-                date: new Date(form.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
-                time: form.time,
-                month_label: monthLabel,
-                location: form.location,
-                description: form.description,
-                category: form.category,
-                category_id: form.category.toLowerCase(),
-                pricing: pricing, // Stockage JSON des prix
-                pricing_labels: pricingLabels, // Labels des zones pour l'affichage
-                seats: seatsData, // Nombre de places par zone
-                // Garder les anciennes colonnes pour compatibilité (optionnel)
-                price_vip: pricing.vip || pricing[Object.keys(pricing)[0]] || 0,
-                price_tribune: pricing.tribune_couverte || pricing.tribune_decouverte || pricing.ticket_simple || 0,
-                price_pelouse: pricing.pelouse || 0,
-                image_url: imageUrl,
-                promoter_logo: logoUrl,
-                status: form.status,
-                featured: false,
-                promoter: promoter?.company_name || "",
-                promoter_id: promoter?.id || null,
-            }).select().single()
+        categoryZones.filter(z => isZoneEnabled(z.key)).forEach(z => {
+            pricing[z.key] = parseInt(form.prices[z.key] || "0") || 0
+            pricingLabels[z.key] = z.label
+            seatsData[z.key] = parseInt(form.seats[z.key] || "0") || 0
+        })
 
-        if (insertError) {
-            setError(insertError.message)
+        form.customZones.forEach(z => {
+            pricing[z.key] = parseInt(z.price || "0") || 0
+            pricingLabels[z.key] = z.label
+            seatsData[z.key] = parseInt(z.seats || "0") || 0
+        })
+
+        const { error: updateError } = await supabase.from("events").update({
+            title: form.title,
+            date: new Date(form.date).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }),
+            time: form.time,
+            month_label: monthLabel,
+            location: form.location,
+            description: form.description,
+            category: form.category,
+            category_id: form.category.toLowerCase(),
+            pricing,
+            pricing_labels: pricingLabels,
+            seats: seatsData,
+            price_vip: pricing.vip || pricing[Object.keys(pricing)[0]] || 0,
+            price_tribune: pricing.tribune_couverte || pricing.tribune_decouverte || pricing.ticket_simple || 0,
+            price_pelouse: pricing.pelouse || 0,
+            image_url: imageUrl,
+            promoter_logo: logoUrl,
+            status: form.status,
+        }).eq("id", eventId)
+
+        if (updateError) {
+            setError(updateError.message)
             setLoading(false)
             return
         }
@@ -282,12 +338,20 @@ export default function NewEventPage() {
         setLoading(false)
     }
 
+    if (loadingEvent) {
+        return (
+            <div className="flex items-center justify-center h-[60vh]">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500" />
+            </div>
+        )
+    }
+
     if (success) return (
         <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
                 <Check className="w-8 h-8 text-green-500" />
             </div>
-            <h2 className="text-xl font-bold text-gray-900">Événement créé !</h2>
+            <h2 className="text-xl font-bold text-gray-900">Événement modifié !</h2>
             <p className="text-gray-500 text-sm">Redirection vers vos événements...</p>
         </div>
     )
@@ -301,8 +365,8 @@ export default function NewEventPage() {
                     <ArrowLeft className="w-5 h-5 text-gray-600" />
                 </Link>
                 <div>
-                    <h1 className="text-2xl font-poppins font-black text-gray-900">Nouvel événement</h1>
-                    <p className="text-sm text-gray-500">Remplissez les informations de votre événement</p>
+                    <h1 className="text-2xl font-poppins font-black text-gray-900">Modifier l'événement</h1>
+                    <p className="text-sm text-gray-500">Modifiez les informations de votre événement</p>
                 </div>
             </div>
 
@@ -336,7 +400,7 @@ export default function NewEventPage() {
                     {logoPreview && (
                         <button
                             type="button"
-                            onClick={() => { setLogoFile(null); setLogoPreview(null) }}
+                            onClick={() => { setLogoFile(null); setLogoPreview(null); setForm(prev => ({ ...prev, existingLogoUrl: "" })) }}
                             className="flex items-center gap-1.5 px-3 py-2 bg-red-50 border border-red-200 text-red-500 text-xs font-bold rounded-xl hover:bg-red-100 transition-colors mt-1"
                         >
                             <X className="w-3.5 h-3.5" />
@@ -364,7 +428,7 @@ export default function NewEventPage() {
                             </label>
                             <button
                                 type="button"
-                                onClick={() => { setImageFile(null); setImagePreview(null) }}
+                                onClick={() => { setImageFile(null); setImagePreview(null); setForm(prev => ({ ...prev, existingImageUrl: "" })) }}
                                 className="flex items-center gap-1.5 px-4 py-2.5 bg-red-50 border border-red-200 text-red-500 text-sm font-bold rounded-xl hover:bg-red-100 transition-colors"
                             >
                                 <X className="w-4 h-4" />
@@ -390,19 +454,19 @@ export default function NewEventPage() {
                 <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Titre *</label>
                     <input type="text" placeholder="Ex: Grande Finale Eumeu Sène vs Gris Bordeaux"
-                        value={form.title} onChange={e => set("title", e.target.value)}
+                        value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))}
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:border-orange-400 focus:outline-none" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Date *</label>
-                        <input type="date" value={form.date} onChange={e => set("date", e.target.value)}
+                        <input type="date" value={form.date} onChange={e => setForm(prev => ({ ...prev, date: e.target.value }))}
                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:border-orange-400 focus:outline-none" />
                     </div>
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Heure</label>
-                        <input type="time" value={form.time} onChange={e => set("time", e.target.value)}
+                        <input type="time" value={form.time} onChange={e => setForm(prev => ({ ...prev, time: e.target.value }))}
                             className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:border-orange-400 focus:outline-none" />
                     </div>
                 </div>
@@ -410,7 +474,7 @@ export default function NewEventPage() {
                 <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Lieu *</label>
                     <input type="text" placeholder="Ex: Arène Nationale de Dakar"
-                        value={form.location} onChange={e => set("location", e.target.value)}
+                        value={form.location} onChange={e => setForm(prev => ({ ...prev, location: e.target.value }))}
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:border-orange-400 focus:outline-none" />
                 </div>
 
@@ -425,7 +489,7 @@ export default function NewEventPage() {
                 <div className="space-y-1.5">
                     <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Description</label>
                     <textarea placeholder="Décrivez votre événement..." rows={3}
-                        value={form.description} onChange={e => set("description", e.target.value)}
+                        value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))}
                         className="w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm focus:border-orange-400 focus:outline-none resize-none" />
                 </div>
             </div>
@@ -551,7 +615,7 @@ export default function NewEventPage() {
                         { value: "published", label: "Publié", desc: "Visible sur le site" },
                         { value: "draft", label: "Brouillon", desc: "Non visible" },
                     ].map(s => (
-                        <button key={s.value} onClick={() => set("status", s.value)}
+                        <button key={s.value} onClick={() => setForm(prev => ({ ...prev, status: s.value as "published" | "draft" }))}
                             className={`flex-1 px-4 py-3 rounded-xl border-2 text-sm font-bold transition-all ${form.status === s.value ? "border-orange-500 bg-orange-50 text-orange-600" : "border-gray-200 text-gray-500"}`}>
                             {s.label}
                             <span className="block text-xs font-normal mt-0.5">{s.desc}</span>
@@ -563,7 +627,7 @@ export default function NewEventPage() {
             {/* Submit */}
             <button onClick={handleSubmit} disabled={loading}
                 className="w-full py-4 bg-orange-500 text-white font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/20 disabled:opacity-50">
-                {loading ? <><Loader2 className="w-5 h-5 animate-spin" />Création...</> : "Créer l'événement"}
+                {loading ? <><Loader2 className="w-5 h-5 animate-spin" />Modification...</> : "Enregistrer les modifications"}
             </button>
         </div>
     )

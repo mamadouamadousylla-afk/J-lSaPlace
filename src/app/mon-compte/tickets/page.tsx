@@ -112,10 +112,44 @@ function TicketsContent() {
                         .replace(/\s+/g, "-")
                         .toUpperCase()
 
+                    // Get pricing from event
+                    const pricing = eventData.pricing || {}
+                    const eventPrice = pricing[cat.toLowerCase()] || eventData.price_vip || 0
+
                     // Generate tickets for each quantity
                     for (let i = 0; i < parseInt(qty || "1"); i++) {
+                        const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
+                        
+                        // Get buyer info from localStorage (set by BookingModal)
+                        const buyerInfo = typeof window !== "undefined" 
+                            ? JSON.parse(localStorage.getItem("booking_buyer_info") || "{}")
+                            : {}
+                        
+                        // Save ticket to database (for both logged in users and guests)
+                        const { data: dbTicket, error: ticketError } = await supabase
+                            .from("tickets")
+                            .insert({
+                                user_id: user?.id || null, // null for guests
+                                event_id: id,
+                                zone: cat.toUpperCase(),
+                                quantity: 1,
+                                total_price: eventPrice,
+                                qr_code: qrCode,
+                                status: "confirmed",
+                                buyer_name: buyerInfo.firstName && buyerInfo.lastName
+                                    ? `${buyerInfo.firstName} ${buyerInfo.lastName}`
+                                    : user?.full_name || "Acheteur invité",
+                                buyer_phone: buyerInfo.whatsapp 
+                                    ? `+221${buyerInfo.whatsapp}`
+                                    : user?.phone || null,
+                                buyer_email: user?.email || null
+                            })
+                            .select()
+                            .single()
+
+                        // Also create local ticket for display
                         const newTicket: TicketData = {
-                            id: `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`,
+                            id: qrCode,
                             title: eventData.title,
                             date: eventData.date,
                             time: eventData.time,
@@ -127,7 +161,8 @@ function TicketsContent() {
                             imageUrl: eventData.image_url,
                             holderName: user?.full_name || "Titulaire",
                             status: "upcoming",
-                            downloaded: false
+                            downloaded: false,
+                            db_id: dbTicket?.id // Store DB ID for reference
                         }
 
                         // Avoid duplicates

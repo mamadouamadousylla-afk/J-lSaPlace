@@ -27,34 +27,12 @@ interface BookingModalProps {
     }
 }
 
-// Configuration des types de places par catégorie
-const CATEGORY_SEAT_TYPES: Record<string, { label: string; key: string; priceKey: string }[]> = {
-    SPORT: [
-        { label: "VIP", key: "vip", priceKey: "price_vip" },
-        { label: "Tribune", key: "tribune", priceKey: "price_tribune" },
-        { label: "Pelouse", key: "pelouse", priceKey: "price_pelouse" }
-    ],
-    MUSIQUE: [
-        { label: "VIP Backstage", key: "vip", priceKey: "price_vip" },
-        { label: "Tribune Or", key: "tribune", priceKey: "price_tribune" },
-        { label: "Fosse Générale", key: "pelouse", priceKey: "price_pelouse" }
-    ],
-    HUMOUR: [
-        { label: "Premium", key: "vip", priceKey: "price_vip" },
-        { label: "Standard", key: "tribune", priceKey: "price_tribune" },
-        { label: "Étudiant", key: "pelouse", priceKey: "price_pelouse" }
-    ],
-    LOISIRS: [
-        { label: "VIP Prestige", key: "vip", priceKey: "price_vip" },
-        { label: "Tribune Privilège", key: "tribune", priceKey: "price_tribune" },
-        { label: "Accès Général", key: "pelouse", priceKey: "price_pelouse" }
-    ],
-    CONFERENCE: [
-        { label: "Business Class", key: "vip", priceKey: "price_vip" },
-        { label: "Standard", key: "tribune", priceKey: "price_tribune" },
-        { label: "Étudiant", key: "pelouse", priceKey: "price_pelouse" }
-    ]
-}
+// Types de places par défaut (fallback si pas de données dynamiques)
+const DEFAULT_SEAT_TYPES = [
+    { label: "VIP", key: "vip", priceKey: "price_vip" },
+    { label: "Tribune", key: "tribune", priceKey: "price_tribune" },
+    { label: "Pelouse", key: "pelouse", priceKey: "price_pelouse" }
+]
 
 const allPaymentMethods = [
     { id: "wave", name: "Wave", logo: "/wave-logo.png" },
@@ -79,6 +57,12 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
     
     // Récupérer les infos complètes de l'événement depuis Supabase
     const [eventData, setEventData] = useState<any>(null)
+    
+    // Disponibilité des places
+    const [availability, setAvailability] = useState<Record<string, { total: number; sold: number; remaining: number; available: boolean; label: string; price: number }>>({})
+    
+    // Types de places dynamiques (construits à partir des données de l'événement)
+    const [dynamicSeatTypes, setDynamicSeatTypes] = useState<{ label: string; key: string; price: number }[]>([])
 
     // Filtrer les méthodes de paiement selon les paramètres
     const paymentMethods = allPaymentMethods.filter(method => {
@@ -109,13 +93,51 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
 
             if (data) {
                 setEventData(data)
-                // Initialiser les quantités à 0
-                const seatTypes = CATEGORY_SEAT_TYPES[data.category] || CATEGORY_SEAT_TYPES.SPORT
-                const initialQuantities: Record<string, number> = {}
-                seatTypes.forEach(type => {
-                    initialQuantities[type.key] = 0
-                })
-                setTicketQuantities(initialQuantities)
+                
+                // Construire les types de places dynamiquement à partir des données du promoteur
+                const pricing = data.pricing || {}
+                const pricingLabels = data.pricing_labels || {}
+                
+                if (Object.keys(pricing).length > 0) {
+                    // Utiliser les données dynamiques définies par le promoteur
+                    const types = Object.keys(pricing).map(key => ({
+                        key,
+                        label: pricingLabels[key] || key.toUpperCase(),
+                        price: pricing[key] || 0
+                    }))
+                    setDynamicSeatTypes(types)
+                    
+                    // Initialiser les quantités à 0
+                    const initialQuantities: Record<string, number> = {}
+                    types.forEach(type => {
+                        initialQuantities[type.key] = 0
+                    })
+                    setTicketQuantities(initialQuantities)
+                } else {
+                    // Fallback: utiliser les anciennes colonnes
+                    const types = DEFAULT_SEAT_TYPES
+                    setDynamicSeatTypes(types.map(t => ({
+                        ...t,
+                        price: data[t.priceKey] || 0
+                    })))
+                    
+                    const initialQuantities: Record<string, number> = {}
+                    types.forEach(type => {
+                        initialQuantities[type.key] = 0
+                    })
+                    setTicketQuantities(initialQuantities)
+                }
+            }
+            
+            // Fetch availability
+            try {
+                const availRes = await fetch(`/api/events/${event.id}/availability`)
+                if (availRes.ok) {
+                    const availData = await availRes.json()
+                    setAvailability(availData.availability || {})
+                }
+            } catch (e) {
+                console.error("Erreur lors du chargement de la disponibilité:", e)
             }
         }
 
@@ -129,9 +151,11 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
         if (isOpen) {
             // Si l'utilisateur est connecté, pré-remplir ses infos
             if (user) {
-                setFirstName(user.user_metadata?.first_name || "")
-                setLastName(user.user_metadata?.last_name || "")
-                setWhatsapp(user.phone?.replace("+221", "") || "")
+                // @ts-ignore - user peut avoir user_metadata (Supabase) ou first_name directement (CustomUser)
+                setFirstName(user.user_metadata?.first_name || user.first_name || "")
+                // @ts-ignore
+                setLastName(user.user_metadata?.last_name || user.last_name || "")
+                setWhatsapp((user.phone || "").replace("+221", ""))
             } else {
                 setFirstName("")
                 setLastName("")
@@ -141,13 +165,15 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
         }
     }, [isOpen, user])
 
-    // Obtenir les types de places pour la catégorie
-    const seatTypes = CATEGORY_SEAT_TYPES[eventData?.category] || CATEGORY_SEAT_TYPES.SPORT
+    // Obtenir les types de places (dynamiques ou fallback)
+    const seatTypes = dynamicSeatTypes.length > 0 ? dynamicSeatTypes : DEFAULT_SEAT_TYPES.map(t => ({
+        ...t,
+        price: eventData?.[t.priceKey] || 0
+    }))
     
     // Calculer le total
     const total = seatTypes.reduce((sum, type) => {
-        const price = eventData?.[type.priceKey] || 0
-        return sum + (ticketQuantities[type.key] || 0) * price
+        return sum + (ticketQuantities[type.key] || 0) * (type.price || 0)
     }, 0)
 
     // Nombre total de billets
@@ -246,11 +272,14 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                 <div className="flex items-center justify-between p-4 bg-green-50 border border-green-200 rounded-2xl">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center text-white font-bold">
-                                            {(user.user_metadata?.first_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
+                                            {/* @ts-ignore */}
+                                            {(user.user_metadata?.first_name?.[0] || user.first_name?.[0] || user.email?.[0] || 'U').toUpperCase()}
                                         </div>
                                         <div>
                                             <p className="font-bold text-gray-900">
-                                                {user.user_metadata?.first_name} {user.user_metadata?.last_name}
+                                                {/* @ts-ignore */}
+                                                {user.user_metadata?.first_name || user.first_name} {/* @ts-ignore */}
+                                                {user.user_metadata?.last_name || user.last_name}
                                             </p>
                                             <p className="text-sm text-gray-500">{user.phone}</p>
                                         </div>
@@ -351,23 +380,41 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                         
                             <div className="space-y-4">
                                 {seatTypes.map((type, index) => {
-                                    const price = eventData?.[type.priceKey] || 0
+                                    const price = type.price || 0
                                     const quantity = ticketQuantities[type.key] || 0
+                                    const zoneAvail = availability[type.key]
+                                    const isAvailable = zoneAvail ? zoneAvail.available : true
+                                    const remaining = zoneAvail?.remaining || 0
+                                    const hasLimit = zoneAvail && zoneAvail.total > 0
+                                    
                                     return (
                                         <div 
                                             key={type.key} 
                                             className={cn(
                                                 "flex items-center justify-between p-5 rounded-[2rem] border",
-                                                index === 0 
+                                                !isAvailable && "opacity-50 bg-gray-100 border-gray-200",
+                                                isAvailable && index === 0 
                                                     ? "bg-[#F8FBFE] border-blue-50/30" 
-                                                    : "bg-[#F8F9FA] border-gray-50"
+                                                    : isAvailable && "bg-[#F8F9FA] border-gray-50"
                                             )}
                                         >
                                             <div className="space-y-0.5">
-                                                <p className="font-bold text-gray-900 text-lg">{type.label}</p>
-                                                <p className="text-[#2D75B6] font-bold tracking-tight">{formatPrice(price)}</p>
+                                                <p className={cn("font-bold text-lg", !isAvailable && "text-gray-400")}>{type.label}</p>
+                                                {!isAvailable ? (
+                                                    <p className="text-red-500 font-bold text-sm">Non disponible</p>
+                                                ) : (
+                                                    <>
+                                                        <p className="text-[#2D75B6] font-bold tracking-tight">{formatPrice(price)}</p>
+                                                        {hasLimit && remaining <= 10 && remaining > 0 && (
+                                                            <p className="text-orange-500 text-xs font-bold">Plus que {remaining} place{remaining > 1 ? 's' : ''} !</p>
+                                                        )}
+                                                    </>
+                                                )}
                                             </div>
-                                            <div className="flex items-center gap-5 bg-white rounded-full p-1.5 shadow-sm border border-gray-100/50">
+                                            <div className={cn(
+                                                "flex items-center gap-5 bg-white rounded-full p-1.5 shadow-sm border border-gray-100/50",
+                                                !isAvailable && "pointer-events-none"
+                                            )}>
                                                 <button
                                                     onClick={() => updateQuantity(type.key, -1)}
                                                     className={cn(
@@ -380,11 +427,13 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                                 <span className="w-4 text-center font-bold text-gray-900 text-lg">{quantity}</span>
                                                 <button
                                                     onClick={() => updateQuantity(type.key, 1)}
+                                                    disabled={hasLimit && quantity >= remaining}
                                                     className={cn(
                                                         "w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-90",
                                                         quantity > 0 
                                                             ? "bg-[#2D75B6] text-white shadow-lg shadow-blue-500/20" 
-                                                            : "bg-gray-100 text-gray-400"
+                                                            : "bg-gray-100 text-gray-400",
+                                                        hasLimit && quantity >= remaining && "opacity-50 cursor-not-allowed"
                                                     )}
                                                 >
                                                     <Plus className="w-6 h-6" />
@@ -465,6 +514,15 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                     // Trouver le type de billet principal
                                     const mainType = Object.entries(ticketQuantities)
                                         .sort(([,a], [,b]) => b - a)[0]
+                                    
+                                    // Sauvegarder les infos de l'acheteur
+                                    const buyerInfo = {
+                                        firstName: firstName.trim(),
+                                        lastName: lastName.trim(),
+                                        whatsapp: whatsapp.trim()
+                                    }
+                                    localStorage.setItem("booking_buyer_info", JSON.stringify(buyerInfo))
+                                    
                                     // Simulate payment flow
                                     router.push(`/mon-compte/tickets?id=${event.id}&qty=${totalTickets}&cat=${mainType?.[0] || 'vip'}`)
                                 }}

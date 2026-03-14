@@ -253,7 +253,7 @@ export default function EventDetail() {
                     </p>
                 </section>
 
-                {/* Promoteur */}
+                {/* Partenaire */}
                 {event.promoter && (
                     <section className="px-2 space-y-4">
                         <h2 className="text-xl font-poppins font-bold flex items-center gap-2">

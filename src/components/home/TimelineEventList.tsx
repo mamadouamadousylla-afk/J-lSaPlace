@@ -148,10 +148,10 @@ export default function TimelineEventList({ selectedCategory, searchQuery }: Tim
                                 {/* Month Badge on Timeline */}
                                 {isFirstInMonth(event, idx) && (
                                     <div 
-                                        className="absolute -left-[32px] top-6 w-6 bg-[#FF4B4B] rounded-full flex items-center justify-center shadow-sm z-10"
-                                        style={{ height: `${Math.max(72, event.monthLabel.length * 10)}px` }}
+                                        className="absolute -left-[38px] top-6 w-8 bg-[#FF4B4B] rounded-full flex items-center justify-center shadow-sm z-10"
+                                        style={{ height: `${Math.max(80, event.monthLabel.length * 11)}px` }}
                                     >
-                                        <span className="-rotate-90 text-[10px] font-bold text-white tracking-widest whitespace-nowrap">
+                                        <span className="-rotate-90 text-[11px] font-bold text-white tracking-widest whitespace-nowrap">
                                             {event.monthLabel}
                                         </span>
                                     </div>

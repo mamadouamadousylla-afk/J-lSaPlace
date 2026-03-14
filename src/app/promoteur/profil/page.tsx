@@ -79,7 +79,7 @@ export default function PromoterProfilPage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl md:text-3xl font-poppins font-black text-gray-900">Mon Profil</h1>
-                    <p className="text-gray-500 text-sm mt-1">Informations de votre compte promoteur</p>
+                    <p className="text-gray-500 text-sm mt-1">Informations de votre compte partenaire</p>
                 </div>
                 <button onClick={() => setEditing(!editing)}
                     className="flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-200 transition-colors">

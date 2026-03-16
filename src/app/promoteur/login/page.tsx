@@ -81,8 +81,8 @@ export default function PromoterLoginPage() {
             }
 
             if (!promoters || promoters.length === 0) {
-                // Check if pending or rejected
-                const { data: pending } = await supabase
+                // Check if pending or rejected using admin client
+                const { data: pending } = await supabaseAdmin
                     .from("promoters")
                     .select("status")
                     .eq("user_id", authData.user.id)

@@ -5,7 +5,10 @@ export async function POST(request: Request) {
     try {
         const { phone, password } = await request.json()
 
+        console.log("[PROMOTER LOGIN] Attempting login:", { phone })
+
         if (!phone || !password) {
+            console.error("[PROMOTER LOGIN] Missing fields")
             return NextResponse.json({ error: "Champs manquants" }, { status: 400 })
         }
 
@@ -21,7 +24,14 @@ export async function POST(request: Request) {
             password: password
         })
 
+        console.log("[PROMOTER LOGIN] Auth result:", { 
+            hasUser: !!authData?.user, 
+            hasError: !!authError,
+            error: authError?.message 
+        })
+
         if (authError || !authData.user) {
+            console.error("[PROMOTER LOGIN] Auth failed:", authError)
             return NextResponse.json({ error: "Identifiants incorrects" }, { status: 401 })
         }
 
@@ -34,6 +44,7 @@ export async function POST(request: Request) {
             .limit(1)
 
         if (promoterError) {
+            console.error("[PROMOTER LOGIN] Promoter check failed:", promoterError)
             return NextResponse.json({ error: "Erreur lors de la vérification" }, { status: 500 })
         }
 

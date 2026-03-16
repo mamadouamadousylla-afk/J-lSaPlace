@@ -57,3 +57,6 @@ Capture d’écran *.png
 !src/**/*.webp
 .vercel_backup
 .env*.local
+
+# submodules
+puppeteer-extension

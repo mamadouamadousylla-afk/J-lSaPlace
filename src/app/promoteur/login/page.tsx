@@ -28,12 +28,17 @@ export default function PromoterLoginPage() {
 
         try {
             // Direct login via Supabase for promoter account
+            console.log('[LOGIN] Attempting login with phone:', `+221${phone}`)
+            
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
                 phone: `+221${phone}`,
                 password: password
             })
 
+            console.log('[LOGIN] Auth result:', { authData, authError })
+
             if (authError || !authData.user) {
+                console.error('[LOGIN] Auth failed:', authError)
                 setError("Identifiants incorrects")
                 setLoading(false)
                 return

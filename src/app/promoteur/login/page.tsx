@@ -27,16 +27,14 @@ export default function PromoterLoginPage() {
         setError(null)
 
         try {
-            // First login as regular user
-            const res = await fetch("/api/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone: `+221${phone}`, password })
+            // Direct login via Supabase for promoter account
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+                phone: `+221${phone}`,
+                password: password
             })
-            const userData = await res.json()
 
-            if (!res.ok) {
-                setError(userData.error || "Identifiants incorrects")
+            if (authError || !authData.user) {
+                setError("Identifiants incorrects")
                 setLoading(false)
                 return
             }
@@ -45,7 +43,7 @@ export default function PromoterLoginPage() {
             const { data: promoters } = await supabase
                 .from("promoters")
                 .select("*")
-                .eq("user_id", userData.user.id)
+                .eq("user_id", authData.user.id)
                 .eq("status", "approved")
                 .limit(1)
 
@@ -54,7 +52,7 @@ export default function PromoterLoginPage() {
                 const { data: pending } = await supabase
                     .from("promoters")
                     .select("status")
-                    .eq("user_id", userData.user.id)
+                    .eq("user_id", authData.user.id)
                     .limit(1)
 
                 if (pending && pending.length > 0 && pending[0].status === "pending") {
@@ -72,9 +70,8 @@ export default function PromoterLoginPage() {
             // Save promoter session
             localStorage.setItem("promoter_session", JSON.stringify({
                 ...promoter,
-                user: userData.user
+                user: authData.user
             }))
-            localStorage.setItem("user_session", JSON.stringify(userData.user))
             router.push("/promoteur")
         } catch {
             setError("Erreur de connexion")

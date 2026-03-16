@@ -2,18 +2,18 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Building2, Phone, Lock, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
+import { Building2, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
 
 export default function PromoterLoginPage() {
     const router = useRouter()
-    const [phone, setPhone] = useState("")
+    const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
     const handleLogin = async () => {
-        if (!phone || !password) {
+        if (!email || !password) {
             setError("Veuillez remplir tous les champs")
             return
         }
@@ -25,7 +25,7 @@ export default function PromoterLoginPage() {
             const res = await fetch("/api/auth/promoter-login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ phone, password })
+                body: JSON.stringify({ email, password })
             })
             const data = await res.json()
 
@@ -74,25 +74,16 @@ export default function PromoterLoginPage() {
 
                     {/* Form */}
                     <div className="p-8 space-y-5">
-                        {/* Phone */}
+                        {/* Email */}
                         <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Numéro de téléphone</label>
-                            <div className="flex gap-2">
-                                <div className="px-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 flex items-center gap-2 font-bold text-gray-900 text-sm">
-                                    <div className="w-5 h-3 rounded-sm overflow-hidden flex">
-                                        <div className="w-1/3 bg-[#00853F]" />
-                                        <div className="w-1/3 bg-[#FDEF42]" />
-                                        <div className="w-1/3 bg-[#E31B23]" />
-                                    </div>
-                                    +221
-                                </div>
-                                <div className="relative flex-1">
-                                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                    <input type="tel" placeholder="77 000 00 00" value={phone}
-                                        onChange={e => setPhone(e.target.value.replace(/\D/g, '').slice(0, 9))}
-                                        className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 text-gray-900 text-sm font-medium tracking-wide"
-                                    />
-                                </div>
+                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Email</label>
+                            <div className="relative">
+                                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                                <input type="email" placeholder="exemple@email.com" value={email}
+                                    onChange={e => setEmail(e.target.value)}
+                                    onKeyDown={e => e.key === "Enter" && handleLogin()}
+                                    className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-gray-50 border border-gray-200 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 text-gray-900 text-sm font-medium"
+                                />
                             </div>
                         </div>
 
@@ -119,9 +110,9 @@ export default function PromoterLoginPage() {
                             </div>
                         )}
 
-                        <button onClick={handleLogin} disabled={loading || !phone || !password}
+                        <button onClick={handleLogin} disabled={loading || !email || !password}
                             className={`w-full py-4 rounded-xl font-bold text-base flex items-center justify-center gap-2 transition-all ${
-                                loading || !phone || !password
+                                loading || !email || !password
                                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                                     : "bg-orange-500 text-white shadow-lg shadow-orange-500/20 hover:bg-orange-600"
                             }`}>

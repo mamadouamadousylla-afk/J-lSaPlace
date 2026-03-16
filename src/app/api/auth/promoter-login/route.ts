@@ -3,11 +3,11 @@ import { createClient } from "@supabase/supabase-js"
 
 export async function POST(request: Request) {
     try {
-        const { phone, password } = await request.json()
+        const { email, password } = await request.json()
 
-        console.log("[PROMOTER LOGIN] Attempting login:", { phone })
+        console.log("[PROMOTER LOGIN] Attempting login:", { email })
 
-        if (!phone || !password) {
+        if (!email || !password) {
             console.error("[PROMOTER LOGIN] Missing fields")
             return NextResponse.json({ error: "Champs manquants" }, { status: 400 })
         }
@@ -18,9 +18,9 @@ export async function POST(request: Request) {
             process.env.SUPABASE_SERVICE_ROLE_KEY!
         )
 
-        // Step 1: Authenticate user
+        // Step 1: Authenticate user with email
         const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
-            phone: `+221${phone}`,
+            email: email,
             password: password
         })
 

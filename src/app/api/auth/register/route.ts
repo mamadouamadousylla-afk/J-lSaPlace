@@ -9,7 +9,7 @@ const supabase = createClient(
 // POST /api/auth/register — Inscription directe sans OTP
 export async function POST(request: NextRequest) {
     try {
-        const { phone, firstName, lastName, password } = await request.json()
+        const { phone, firstName, lastName, password, email } = await request.json()
 
         if (!phone || !password || !firstName || !lastName) {
             return NextResponse.json({ error: "Tous les champs sont requis" }, { status: 400 })
@@ -21,7 +21,9 @@ export async function POST(request: NextRequest) {
 
         const formattedPhone = phone.startsWith("+") ? phone : `+221${phone}`
         const fullName = `${firstName} ${lastName}`.trim()
-        const fakeEmail = `${formattedPhone.replace('+', '')}@sunulamb.local`
+        
+        // Use real email if provided, otherwise generate fake one
+        const authEmail = email && email.trim() ? email.trim() : `${formattedPhone.replace('+', '')}@sunulamb.local`
 
         // Vérifier si le numéro existe déjà
         const { data: existingByPhone } = await supabase
@@ -43,7 +45,7 @@ export async function POST(request: NextRequest) {
         
         // Créer l'utilisateur dans auth.users
         const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: fakeEmail,
+            email: authEmail,
             password: password,
             options: {
                 data: {

@@ -56,7 +56,8 @@ export default function PromoterSignupPage() {
                     phone: formattedPhone,
                     firstName,
                     lastName,
-                    password: form.password
+                    password: form.password,
+                    email: form.email || null
                 })
             })
             const regData = await regRes.json()

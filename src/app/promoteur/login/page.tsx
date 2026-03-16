@@ -3,18 +3,6 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Building2, Phone, Lock, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
-import { createClient } from "@supabase/supabase-js"
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
-
-// Create admin client with service role key to bypass RLS
-const supabaseAdmin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
 
 export default function PromoterLoginPage() {
     const router = useRouter()
@@ -33,85 +21,34 @@ export default function PromoterLoginPage() {
         setError(null)
 
         try {
-            // Step 1: Authenticate with Supabase Auth
-            console.log('[LOGIN] Step 1: Authenticating...')
-            
-            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-                phone: `+221${phone}`,
-                password: password
+            // Call server-side API for promoter login
+            const res = await fetch("/api/auth/promoter-login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ phone, password })
             })
+            const data = await res.json()
 
-            console.log('[LOGIN] Auth result:', { 
-                hasUser: !!authData?.user, 
-                hasError: !!authError,
-                error: authError 
-            })
-
-            if (authError) {
-                console.error('[LOGIN] Auth error details:', authError)
-                setError("Identifiants incorrects")
-                setLoading(false)
-                return
-            }
-
-            if (!authData.user) {
-                setError("Identifiants incorrects")
-                setLoading(false)
-                return
-            }
-
-            // Step 2: Check promoter status using service role key for admin access
-            console.log('[LOGIN] Step 2: Checking promoter status...')
-            
-            const { data: promoters, error: promoterError } = await supabaseAdmin
-                .from("promoters")
-                .select("*")
-                .eq("user_id", authData.user.id)
-                .eq("status", "approved")
-                .limit(1)
-
-            console.log('[LOGIN] Promoter check:', { promoters, promoterError })
-
-            if (promoterError) {
-                console.error('[LOGIN] Promoter query error:', promoterError)
-                // Still allow login but log out as promoter
-                localStorage.setItem("user_session", JSON.stringify(authData.user))
-                router.push("/mon-compte")
-                return
-            }
-
-            if (!promoters || promoters.length === 0) {
-                // Check if pending or rejected using admin client
-                const { data: pending } = await supabaseAdmin
-                    .from("promoters")
-                    .select("status")
-                    .eq("user_id", authData.user.id)
-                    .limit(1)
-
-                if (pending && pending.length > 0 && pending[0].status === "pending") {
-                    setError("Votre compte partenaire est en cours de validation par l'administrateur.")
-                } else if (pending && pending.length > 0 && pending[0].status === "rejected") {
-                    setError("Votre demande de compte partenaire a été rejetée. Contactez l'administrateur.")
-                } else {
-                    // Regular user, redirect to standard account page
-                    localStorage.setItem("user_session", JSON.stringify(authData.user))
+            if (!res.ok) {
+                if (data.error === "not_partner") {
+                    // Regular user, redirect to standard account
+                    localStorage.setItem("user_session", JSON.stringify(data.user))
                     router.push("/mon-compte")
+                    return
                 }
+                setError(data.message || data.error || "Identifiants incorrects")
                 setLoading(false)
                 return
             }
 
-            // Step 3: Approved promoter - save session and redirect
-            console.log('[LOGIN] Step 3: Approved promoter found!')
-            
-            const promoter = promoters[0]
+            // Success - save promoter session
             localStorage.setItem("promoter_session", JSON.stringify({
-                ...promoter,
-                user: authData.user
+                ...data.promoter,
+                user: data.user
             }))
             router.push("/promoteur")
         } catch (err) {
-            console.error('[LOGIN] Unexpected error:', err)
+            console.error("[LOGIN] Error:", err)
             setError("Erreur de connexion")
         }
         setLoading(false)

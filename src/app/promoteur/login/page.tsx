@@ -10,6 +10,12 @@ const supabase = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
+// Create admin client with service role key to bypass RLS
+const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
+
 export default function PromoterLoginPage() {
     const router = useRouter()
     const [phone, setPhone] = useState("")
@@ -57,7 +63,7 @@ export default function PromoterLoginPage() {
             // Step 2: Check promoter status using service role key for admin access
             console.log('[LOGIN] Step 2: Checking promoter status...')
             
-            const { data: promoters, error: promoterError } = await supabase
+            const { data: promoters, error: promoterError } = await supabaseAdmin
                 .from("promoters")
                 .select("*")
                 .eq("user_id", authData.user.id)

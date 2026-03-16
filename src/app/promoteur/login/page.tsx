@@ -27,33 +27,55 @@ export default function PromoterLoginPage() {
         setError(null)
 
         try {
-            // Direct login via Supabase for promoter account
-            console.log('[LOGIN] Attempting login with phone:', `+221${phone}`)
+            // Step 1: Authenticate with Supabase Auth
+            console.log('[LOGIN] Step 1: Authenticating...')
             
             const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
                 phone: `+221${phone}`,
                 password: password
             })
 
-            console.log('[LOGIN] Auth result:', { authData, authError })
+            console.log('[LOGIN] Auth result:', { 
+                hasUser: !!authData?.user, 
+                hasError: !!authError,
+                error: authError 
+            })
 
-            if (authError || !authData.user) {
-                console.error('[LOGIN] Auth failed:', authError)
+            if (authError) {
+                console.error('[LOGIN] Auth error details:', authError)
                 setError("Identifiants incorrects")
                 setLoading(false)
                 return
             }
 
-            // Check if this user has an approved promoter account
-            const { data: promoters } = await supabase
+            if (!authData.user) {
+                setError("Identifiants incorrects")
+                setLoading(false)
+                return
+            }
+
+            // Step 2: Check promoter status using service role key for admin access
+            console.log('[LOGIN] Step 2: Checking promoter status...')
+            
+            const { data: promoters, error: promoterError } = await supabase
                 .from("promoters")
                 .select("*")
                 .eq("user_id", authData.user.id)
                 .eq("status", "approved")
                 .limit(1)
 
+            console.log('[LOGIN] Promoter check:', { promoters, promoterError })
+
+            if (promoterError) {
+                console.error('[LOGIN] Promoter query error:', promoterError)
+                // Still allow login but log out as promoter
+                localStorage.setItem("user_session", JSON.stringify(authData.user))
+                router.push("/mon-compte")
+                return
+            }
+
             if (!promoters || promoters.length === 0) {
-                // Check if pending
+                // Check if pending or rejected
                 const { data: pending } = await supabase
                     .from("promoters")
                     .select("status")
@@ -65,20 +87,25 @@ export default function PromoterLoginPage() {
                 } else if (pending && pending.length > 0 && pending[0].status === "rejected") {
                     setError("Votre demande de compte partenaire a été rejetée. Contactez l'administrateur.")
                 } else {
-                    setError("Aucun compte partenaire approuvé trouvé pour ce numéro.")
+                    // Regular user, redirect to standard account page
+                    localStorage.setItem("user_session", JSON.stringify(authData.user))
+                    router.push("/mon-compte")
                 }
                 setLoading(false)
                 return
             }
 
+            // Step 3: Approved promoter - save session and redirect
+            console.log('[LOGIN] Step 3: Approved promoter found!')
+            
             const promoter = promoters[0]
-            // Save promoter session
             localStorage.setItem("promoter_session", JSON.stringify({
                 ...promoter,
                 user: authData.user
             }))
             router.push("/promoteur")
-        } catch {
+        } catch (err) {
+            console.error('[LOGIN] Unexpected error:', err)
             setError("Erreur de connexion")
         }
         setLoading(false)

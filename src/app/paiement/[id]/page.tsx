@@ -24,23 +24,47 @@ export default function PaymentPage() {
     const [user, setUser] = useState<any>(null)
 
     const eventId = params.id as string
-    const qty = parseInt(searchParams.get("qty") || "1")
-    const catId = searchParams.get("cat") || "vip"
+    
+    // Parse multiple categories from URL (format: "vip:2,tribune:1,pelouse:3")
+    const catsParam = searchParams.get("cats") || ""
+    const ticketCategories = catsParam
+        .split(",")
+        .filter(Boolean)
+        .map(cat => {
+            const [catId, qty] = cat.split(":")
+            return { catId: catId || "vip", qty: parseInt(qty || "1") }
+        })
+    
+    // Fallback to old single category format for compatibility
+    const legacyQty = parseInt(searchParams.get("qty") || "1")
+    const legacyCatId = searchParams.get("cat") || "vip"
+    
+    // Use new format if available, otherwise fallback to old
+    const finalCategories = ticketCategories.length > 0 
+        ? ticketCategories 
+        : [{ catId: legacyCatId, qty: legacyQty }]
 
-    // Calculate price dynamically from event data
-    const getPrice = () => {
+    // Calculate total price across all categories
+    const calculateTotal = () => {
         if (!eventData) return 0
-        const pricing = eventData.pricing || {}
-        if (pricing[catId]) return pricing[catId]
-
-        // Fallback to old columns
-        if (catId.toLowerCase() === "vip") return eventData.price_vip || 15000
-        if (catId.toLowerCase() === "tribune") return eventData.price_tribune || 5000
-        return eventData.price_pelouse || 2000
+        let total = 0
+        finalCategories.forEach(({ catId, qty }) => {
+            const pricing = eventData.pricing || {}
+            let price = pricing[catId]
+            
+            // Fallback to old columns
+            if (price === undefined) {
+                if (catId.toLowerCase() === "vip") price = eventData.price_vip || 15000
+                else if (catId.toLowerCase() === "tribune") price = eventData.price_tribune || 5000
+                else price = eventData.price_pelouse || 2000
+            }
+            
+            total += (price || 0) * qty
+        })
+        return total
     }
 
-    const price = getPrice()
-    const total = price * qty
+    const total = calculateTotal()
 
     // Load event data and user
     useEffect(() => {
@@ -71,8 +95,10 @@ export default function PaymentPage() {
                 // Get current user
                 const { data: { user } } = await supabase.auth.getUser()
 
-                if (!user) {
-                    // Guest checkout - still save tickets but without user_id
+                const allTickets = []
+                
+                // Create tickets for each category
+                for (const { catId, qty } of finalCategories) {
                     // Get zone label matching the category
                     const pricingLabels = eventData?.pricing_labels || {}
                     const zoneLabel = pricingLabels[catId] || catId.toUpperCase()
@@ -82,112 +108,116 @@ export default function PaymentPage() {
                         .replace(/\s+/g, "-")
                         .toUpperCase()
 
-                    const guestTickets = []
+                    // Get price for this category
+                    const pricing = eventData?.pricing || {}
+                    let price = pricing[catId]
                     
-                    for (let i = 0; i < qty; i++) {
-                        const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
+                    // Fallback to old columns
+                    if (price === undefined) {
+                        if (catId.toLowerCase() === "vip") price = eventData.price_vip || 15000
+                        else if (catId.toLowerCase() === "tribune") price = eventData.price_tribune || 5000
+                        else price = eventData.price_pelouse || 2000
+                    }
 
-                        const { data: ticket, error } = await supabase
-                            .from("tickets")
-                            .insert({
-                                user_id: null, // Guest purchase
-                                event_id: eventId,
-                                zone: catId.toUpperCase(),
-                                quantity: 1,
-                                total_price: price,
-                                qr_code: qrCode,
-                                payment_ref: `PAY-${Date.now()}-${i}`,
-                                payment_method: selectedMethod.id,
-                                status: "confirmed",
-                                buyer_name: "Acheteur invité",
-                                buyer_phone: localStorage.getItem("guest_phone") || null
-                            })
-                            .select()
-                            .single()
+                    if (user) {
+                        // Logged in user - create tickets with user_id
+                        for (let i = 0; i < qty; i++) {
+                            const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
 
-                        if (!error && ticket) {
-                            guestTickets.push(ticket)
+                            const { data: ticket, error } = await supabase
+                                .from("tickets")
+                                .insert({
+                                    user_id: user.id,
+                                    event_id: eventId,
+                                    zone: catId.toUpperCase(),
+                                    quantity: 1,
+                                    total_price: price,
+                                    qr_code: qrCode,
+                                    payment_ref: `PAY-${Date.now()}-${catId}-${i}`,
+                                    payment_method: selectedMethod.id,
+                                    status: "confirmed"
+                                })
+                                .select()
+                                .single()
+
+                            if (error) {
+                                console.error("Error creating ticket:", error)
+                            } else {
+                                allTickets.push(ticket)
+                            }
+                        }
+                    } else {
+                        // Guest checkout - create tickets without user_id
+                        for (let i = 0; i < qty; i++) {
+                            const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
+
+                            const { data: ticket, error } = await supabase
+                                .from("tickets")
+                                .insert({
+                                    user_id: null, // Guest purchase
+                                    event_id: eventId,
+                                    zone: catId.toUpperCase(),
+                                    quantity: 1,
+                                    total_price: price,
+                                    qr_code: qrCode,
+                                    payment_ref: `PAY-${Date.now()}-${catId}-${i}`,
+                                    payment_method: selectedMethod.id,
+                                    status: "confirmed",
+                                    buyer_name: "Acheteur invité",
+                                    buyer_phone: localStorage.getItem("guest_phone") || null
+                                })
+                                .select()
+                                .single()
+
+                            if (!error && ticket) {
+                                allTickets.push(ticket)
+                            }
                         }
                     }
-
-                    // Save guest info to localStorage for display
-                    if (guestTickets.length > 0) {
-                        localStorage.setItem("guest_tickets", JSON.stringify(guestTickets))
-                    }
-
-                    setIsLoading(false)
-                    setIsSuccess(true)
-                    setTimeout(() => {
-                        router.push(`/mon-compte/tickets?id=${eventId}&qty=${qty}&cat=${catId}&guest=true`)
-                    }, 3000)
-                    return
                 }
 
-                // Create tickets for each quantity
-                const tickets = []
+                // Save guest info to localStorage for display
+                if (allTickets.length > 0 && !user) {
+                    localStorage.setItem("guest_tickets", JSON.stringify(allTickets))
+                }
 
-                // Get zone label matching the category
-                const pricingLabels = eventData?.pricing_labels || {}
-                const zoneLabel = pricingLabels[catId] || catId.toUpperCase()
-
-                const zoneSanitized = zoneLabel
-                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                    .replace(/\s+/g, "-")
-                    .toUpperCase()
-
-                for (let i = 0; i < qty; i++) {
-                    const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
-
-                    const { data: ticket, error } = await supabase
-                        .from("tickets")
+                // Create payment record (if logged in)
+                if (user) {
+                    const fee = Math.round(total * 0.03) // 3% fee
+                    await supabase
+                        .from("payments")
                         .insert({
                             user_id: user.id,
                             event_id: eventId,
-                            zone: catId.toUpperCase(),
-                            quantity: 1,
-                            total_price: price,
-                            qr_code: qrCode,
-                            payment_ref: `PAY-${Date.now()}-${i}`,
+                            ticket_id: allTickets[0]?.id,
+                            amount: total,
+                            fee: fee,
                             payment_method: selectedMethod.id,
-                            status: "confirmed"
+                            status: "completed",
+                            phone_number: user.phone || null,
+                            payment_reference: `REF-${Date.now()}`,
+                            metadata: {
+                                event_title: eventData?.title,
+                                categories: finalCategories,
+                                total_tickets: allTickets.length
+                            }
                         })
-                        .select()
-                        .single()
-
-                    if (error) {
-                        console.error("Error creating ticket:", error)
-                    } else {
-                        tickets.push(ticket)
-                    }
                 }
-
-                // Create payment record
-                const fee = Math.round(total * 0.03) // 3% fee
-                await supabase
-                    .from("payments")
-                    .insert({
-                        user_id: user.id,
-                        event_id: eventId,
-                        ticket_id: tickets[0]?.id,
-                        amount: total,
-                        fee: fee,
-                        payment_method: selectedMethod.id,
-                        status: "completed",
-                        phone_number: user.phone || null,
-                        payment_reference: `REF-${Date.now()}`,
-                        metadata: {
-                            event_title: eventData?.title,
-                            zone: catId,
-                            quantity: qty,
-                            tickets_created: tickets.length
-                        }
-                    })
 
                 setIsLoading(false)
                 setIsSuccess(true)
 
+                // Build redirect URL with all categories
+                const catsParam = finalCategories
+                    .map(({ catId, qty }) => `${catId}:${qty}`)
+                    .join(',')
+                
                 setTimeout(() => {
-                    router.push(`/mon-compte/tickets?id=${eventId}&qty=${qty}&cat=${catId}`)
+                    if (user) {
+                        router.push(`/mon-compte/tickets?id=${eventId}&cats=${catsParam}`)
+                    } else {
+                        router.push(`/mon-compte/tickets?id=${eventId}&cats=${catsParam}&guest=true`)
+                    }
                 }, 3000)
             } catch (error) {
                 console.error("Payment processing error:", error)
@@ -211,7 +241,13 @@ export default function PaymentPage() {
                     <div>
                         <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Récapitulatif</p>
                         <h2 className="font-bold text-lg text-gray-900">{eventData?.title || "Chargement..."}</h2>
-                        <p className="text-sm text-gray-500">{qty}x Ticket {eventData?.pricing_labels?.[catId] || catId.toUpperCase()}</p>
+                        <div className="space-y-1">
+                            {finalCategories.map(({ catId, qty }) => (
+                                <p key={catId} className="text-sm text-gray-500">
+                                    {qty}x Ticket {eventData?.pricing_labels?.[catId] || catId.toUpperCase()}
+                                </p>
+                            ))}
+                        </div>
                     </div>
                     <div className="text-right">
                         <p className="font-poppins font-bold text-2xl text-secondary">{formatPrice(total)}</p>

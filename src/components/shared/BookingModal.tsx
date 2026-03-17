@@ -511,9 +511,6 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                         setShowErrors(true)
                                         return
                                     }
-                                    // Trouver le type de billet principal
-                                    const mainType = Object.entries(ticketQuantities)
-                                        .sort(([,a], [,b]) => b - a)[0]
                                     
                                     // Sauvegarder les infos de l'acheteur
                                     const buyerInfo = {
@@ -523,8 +520,14 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                     }
                                     localStorage.setItem("booking_buyer_info", JSON.stringify(buyerInfo))
                                     
-                                    // Simulate payment flow
-                                    router.push(`/mon-compte/tickets?id=${event.id}&qty=${totalTickets}&cat=${mainType?.[0] || 'vip'}`)
+                                    // Encoder toutes les catégories et quantités
+                                    const categories = Object.entries(ticketQuantities)
+                                        .filter(([, qty]) => qty > 0)
+                                        .map(([catId, qty]) => `${catId}:${qty}`)
+                                        .join(',')
+                                    
+                                    // Simulate payment flow with all categories
+                                    router.push(`/mon-compte/tickets?id=${event.id}&cats=${categories}`)
                                 }}
                             >
                                 Suivant

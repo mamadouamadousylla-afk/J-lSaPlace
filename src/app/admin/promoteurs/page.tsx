@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
-import { Building2, Check, X, Clock, ChevronRight, Phone, Mail, Globe, User, Eye } from "lucide-react"
+import { Building2, Check, X, Clock, Phone, Mail, User, Eye, EyeOff, KeyRound, RefreshCw, Copy, CheckCheck } from "lucide-react"
 
 interface Promoter {
     id: string
@@ -16,6 +16,7 @@ interface Promoter {
     admin_note?: string
     created_at: string
     approved_at?: string
+    user_id?: string
 }
 
 export default function AdminPromotersPage() {
@@ -26,9 +27,27 @@ export default function AdminPromotersPage() {
     const [adminNote, setAdminNote] = useState("")
     const [processing, setProcessing] = useState(false)
 
+    // Password state
+    const [password, setPassword] = useState<string | null>(null)
+    const [showPassword, setShowPassword] = useState(false)
+    const [loadingPassword, setLoadingPassword] = useState(false)
+    const [resettingPassword, setResettingPassword] = useState(false)
+    const [copied, setCopied] = useState(false)
+    const [passwordError, setPasswordError] = useState<string | null>(null)
+
     useEffect(() => {
         fetchPromoters()
     }, [filter])
+
+    // Reset password state when modal closes/opens
+    useEffect(() => {
+        if (!selected) {
+            setPassword(null)
+            setShowPassword(false)
+            setPasswordError(null)
+            setCopied(false)
+        }
+    }, [selected])
 
     const fetchPromoters = async () => {
         setLoading(true)
@@ -59,6 +78,49 @@ export default function AdminPromotersPage() {
             console.error(e)
         }
         setProcessing(false)
+    }
+
+    const fetchPassword = async (promoterId: string) => {
+        setLoadingPassword(true)
+        setPasswordError(null)
+        try {
+            const res = await fetch(`/api/promoters/${promoterId}/password`)
+            const data = await res.json()
+            if (res.ok) {
+                setPassword(data.password || "Non défini")
+                setShowPassword(true)
+            } else {
+                setPasswordError(data.error || "Impossible de récupérer le mot de passe")
+            }
+        } catch (e) {
+            setPasswordError("Erreur de connexion")
+        }
+        setLoadingPassword(false)
+    }
+
+    const resetPassword = async (promoterId: string) => {
+        if (!confirm("Voulez-vous générer un nouveau mot de passe pour ce partenaire ?")) return
+        setResettingPassword(true)
+        setPasswordError(null)
+        try {
+            const res = await fetch(`/api/promoters/${promoterId}/password`, { method: "POST" })
+            const data = await res.json()
+            if (res.ok) {
+                setPassword(data.newPassword)
+                setShowPassword(true)
+            } else {
+                setPasswordError(data.error || "Impossible de réinitialiser le mot de passe")
+            }
+        } catch (e) {
+            setPasswordError("Erreur de connexion")
+        }
+        setResettingPassword(false)
+    }
+
+    const copyToClipboard = (text: string) => {
+        navigator.clipboard.writeText(text)
+        setCopied(true)
+        setTimeout(() => setCopied(false), 2000)
     }
 
     const statusConfig = {
@@ -155,6 +217,7 @@ export default function AdminPromotersPage() {
                                         <button
                                             onClick={() => { setSelected(p); setAdminNote(p.admin_note || "") }}
                                             className="p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
+                                            title="Voir les détails"
                                         >
                                             <Eye className="w-5 h-5 text-gray-600" />
                                         </button>
@@ -212,7 +275,7 @@ export default function AdminPromotersPage() {
                     <motion.div
                         initial={{ scale: 0.95, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden"
+                        className="bg-white rounded-3xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto"
                     >
                         <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                             <h2 className="text-xl font-bold text-gray-900">Détails du partenaire</h2>
@@ -220,7 +283,8 @@ export default function AdminPromotersPage() {
                                 <X className="w-5 h-5 text-gray-400" />
                             </button>
                         </div>
-                        <div className="p-6 space-y-4">
+                        <div className="p-6 space-y-5">
+                            {/* Basic info */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <p className="text-xs text-gray-400 uppercase tracking-wider">Organisation</p>
@@ -247,12 +311,80 @@ export default function AdminPromotersPage() {
                                     </div>
                                 )}
                             </div>
+
                             {selected.description && (
                                 <div>
                                     <p className="text-xs text-gray-400 uppercase tracking-wider">Description</p>
                                     <p className="text-gray-700 mt-1 text-sm leading-relaxed">{selected.description}</p>
                                 </div>
                             )}
+
+                            {/* ===== MOT DE PASSE SECTION ===== */}
+                            <div className="border border-dashed border-[#2D75B6]/30 rounded-2xl p-4 bg-blue-50/30 space-y-3">
+                                <div className="flex items-center gap-2">
+                                    <KeyRound className="w-5 h-5 text-[#2D75B6]" />
+                                    <p className="font-bold text-gray-800 text-sm">Mot de passe du compte</p>
+                                </div>
+
+                                {passwordError && (
+                                    <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-2.5">
+                                        {passwordError}
+                                    </div>
+                                )}
+
+                                {password !== null ? (
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-4 py-3">
+                                            <span className="flex-1 font-mono text-gray-800 text-sm tracking-widest">
+                                                {showPassword ? password : "••••••••"}
+                                            </span>
+                                            <button
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="p-1 text-gray-400 hover:text-gray-600"
+                                                title={showPassword ? "Masquer" : "Afficher"}
+                                            >
+                                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
+                                            <button
+                                                onClick={() => password && copyToClipboard(password)}
+                                                className="p-1 text-gray-400 hover:text-[#2D75B6]"
+                                                title="Copier"
+                                            >
+                                                {copied ? <CheckCheck className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                        <p className="text-xs text-gray-400 text-center">Communiquez ce mot de passe au partenaire en toute sécurité</p>
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => fetchPassword(selected.id)}
+                                        disabled={loadingPassword}
+                                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-[#2D75B6] text-white rounded-xl font-bold text-sm hover:bg-[#2560a0] transition-colors disabled:opacity-60"
+                                    >
+                                        {loadingPassword ? (
+                                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                                        ) : (
+                                            <Eye className="w-4 h-4" />
+                                        )}
+                                        {loadingPassword ? "Chargement..." : "Voir le mot de passe"}
+                                    </button>
+                                )}
+
+                                {/* Reset button always visible */}
+                                <button
+                                    onClick={() => resetPassword(selected.id)}
+                                    disabled={resettingPassword}
+                                    className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-orange-100 text-orange-700 rounded-xl font-bold text-sm hover:bg-orange-200 transition-colors disabled:opacity-60"
+                                >
+                                    {resettingPassword ? (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-700" />
+                                    ) : (
+                                        <RefreshCw className="w-4 h-4" />
+                                    )}
+                                    {resettingPassword ? "Génération..." : "Générer un nouveau mot de passe"}
+                                </button>
+                            </div>
+
                             {/* Admin note */}
                             <div>
                                 <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Note admin (optionnel)</label>
@@ -264,6 +396,7 @@ export default function AdminPromotersPage() {
                                     className="w-full mt-2 px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 text-sm resize-none focus:border-[#2D75B6] focus:outline-none"
                                 />
                             </div>
+
                             {selected.status === "pending" && (
                                 <div className="flex gap-3 pt-2">
                                     <button

@@ -73,7 +73,7 @@ export default function TimelineEventList({ selectedCategory, searchQuery }: Tim
                 .order("created_at", { ascending: false })
 
             if (error) {
-                console.error("Erreur lors du chargement des événements:", error)
+                console.error("Erreur lors du chargement des événements:", error.message, error.details, error.code, error)
             } else if (data) {
                 console.log("Événements chargés depuis Supabase:", data.length, data.map(e => ({ id: e.id, title: e.title })))
                 // Mapper les données Supabase vers le format EventData

@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Building2, Mail, Lock, ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
+import Link from "next/link"
 
 export default function PromoterLoginPage() {
     const router = useRouter()
@@ -102,6 +103,16 @@ export default function PromoterLoginPage() {
                                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Forgot password link */}
+                        <div className="text-right">
+                            <Link
+                                href="/promoteur/mot-de-passe-oublie"
+                                className="text-xs text-orange-500 font-semibold hover:underline"
+                            >
+                                Mot de passe oublié ?
+                            </Link>
                         </div>
 
                         {error && (

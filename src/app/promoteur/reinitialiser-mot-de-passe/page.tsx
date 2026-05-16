@@ -3,13 +3,8 @@
 import { useState, useEffect, Suspense } from "react"
 import { useRouter } from "next/navigation"
 import { Building2, Lock, ArrowRight, Loader2, CheckCircle, Eye, EyeOff, AlertCircle } from "lucide-react"
-import { createClient } from "@supabase/supabase-js"
+import { supabase } from "@/lib/supabase"
 import Link from "next/link"
-
-const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
 
 function ResetPasswordForm() {
     const router = useRouter()

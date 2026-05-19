@@ -21,6 +21,7 @@ function TicketsContent() {
     const id = searchParams.get("id")
     const qty = searchParams.get("qty")
     const cat = searchParams.get("cat")
+    const catsParam = searchParams.get("cats")
 
     const [activeTab, setActiveTab] = useState("active")
     const [displayTickets, setDisplayTickets] = useState<TicketData[]>([])
@@ -89,10 +90,8 @@ function TicketsContent() {
                     const newTickets = formattedTickets.filter(t => !existingIds.has(t.id))
                     currentTickets = [...newTickets, ...currentTickets]
                 }
-            }
-
-            // If new purchase detected in URL (from payment flow) - works for both guests and logged users
-            if (id && qty && cat) {
+            }            // If new purchase detected in URL (from payment flow) - works for both guests and logged users
+            if (id && (catsParam || (qty && cat))) {
                 // Fetch event details from Supabase
                 const { data: eventData, error } = await supabase
                     .from("events")
@@ -101,91 +100,103 @@ function TicketsContent() {
                     .single()
 
                 if (eventData) {
-                    // Get zone label matching the category
-                    const categoryKey = (eventData.category || "SPORT").toUpperCase()
-                    const { CATEGORY_CONFIG } = await import("@/components/shared/DynamicTicket")
-                    const catConfig = CATEGORY_CONFIG[categoryKey]
-                    const zoneLabel = catConfig?.zoneLabels?.[cat.toLowerCase()]?.label || cat.toUpperCase()
-                    // Sanitize label for use in ID (no spaces, no accents)
-                    const zoneSanitized = zoneLabel
-                        .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-                        .replace(/\s+/g, "-")
-                        .toUpperCase()
+                    // Parse categories from catsParam or fallback to cat/qty
+                    const categoriesToProcess = catsParam 
+                        ? catsParam.split(',').map(c => {
+                            const [cName, cQty] = c.split(':')
+                            return { cat: cName, qty: parseInt(cQty) || 1 }
+                          })
+                        : [{ cat: cat as string, qty: parseInt(qty || "1") }]
 
-                    // Get pricing from event
-                    const pricing = eventData.pricing || {}
-                    const eventPrice = pricing[cat.toLowerCase()] || eventData.price_vip || 0
+                    for (const { cat: currentCat, qty: currentQty } of categoriesToProcess) {
+                        if (!currentCat || currentQty <= 0) continue;
 
-                    // Generate tickets for each quantity
-                    for (let i = 0; i < parseInt(qty || "1"); i++) {
-                        const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
-                        
-                        // Get buyer info from localStorage (set by BookingModal)
-                        const buyerInfo = typeof window !== "undefined" 
-                            ? JSON.parse(localStorage.getItem("booking_buyer_info") || "{}")
-                            : {}
-                        
-                        // Save ticket to database (for both logged in users and guests)
-                        const { data: dbTicket, error: ticketError } = await supabase
-                            .from("tickets")
-                            .insert({
-                                user_id: user?.id || null, // null for guests
-                                event_id: id,
-                                zone: cat.toUpperCase(),
-                                quantity: 1,
-                                total_price: eventPrice,
-                                qr_code: qrCode,
-                                status: "confirmed",
-                                buyer_name: buyerInfo.firstName && buyerInfo.lastName
-                                    ? `${buyerInfo.firstName} ${buyerInfo.lastName}`
-                                    : user?.full_name || "Acheteur invité",
-                                buyer_phone: buyerInfo.whatsapp 
-                                    ? `+221${buyerInfo.whatsapp}`
-                                    : user?.phone || null,
-                                buyer_email: user?.email || null
-                            })
-                            .select()
-                            .single()
+                        // Get zone label matching the category
+                        const categoryKey = (eventData.category || "SPORT").toUpperCase()
+                        const { CATEGORY_CONFIG } = await import("@/components/shared/DynamicTicket")
+                        const catConfig = CATEGORY_CONFIG[categoryKey]
+                        const zoneLabel = catConfig?.zoneLabels?.[currentCat.toLowerCase()]?.label || currentCat.toUpperCase()
+                        // Sanitize label for use in ID (no spaces, no accents)
+                        const zoneSanitized = zoneLabel
+                            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                            .replace(/\s+/g, "-")
+                            .toUpperCase()
 
-                        // Also create local ticket for display
-                        const newTicket: TicketData = {
-                            id: qrCode,
-                            title: eventData.title,
-                            date: eventData.date,
-                            time: eventData.time,
-                            location: eventData.location,
-                            category: eventData.category || "SPORT",
-                            zone: cat.toUpperCase(),
-                            row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
-                            seat: String(Math.floor(Math.random() * 100) + 1),
-                            imageUrl: eventData.image_url,
-                            holderName: user?.full_name || "Titulaire",
-                            status: "upcoming",
-                            downloaded: false,
-                            db_id: dbTicket?.id // Store DB ID for reference
-                        }
+                        // Get pricing from event
+                        const pricing = eventData.pricing || {}
+                        const eventPrice = pricing[currentCat.toLowerCase()] || eventData.price_vip || 0
 
-                        // Avoid duplicates
-                        const exists = currentTickets.some((t: TicketData) => 
-                            t.title === newTicket.title && 
-                            t.zone === newTicket.zone && 
-                            t.date === newTicket.date &&
-                            t.seat === newTicket.seat
-                        )
-                        if (!exists) {
-                            currentTickets = [newTicket, ...currentTickets]
+                        // Generate tickets for each quantity
+                        for (let i = 0; i < currentQty; i++) {
+                            const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneSanitized}-${i + 1}`
+                            
+                            // Get buyer info from localStorage (set by BookingModal)
+                            const buyerInfo = typeof window !== "undefined" 
+                                ? JSON.parse(localStorage.getItem("booking_buyer_info") || "{}")
+                                : {}
+                            
+                            // Save ticket to database (for both logged in users and guests)
+                            const { data: dbTicket, error: ticketError } = await supabase
+                                .from("tickets")
+                                .insert({
+                                    user_id: user?.id || null, // null for guests
+                                    event_id: id,
+                                    zone: currentCat.toUpperCase(),
+                                    quantity: 1,
+                                    total_price: eventPrice,
+                                    qr_code: qrCode,
+                                    status: "confirmed",
+                                    buyer_name: buyerInfo.firstName && buyerInfo.lastName
+                                        ? `${buyerInfo.firstName} ${buyerInfo.lastName}`
+                                        : user?.full_name || "Acheteur invité",
+                                    buyer_phone: buyerInfo.whatsapp 
+                                        ? `+221${buyerInfo.whatsapp}`
+                                        : user?.phone || null,
+                                    buyer_email: user?.email || null
+                                })
+                                .select()
+                                .single()
+
+                            // Also create local ticket for display
+                            const newTicket: TicketData = {
+                                id: qrCode,
+                                title: eventData.title,
+                                date: eventData.date,
+                                time: eventData.time,
+                                location: eventData.location,
+                                category: eventData.category || "SPORT",
+                                zone: currentCat.toUpperCase(),
+                                row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
+                                seat: String(Math.floor(Math.random() * 100) + 1),
+                                imageUrl: eventData.image_url,
+                                holderName: user?.full_name || "Titulaire",
+                                status: "upcoming",
+                                downloaded: false,
+                                db_id: dbTicket?.id // Store DB ID for reference
+                            }
+
+                            // Avoid duplicates
+                            const exists = currentTickets.some((t: TicketData) => 
+                                t.title === newTicket.title && 
+                                t.zone === newTicket.zone && 
+                                t.date === newTicket.date &&
+                                t.seat === newTicket.seat
+                            )
+                            if (!exists) {
+                                currentTickets = [newTicket, ...currentTickets]
+                            }
                         }
                     }
                     localStorage.setItem("sunulamb_tickets", JSON.stringify(currentTickets))
                 }
-            }
+            }  }
 
             setDisplayTickets(currentTickets)
             setLoading(false)
         }
 
         loadTickets()
-    }, [id, qty, cat, user])
+    }, [id, qty, cat, catsParam, user])
 
     // Handle download - mark ticket as downloaded and remove from active view
     const handleDownload = (ticketId: string) => {
@@ -210,7 +221,7 @@ function TicketsContent() {
 
     // ── NOT LOGGED IN: Check if coming from purchase flow ──
     // If user has tickets in localStorage or URL params, show tickets without requiring login
-    const hasGuestTickets = displayTickets.length > 0 || (id && qty && cat)
+    const hasGuestTickets = displayTickets.length > 0 || (id && (catsParam || (qty && cat)))
 
     // ── Show tickets (logged in or guest with tickets) ──
     return (

@@ -189,7 +189,7 @@ function TicketsContent() {
                     }
                     localStorage.setItem("sunulamb_tickets", JSON.stringify(currentTickets))
                 }
-            }  }
+            }
 
             setDisplayTickets(currentTickets)
             setLoading(false)

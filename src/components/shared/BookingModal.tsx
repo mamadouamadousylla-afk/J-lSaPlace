@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X, User, Minus, Plus, ArrowRight, Smartphone, CheckCircle2, AlertCircle, LogIn } from "lucide-react"
+import { X, User, Minus, Plus, ArrowRight, Smartphone, CheckCircle2, AlertCircle, LogIn, MessageCircle, Mail, Info } from "lucide-react"
 import { formatPrice, cn } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { supabase } from "@/lib/supabase"
@@ -49,6 +49,8 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
     const [firstName, setFirstName] = useState("")
     const [lastName, setLastName] = useState("")
     const [whatsapp, setWhatsapp] = useState("")
+    const [email, setEmail] = useState("")
+    const [receptionChannel, setReceptionChannel] = useState<'whatsapp' | 'email'>('whatsapp')
     const [selectedPayment, setSelectedPayment] = useState("") // Aucun mode sélectionné par défaut
     const [showErrors, setShowErrors] = useState(false)
     
@@ -156,10 +158,13 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                 // @ts-ignore
                 setLastName(user.user_metadata?.last_name || user.last_name || "")
                 setWhatsapp((user.phone || "").replace("+221", ""))
+                // @ts-ignore
+                setEmail(user.email || "")
             } else {
                 setFirstName("")
                 setLastName("")
                 setWhatsapp("")
+                setEmail("")
             }
             setShowErrors(false)
         }
@@ -181,11 +186,14 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
 
     // Validation
     const isValid = () => {
+        const isInfoValid = receptionChannel === 'whatsapp' 
+            ? (whatsapp.trim() !== "" && whatsapp.length >= 9)
+            : (email.trim() !== "" && email.includes('@'))
+
         return (
             firstName.trim() !== "" &&
             lastName.trim() !== "" &&
-            whatsapp.trim() !== "" &&
-            whatsapp.length >= 9 &&
+            isInfoValid &&
             totalTickets > 0 &&
             selectedPayment !== ""
         )
@@ -329,34 +337,55 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                 </div>
                             </div>
 
-                            <div className="space-y-2">
-                                <label className="text-[11px] font-bold text-[#8E9AAF] uppercase tracking-widest ml-1">
-                                    NUMÉRO WHATSAPP <span className="text-red-500">*</span>
-                                </label>
-                                <div className="flex gap-3">
-                                    <div className="px-5 py-4 rounded-[1.25rem] bg-[#F8F9FA] flex items-center gap-2.5 font-bold text-gray-900 border border-gray-50/50">
-                                        <div className="w-6 h-4 rounded-sm overflow-hidden flex shadow-sm">
-                                            <div className="w-1/3 bg-[#00853F]" />
-                                            <div className="w-1/3 bg-[#FDEF42]" />
-                                            <div className="w-1/3 bg-[#E31B23]" />
+                            {receptionChannel === 'whatsapp' ? (
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold text-[#8E9AAF] uppercase tracking-widest ml-1">
+                                        NUMÉRO WHATSAPP <span className="text-red-500">*</span>
+                                    </label>
+                                    <div className="flex gap-3">
+                                        <div className="px-5 py-4 rounded-[1.25rem] bg-[#F8F9FA] flex items-center gap-2.5 font-bold text-gray-900 border border-gray-50/50">
+                                            <div className="w-6 h-4 rounded-sm overflow-hidden flex shadow-sm">
+                                                <div className="w-1/3 bg-[#00853F]" />
+                                                <div className="w-1/3 bg-[#FDEF42]" />
+                                                <div className="w-1/3 bg-[#E31B23]" />
+                                            </div>
+                                            <span className="text-sm">+221</span>
                                         </div>
-                                        <span className="text-sm">+221</span>
+                                        <input
+                                            type="tel"
+                                            placeholder="77 000 00 00"
+                                            value={whatsapp}
+                                            onChange={(e) => setWhatsapp(e.target.value)}
+                                            className={cn(
+                                                "flex-1 px-6 py-4 rounded-[1.25rem] bg-[#F8F9FA] border-2 focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 placeholder:text-gray-300 transition-all font-medium tracking-wide text-sm",
+                                                showErrors && whatsapp.length < 9 ? "border-red-300" : "border-transparent"
+                                            )}
+                                        />
                                     </div>
+                                    {showErrors && whatsapp.length < 9 && (
+                                        <p className="text-red-500 text-xs ml-1">Numéro WhatsApp invalide (9 chiffres minimum)</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <label className="text-[11px] font-bold text-[#8E9AAF] uppercase tracking-widest ml-1">
+                                        ADRESSE EMAIL <span className="text-red-500">*</span>
+                                    </label>
                                     <input
-                                        type="tel"
-                                        placeholder="77 000 00 00"
-                                        value={whatsapp}
-                                        onChange={(e) => setWhatsapp(e.target.value)}
+                                        type="email"
+                                        placeholder="votre@email.com"
+                                        value={email}
+                                        onChange={(e) => setEmail(e.target.value)}
                                         className={cn(
-                                            "flex-1 px-6 py-4 rounded-[1.25rem] bg-[#F8F9FA] border-2 focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 placeholder:text-gray-300 transition-all font-medium tracking-wide text-sm",
-                                            showErrors && whatsapp.length < 9 ? "border-red-300" : "border-transparent"
+                                            "w-full px-6 py-4 rounded-[1.25rem] bg-[#F8F9FA] border-2 focus:ring-2 focus:ring-[#2D75B6]/20 text-gray-900 placeholder:text-gray-300 transition-all font-medium text-sm",
+                                            showErrors && (!email.trim() || !email.includes('@')) ? "border-red-300" : "border-transparent"
                                         )}
                                     />
+                                    {showErrors && (!email.trim() || !email.includes('@')) && (
+                                        <p className="text-red-500 text-xs ml-1">Adresse email invalide</p>
+                                    )}
                                 </div>
-                                {showErrors && whatsapp.length < 9 && (
-                                    <p className="text-red-500 text-xs ml-1">Numéro WhatsApp invalide (9 chiffres minimum)</p>
-                                )}
-                            </div>
+                            )}
                         </div>
 
                         {/* Ticket Selection */}
@@ -488,6 +517,57 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                 ))}
                             </div>
                         </div>
+
+                        {/* Reception Channel Selection */}
+                        <div className="space-y-5 pt-2">
+                            <h3 className="font-bold text-lg text-[#1A2D42]">Canal de réception :</h3>
+                            <div className="space-y-3">
+                                <button 
+                                    onClick={() => setReceptionChannel('whatsapp')}
+                                    className={cn(
+                                        "flex items-center gap-4 p-4 rounded-2xl border-2 text-left w-full transition-all",
+                                        receptionChannel === 'whatsapp' 
+                                            ? "border-green-300 bg-green-50" 
+                                            : "border-gray-200 bg-white"
+                                    )}
+                                >
+                                    <div className="w-12 h-12 rounded-xl flex flex-shrink-0 items-center justify-center bg-white shadow-sm border border-gray-100">
+                                        <MessageCircle className="w-6 h-6 text-green-500" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900 text-lg">WhatsApp</p>
+                                        <p className="text-sm text-gray-500">Recevez vos billets sur WhatsApp</p>
+                                    </div>
+                                </button>
+
+                                <button 
+                                    onClick={() => setReceptionChannel('email')}
+                                    className={cn(
+                                        "flex items-center gap-4 p-4 rounded-2xl border-2 text-left w-full transition-all",
+                                        receptionChannel === 'email' 
+                                            ? "border-[#2D75B6] bg-[#2D75B6]/5" 
+                                            : "border-gray-200 bg-white"
+                                    )}
+                                >
+                                    <div className="w-12 h-12 rounded-xl flex flex-shrink-0 items-center justify-center bg-white shadow-sm border border-gray-100">
+                                        <Mail className="w-6 h-6 text-[#2D75B6]" />
+                                    </div>
+                                    <div>
+                                        <p className="font-bold text-gray-900 text-lg">Par email</p>
+                                        <p className="text-sm text-gray-500">Recevez vos billets par email</p>
+                                    </div>
+                                </button>
+                                
+                                {receptionChannel === 'whatsapp' && (
+                                    <div className="p-4 rounded-xl bg-[#FFFDE7] flex gap-3 items-start border border-yellow-200">
+                                        <div className="bg-[#6B8EAC] rounded-md p-1 mt-0.5">
+                                            <Info className="w-4 h-4 text-white" />
+                                        </div>
+                                        <p className="text-sm text-gray-700">Renseignez un numéro WhatsApp actif pour la réception de votre commande.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Footer / CTA */}
@@ -516,7 +596,9 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                     const buyerInfo = {
                                         firstName: firstName.trim(),
                                         lastName: lastName.trim(),
-                                        whatsapp: whatsapp.trim()
+                                        whatsapp: receptionChannel === 'whatsapp' ? whatsapp.trim() : "",
+                                        email: receptionChannel === 'email' ? email.trim() : "",
+                                        receptionChannel
                                     }
                                     localStorage.setItem("booking_buyer_info", JSON.stringify(buyerInfo))
                                     

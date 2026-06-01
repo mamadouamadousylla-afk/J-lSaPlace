@@ -2,7 +2,7 @@
 
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowLeft, CreditCard, Smartphone, CheckCircle2, Lock } from "lucide-react"
+import { ArrowLeft, CreditCard, Smartphone, CheckCircle2, Lock, MessageCircle, Mail, Info } from "lucide-react"
 import { formatPrice, cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
@@ -22,6 +22,12 @@ export default function PaymentPage() {
     const [isSuccess, setIsSuccess] = useState(false)
     const [eventData, setEventData] = useState<any>(null)
     const [user, setUser] = useState<any>(null)
+    
+    // Nouveaux états pour le canal de réception et les informations
+    const [receptionChannel, setReceptionChannel] = useState<'whatsapp' | 'email'>('whatsapp')
+    const [buyerName, setBuyerName] = useState('')
+    const [buyerPhone, setBuyerPhone] = useState('')
+    const [buyerEmail, setBuyerEmail] = useState('')
 
     const eventId = params.id as string
     
@@ -135,7 +141,10 @@ export default function PaymentPage() {
                                     qr_code: qrCode,
                                     payment_ref: `PAY-${Date.now()}-${catId}-${i}`,
                                     payment_method: selectedMethod.id,
-                                    status: "confirmed"
+                                    status: "confirmed",
+                                    buyer_name: user.user_metadata?.full_name || buyerName || null,
+                                    buyer_phone: receptionChannel === 'whatsapp' ? (buyerPhone || user.phone || null) : (user.phone || null),
+                                    buyer_email: receptionChannel === 'email' ? (buyerEmail || user.email || null) : (user.email || null)
                                 })
                                 .select()
                                 .single()
@@ -163,8 +172,9 @@ export default function PaymentPage() {
                                     payment_ref: `PAY-${Date.now()}-${catId}-${i}`,
                                     payment_method: selectedMethod.id,
                                     status: "confirmed",
-                                    buyer_name: "Acheteur invité",
-                                    buyer_phone: localStorage.getItem("guest_phone") || null
+                                    buyer_name: buyerName || "Acheteur invité",
+                                    buyer_phone: receptionChannel === 'whatsapp' ? buyerPhone : (localStorage.getItem("guest_phone") || null),
+                                    buyer_email: receptionChannel === 'email' ? buyerEmail : null
                                 })
                                 .select()
                                 .single()
@@ -289,6 +299,57 @@ export default function PaymentPage() {
                 </div>
             </div>
 
+            {/* Reception Channel */}
+            <div className="space-y-4">
+                <h3 className="font-poppins font-bold px-2 text-gray-900">Canal de réception :</h3>
+                <div className="space-y-3">
+                    <button 
+                        onClick={() => setReceptionChannel('whatsapp')}
+                        className={cn(
+                            "flex items-center gap-4 p-4 rounded-2xl border-2 text-left w-full transition-all",
+                            receptionChannel === 'whatsapp' 
+                                ? "border-green-300 bg-green-50" 
+                                : "border-gray-200 bg-white"
+                        )}
+                    >
+                        <div className="w-12 h-12 rounded-xl flex flex-shrink-0 items-center justify-center bg-white shadow-sm border border-gray-100">
+                            <MessageCircle className="w-6 h-6 text-green-500" />
+                        </div>
+                        <div>
+                            <p className="font-bold text-gray-900 text-lg">WhatsApp</p>
+                            <p className="text-sm text-gray-500">Recevez vos billets sur WhatsApp</p>
+                        </div>
+                    </button>
+
+                    <button 
+                        onClick={() => setReceptionChannel('email')}
+                        className={cn(
+                            "flex items-center gap-4 p-4 rounded-2xl border-2 text-left w-full transition-all",
+                            receptionChannel === 'email' 
+                                ? "border-primary bg-primary/5" 
+                                : "border-gray-200 bg-white"
+                        )}
+                    >
+                        <div className="w-12 h-12 rounded-xl flex flex-shrink-0 items-center justify-center bg-white shadow-sm border border-gray-100">
+                            <Mail className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                            <p className="font-bold text-gray-900 text-lg">Par email</p>
+                            <p className="text-sm text-gray-500">Recevez vos billets par email</p>
+                        </div>
+                    </button>
+                    
+                    {receptionChannel === 'whatsapp' && (
+                        <div className="p-4 rounded-xl bg-[#FFFDE7] flex gap-3 items-start border border-yellow-200">
+                            <div className="bg-[#6B8EAC] rounded-md p-1 mt-0.5">
+                                <Info className="w-4 h-4 text-white" />
+                            </div>
+                            <p className="text-sm text-gray-700">Renseignez un numéro WhatsApp actif pour la réception de votre commande.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
             {/* User Info */}
             <div className="space-y-4">
                 <h3 className="font-poppins font-bold px-2 text-gray-900">Vos informations</h3>
@@ -296,18 +357,32 @@ export default function PaymentPage() {
                     <input
                         type="text"
                         placeholder="Nom complet"
+                        value={buyerName}
+                        onChange={(e) => setBuyerName(e.target.value)}
                         className="w-full px-6 py-4 rounded-3xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-gray-900 placeholder:text-gray-400"
                     />
-                    <div className="flex gap-2">
-                        <div className="w-20 px-4 py-4 rounded-3xl bg-gray-50 border border-gray-200 flex items-center justify-center font-bold text-gray-400">
-                            +221
+                    {receptionChannel === 'whatsapp' ? (
+                        <div className="flex gap-2">
+                            <div className="w-20 px-4 py-4 rounded-3xl bg-gray-50 border border-gray-200 flex items-center justify-center font-bold text-gray-400">
+                                +221
+                            </div>
+                            <input
+                                type="tel"
+                                placeholder="Numéro WhatsApp"
+                                value={buyerPhone}
+                                onChange={(e) => setBuyerPhone(e.target.value)}
+                                className="flex-1 px-6 py-4 rounded-3xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-gray-900 placeholder:text-gray-400"
+                            />
                         </div>
+                    ) : (
                         <input
-                            type="tel"
-                            placeholder="Téléphone"
-                            className="flex-1 px-6 py-4 rounded-3xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-gray-900 placeholder:text-gray-400"
+                            type="email"
+                            placeholder="Adresse email"
+                            value={buyerEmail}
+                            onChange={(e) => setBuyerEmail(e.target.value)}
+                            className="w-full px-6 py-4 rounded-3xl bg-gray-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 text-gray-900 placeholder:text-gray-400"
                         />
-                    </div>
+                    )}
                 </div>
             </div>
 

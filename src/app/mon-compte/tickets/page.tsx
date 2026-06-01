@@ -136,6 +136,7 @@ function TicketsContent() {
                                 : {}
                             
                             // Save ticket to database (for both logged in users and guests)
+                            /* 
                             const { data: dbTicket, error: ticketError } = await supabase
                                 .from("tickets")
                                 .insert({
@@ -156,6 +157,7 @@ function TicketsContent() {
                                 })
                                 .select()
                                 .single()
+                            */
 
                             // Also create local ticket for display
                             const newTicket: TicketData = {
@@ -172,7 +174,7 @@ function TicketsContent() {
                                 holderName: user?.full_name || "Titulaire",
                                 status: "upcoming",
                                 downloaded: false,
-                                db_id: dbTicket?.id // Store DB ID for reference
+                                db_id: undefined // dbTicket?.id Store DB ID for reference
                             }
 
                             // Avoid duplicates

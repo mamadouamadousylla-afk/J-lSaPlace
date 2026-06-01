@@ -585,16 +585,16 @@ export default function DynamicTicket({
                         </div>
                     )}
 
-                    {/* Download Button */}
+                    {/* Action Buttons */}
                     {!compact && (
-                        <div className="pt-2">
+                        <div className="pt-2 space-y-2">
                             <button
                                 onClick={handleDownload}
                                 disabled={isDownloading}
                                 className={`w-full py-4 rounded-xl bg-gradient-to-r ${config.gradient} text-white font-bold flex items-center justify-center gap-3 shadow-xl active:scale-[0.98] transition-all ${isDownloading ? 'opacity-70' : ''}`}
                             >
                                 <Download className={`w-5 h-5 ${isDownloading ? 'animate-bounce' : ''}`} />
-                                {isDownloading ? 'Generation...' : 'Telecharger'}
+                                {isDownloading ? 'Génération...' : 'Télécharger le billet'}
                             </button>
                         </div>
                     )}

@@ -153,6 +153,32 @@ export default function PaymentPage() {
                                 console.error("Error creating ticket:", error)
                             } else {
                                 allTickets.push(ticket)
+                                
+                                // Envoi WhatsApp automatique
+                                if (receptionChannel === 'whatsapp') {
+                                    const phoneToSend = buyerPhone || user.phone
+                                    if (phoneToSend) {
+                                        fetch('/api/tickets/send', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                ticket: {
+                                                    id: ticket.qr_code,
+                                                    title: eventData?.title || "Événement",
+                                                    date: eventData?.date || "",
+                                                    time: eventData?.time || "",
+                                                    location: eventData?.location || "",
+                                                    category: eventData?.category || "SPORT",
+                                                    zone: ticket.zone,
+                                                    row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
+                                                    seat: String(Math.floor(Math.random() * 100) + 1),
+                                                },
+                                                phone: phoneToSend,
+                                                channel: 'whatsapp'
+                                            })
+                                        }).catch(e => console.error("Erreur d'envoi WhatsApp:", e))
+                                    }
+                                }
                             }
                         }
                     } else {
@@ -181,6 +207,32 @@ export default function PaymentPage() {
 
                             if (!error && ticket) {
                                 allTickets.push(ticket)
+
+                                // Envoi WhatsApp automatique (invité)
+                                if (receptionChannel === 'whatsapp') {
+                                    const phoneToSend = buyerPhone || localStorage.getItem("guest_phone")
+                                    if (phoneToSend) {
+                                        fetch('/api/tickets/send', {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                ticket: {
+                                                    id: ticket.qr_code,
+                                                    title: eventData?.title || "Événement",
+                                                    date: eventData?.date || "",
+                                                    time: eventData?.time || "",
+                                                    location: eventData?.location || "",
+                                                    category: eventData?.category || "SPORT",
+                                                    zone: ticket.zone,
+                                                    row: String.fromCharCode(65 + Math.floor(Math.random() * 10)),
+                                                    seat: String(Math.floor(Math.random() * 100) + 1),
+                                                },
+                                                phone: phoneToSend,
+                                                channel: 'whatsapp'
+                                            })
+                                        }).catch(e => console.error("Erreur d'envoi WhatsApp:", e))
+                                    }
+                                }
                             }
                         }
                     }

@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Plus, Search, Edit2, Trash2, X, Calendar, MapPin, MoreHorizontal, MapPinned } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { formatPrice, cn } from "@/lib/utils"
+import { formatPrice, cn, isEventFinished } from "@/lib/utils"
 
 // Fonction pour nettoyer le nom du fichier (enlever les caractères spéciaux)
 function sanitizeFileName(fileName: string): string {
@@ -546,6 +546,7 @@ export default function AdminEvents() {
                     <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#1A8744]"></div> En cours</div>
                     <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-gray-300"></div> Brouillon</div>
                     <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-[#3B82F6]"></div> Épuisé</div>
+                    <div className="flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-red-500"></div> Terminé</div>
                 </div>
             </div>
 
@@ -556,14 +557,15 @@ export default function AdminEvents() {
                         Chargement des événements...
                     </div>
                 ) : events.map((event, idx) => {
+                    const isFinished = isEventFinished(event.date);
                     const isSoldOut = event.status === 'sold_out';
-                    const isActive = event.status === 'published';
+                    const isActive = event.status === 'published' && !isFinished;
                     const isDraft = event.status === 'draft';
 
                     const totalTickets = 5000;
-                    const soldTickets = isSoldOut ? 5000 : (isActive ? Math.floor(Math.random() * 4000) + 1000 : 0);
+                    const soldTickets = isSoldOut ? 5000 : (isActive || isFinished ? Math.floor(Math.random() * 4000) + 1000 : 0);
                     const percentSold = (soldTickets / totalTickets) * 100;
-                    const progressColor = isSoldOut ? 'bg-[#3B82F6]' : 'bg-[#1D6F42]';
+                    const progressColor = isFinished ? 'bg-red-500' : isSoldOut ? 'bg-[#3B82F6]' : 'bg-[#1D6F42]';
 
                     return (
                         <motion.div
@@ -616,8 +618,8 @@ export default function AdminEvents() {
                             <div className="hidden md:flex flex-col w-48 shrink-0 border-l border-gray-100 pl-6 h-12 justify-center">
                                 <div className="flex items-baseline justify-between mb-2">
                                     <span className="text-[17px] font-bold text-gray-900">{soldTickets.toLocaleString()}</span>
-                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isSoldOut ? 'text-[#3B82F6]' : 'text-gray-400'}`}>
-                                        {isSoldOut ? 'Épuisé' : `${Math.round(100 - percentSold)}% Restant`}
+                                    <span className={`text-[10px] font-bold uppercase tracking-widest ${isFinished ? 'text-red-500' : isSoldOut ? 'text-[#3B82F6]' : 'text-gray-400'}`}>
+                                        {isFinished ? 'Terminé' : isSoldOut ? 'Épuisé' : `${Math.round(100 - percentSold)}% Restant`}
                                     </span>
                                 </div>
                                 <div className="h-[3px] w-full bg-gray-100 rounded-full overflow-hidden">

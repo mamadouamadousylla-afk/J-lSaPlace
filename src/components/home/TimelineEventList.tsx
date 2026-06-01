@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Heart } from "lucide-react"
-import { cn, formatPrice } from "@/lib/utils"
+import { cn, formatPrice, isEventFinished } from "@/lib/utils"
 import { supabase } from "@/lib/supabase"
 import { useFavorites } from "@/context/FavoritesContext"
 
@@ -77,7 +77,9 @@ export default function TimelineEventList({ selectedCategory, searchQuery }: Tim
             } else if (data) {
                 console.log("Événements chargés depuis Supabase:", data.length, data.map(e => ({ id: e.id, title: e.title })))
                 // Mapper les données Supabase vers le format EventData
-                const mappedEvents: EventData[] = data.map(event => ({
+                const mappedEvents: EventData[] = data
+                    .filter(event => !isEventFinished(event.date))
+                    .map(event => ({
                     id: event.id,
                     title: event.title,
                     date: event.date,

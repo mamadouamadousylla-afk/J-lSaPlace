@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { useFavorites } from "@/context/FavoritesContext"
-import { cn, formatPrice } from "@/lib/utils"
+import { cn, formatPrice, isEventFinished } from "@/lib/utils"
 import { useState, useEffect, useRef } from "react"
 
 interface HeroEvent {
@@ -36,17 +36,34 @@ export default function Hero() {
                 .order("created_at", { ascending: false })
 
             if (featured && featured.length > 0) {
-                setEvents(featured)
+                const upcomingFeatured = featured.filter(e => !isEventFinished(e.date));
+                if (upcomingFeatured.length > 0) {
+                    setEvents(upcomingFeatured)
+                } else {
+                    // Fallback: latest event that is not finished
+                    const { data: latest } = await supabase
+                        .from("events")
+                        .select("id, title, date, image_url, price_vip, tag, featured")
+                        .eq("status", "published")
+                        .order("created_at", { ascending: false })
+
+                    if (latest && latest.length > 0) {
+                        const upcomingLatest = latest.filter(e => !isEventFinished(e.date));
+                        if (upcomingLatest.length > 0) setEvents([upcomingLatest[0]]);
+                    }
+                }
             } else {
-                // Fallback: latest event
+                // Fallback: latest event that is not finished
                 const { data: latest } = await supabase
                     .from("events")
                     .select("id, title, date, image_url, price_vip, tag, featured")
                     .eq("status", "published")
                     .order("created_at", { ascending: false })
-                    .limit(1)
 
-                if (latest && latest.length > 0) setEvents(latest)
+                if (latest && latest.length > 0) {
+                    const upcomingLatest = latest.filter(e => !isEventFinished(e.date));
+                    if (upcomingLatest.length > 0) setEvents([upcomingLatest[0]]);
+                }
             }
             setLoading(false)
         }

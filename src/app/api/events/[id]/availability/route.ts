@@ -31,13 +31,6 @@ export async function GET(
         .eq("event_id", id)
         .in("status", ["confirmed", "used"])
 
-    // Aggregate sold count by zone
-    const soldByZone: Record<string, number> = {}
-    ;(tickets || []).forEach(t => {
-        const zoneKey = t.zone?.toLowerCase() || t.zone
-        soldByZone[zoneKey] = (soldByZone[zoneKey] || 0) + (t.quantity || 1)
-    })
-
     // Build availability response
     const seats = event.seats || {}
     const pricing = event.pricing || {}
@@ -54,12 +47,26 @@ export async function GET(
 
     // Process each zone from pricing
     Object.keys(pricing).forEach(zoneKey => {
+        const keyLower = zoneKey.toLowerCase().trim()
+        const label = pricingLabels[zoneKey] || zoneKey.toUpperCase()
+        const labelLower = label.toLowerCase().trim()
+        const keyNorm = keyLower.replace(/[^a-z0-9]/g, "")
+        const labelNorm = labelLower.replace(/[^a-z0-9]/g, "")
+
+        const sold = (tickets || []).filter((t: any) => {
+            const tkZone = (t.zone || "").toLowerCase().trim()
+            const tkNorm = tkZone.replace(/[^a-z0-9]/g, "")
+            return tkZone === keyLower || 
+                   tkZone === labelLower || 
+                   (tkNorm && tkNorm === keyNorm) || 
+                   (tkNorm && tkNorm === labelNorm)
+        }).reduce((sum: number, t: any) => sum + (t.quantity || 1), 0)
+
         const total = seats[zoneKey] || 0
-        const sold = soldByZone[zoneKey] || 0
         const remaining = total > 0 ? Math.max(0, total - sold) : 999999 // Unlimited if not set
 
         availability[zoneKey] = {
-            label: pricingLabels[zoneKey] || zoneKey.toUpperCase(),
+            label,
             price: pricing[zoneKey] || 0,
             total,
             sold,
@@ -86,7 +93,7 @@ export async function GET(
         if (oldEvent) {
             oldZones.forEach(z => {
                 const priceKey = `price_${z.key}` as keyof typeof oldEvent
-                const sold = soldByZone[z.key] || soldByZone[z.key.toUpperCase()] || 0
+                const sold = (tickets || []).filter((t: any) => (t.zone || "").toLowerCase().includes(z.key.toLowerCase())).reduce((sum: number, t: any) => sum + (t.quantity || 1), 0)
 
                 availability[z.key] = {
                     label: z.label,

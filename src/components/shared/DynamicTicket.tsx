@@ -114,6 +114,7 @@ export interface DynamicTicketProps {
     location: string
     category: string
     zone: string
+    zoneLabel?: string
     row?: string
     seat?: string
     imageUrl?: string
@@ -131,6 +132,7 @@ export default function DynamicTicket({
     location,
     category,
     zone,
+    zoneLabel,
     row,
     seat,
     imageUrl,
@@ -142,7 +144,9 @@ export default function DynamicTicket({
     const [isDownloading, setIsDownloading] = useState(false)
     
     const config = CATEGORY_CONFIG[category?.toUpperCase()] || CATEGORY_CONFIG.SPORT
-    const zoneConfig = config.zoneLabels[zone?.toLowerCase()] || { label: zone, icon: "🎫" }
+    const defaultZone = config.zoneLabels[zone?.toLowerCase()]
+    const displayLabel = zoneLabel || defaultZone?.label || (zone && zone.startsWith("CUSTOM_") ? (defaultZone?.label || "Place Réservée") : zone)
+    const zoneConfig = { label: displayLabel, icon: defaultZone?.icon || "🎫" }
     const qrValue = qrCode || id
 
     // Create header image with gradient overlay using Canvas

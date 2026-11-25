@@ -79,7 +79,7 @@ export default function EventDashboard() {
             setTickets(ticketsData || [])
             
             // Calculate stats
-            const totalTickets = ticketsData?.length || 0
+            const totalTickets = ticketsData?.reduce((sum: number, t: any) => sum + (t.quantity || 1), 0) || 0
             const revenue = ticketsData?.reduce((sum: number, t: any) => sum + (t.total_price || 0), 0) || 0
             const attendees = ticketsData?.reduce((sum: number, t: any) => sum + (t.quantity || 1), 0) || 0
             

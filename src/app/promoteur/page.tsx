@@ -59,14 +59,14 @@ export default function PromoterDashboard() {
         if (eventList.length > 0) {
             const eventIds = eventList.map((e: any) => e.id)
 
-            // Fetch all confirmed tickets for stats
+            // Fetch all confirmed and used tickets for stats
             const { data: ticketsData } = await supabase
                 .from("tickets")
-                .select("id, total_price, status")
+                .select("id, total_price, status, quantity")
                 .in("event_id", eventIds)
-                .eq("status", "confirmed")
+                .in("status", ["confirmed", "used"])
 
-            totalTickets = ticketsData?.length || 0
+            totalTickets = ticketsData?.reduce((sum: number, t: any) => sum + (t.quantity || 1), 0) || 0
             totalRevenue = ticketsData?.reduce((sum: number, t: any) => sum + (t.total_price || 0), 0) || 0
         }
 

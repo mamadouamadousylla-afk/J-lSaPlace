@@ -62,6 +62,7 @@ function StatistiquesContent() {
         setTickets(t)
 
         const revenue = t.reduce((sum: number, tk: any) => sum + (tk.total_price || 0), 0)
+        const totalSoldTickets = t.reduce((sum: number, tk: any) => sum + (tk.quantity || 1), 0)
 
         // Group by zone
         const pricing = event.pricing || {}
@@ -69,26 +70,45 @@ function StatistiquesContent() {
         const seats = event.seats || {}
 
         const zoneStats = Object.keys(pricing).map(key => {
-            const sold = t.filter((tk: any) => tk.zone?.toLowerCase() === key.toLowerCase()).length
+            const keyLower = key.toLowerCase().trim()
+            const label = pricingLabels[key] || key.toUpperCase()
+            const labelLower = label.toLowerCase().trim()
+            const keyNorm = keyLower.replace(/[^a-z0-9]/g, "")
+            const labelNorm = labelLower.replace(/[^a-z0-9]/g, "")
+
+            const sold = t.filter((tk: any) => {
+                const tkZone = (tk.zone || "").toLowerCase().trim()
+                const tkNorm = tkZone.replace(/[^a-z0-9]/g, "")
+                return tkZone === keyLower || 
+                       tkZone === labelLower || 
+                       (tkNorm && tkNorm === keyNorm) || 
+                       (tkNorm && tkNorm === labelNorm)
+            }).reduce((sum: number, tk: any) => sum + (tk.quantity || 1), 0)
+
             return {
-                label: pricingLabels[key] || key.toUpperCase(),
+                label,
                 sold,
                 total: seats[key] || 0,
                 price: pricing[key] || 0,
-                color: key.toLowerCase() === "vip" ? "bg-yellow-400" : "bg-blue-400"
+                color: keyLower.includes("vip") ? "bg-yellow-400" : "bg-blue-400"
             }
         })
 
         // Fallback for old events without dynamic pricing
         if (zoneStats.length === 0) {
+            const countForZone = (name: string) => {
+                const nameLower = name.toLowerCase()
+                return t.filter((tk: any) => (tk.zone || "").toLowerCase().includes(nameLower))
+                        .reduce((sum: number, tk: any) => sum + (tk.quantity || 1), 0)
+            }
             zoneStats.push(
-                { label: "VIP", sold: t.filter(tk => tk.zone?.toLowerCase() === "vip").length, total: event.seats_vip || 0, price: event.price_vip || 0, color: "bg-yellow-400" },
-                { label: "Tribune", sold: t.filter(tk => tk.zone?.toLowerCase() === "tribune").length, total: event.seats_tribune || 0, price: event.price_tribune || 0, color: "bg-blue-400" },
-                { label: "Pelouse", sold: t.filter(tk => tk.zone?.toLowerCase() === "pelouse").length, total: event.seats_pelouse || 0, price: event.price_pelouse || 0, color: "bg-green-400" }
+                { label: "VIP", sold: countForZone("vip"), total: event.seats_vip || 0, price: event.price_vip || 0, color: "bg-yellow-400" },
+                { label: "Tribune", sold: countForZone("tribune"), total: event.seats_tribune || 0, price: event.price_tribune || 0, color: "bg-blue-400" },
+                { label: "Pelouse", sold: countForZone("pelouse"), total: event.seats_pelouse || 0, price: event.price_pelouse || 0, color: "bg-green-400" }
             )
         }
 
-        setStats({ tickets: t.length, revenue, zones: zoneStats })
+        setStats({ tickets: totalSoldTickets, revenue, zones: zoneStats })
         setLoading(false)
     }
 

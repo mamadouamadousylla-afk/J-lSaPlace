@@ -84,7 +84,6 @@ function StatistiquesContent() {
                        (tkNorm && tkNorm === keyNorm) || 
                        (tkNorm && tkNorm === labelNorm)
             }).reduce((sum: number, tk: any) => sum + (tk.quantity || 1), 0)
-
             return {
                 label,
                 sold,

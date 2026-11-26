@@ -14,6 +14,10 @@ async function getAuthUser(request: NextRequest) {
 
 // Helper: normalize zone name to match database keys
 function normalizeZoneKey(zone: string): string {
+    // If it's already a CUSTOM_XXXX key, just lowercase it
+    if (zone.toUpperCase().startsWith("CUSTOM_")) {
+        return zone.toLowerCase()
+    }
     const zoneMap: Record<string, string> = {
         "VIP": "vip",
         "TRIBUNE": "tribune",

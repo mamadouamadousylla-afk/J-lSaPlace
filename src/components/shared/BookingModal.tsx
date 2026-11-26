@@ -506,13 +506,14 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                         ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                                         : "bg-[#2D75B6] text-white shadow-xl shadow-[#2D75B6]/25"
                                 )}
-                                onClick={() => {
+                                onClick={async () => {
                                     if (!isValid()) {
                                         setShowErrors(true)
                                         return
                                     }
-                                    // Trouver le type de billet principal
+                                    // Trouver le type de billet principal (celui avec la plus grande quantité)
                                     const mainType = Object.entries(ticketQuantities)
+                                        .filter(([, qty]) => qty > 0)
                                         .sort(([,a], [,b]) => b - a)[0]
                                     
                                     // Sauvegarder les infos de l'acheteur
@@ -522,8 +523,44 @@ export default function BookingModal({ isOpen, onClose, event }: BookingModalPro
                                         whatsapp: whatsapp.trim()
                                     }
                                     localStorage.setItem("booking_buyer_info", JSON.stringify(buyerInfo))
+
+                                    // ── Sauvegarde immédiate dans Supabase avant la redirection ──
+                                    // Évite de perdre le ticket si l'utilisateur quitte la page suivante
+                                    try {
+                                        const zoneKey = mainType?.[0] || 'vip'
+                                        const pricing = eventData?.pricing || {}
+                                        const pricingLabels = eventData?.pricing_labels || {}
+                                        const unitPrice = pricing[zoneKey] || 0
+                                        const zoneLabel = pricingLabels[zoneKey] || zoneKey.toUpperCase()
+                                        const qrCode = `JSP-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}-${zoneLabel.normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/\s+/g,"-").toUpperCase()}-1`
+                                        const row = String.fromCharCode(65 + Math.floor(Math.random() * 10))
+                                        const seat = String(Math.floor(Math.random() * 100) + 1)
+
+                                        // user depuis AuthContext (peut être null pour invité)
+                                        const { data: { user: supaUser } } = await supabase.auth.getUser()
+                                        const storedUser = typeof window !== "undefined"
+                                            ? (() => { try { return JSON.parse(localStorage.getItem("user_session") || "{}") } catch { return {} } })()
+                                            : {}
+
+                                        await supabase.from("tickets").insert({
+                                            user_id: supaUser?.id || storedUser?.id || null,
+                                            event_id: event.id,
+                                            zone: zoneKey,
+                                            quantity: totalTickets,
+                                            total_price: unitPrice * totalTickets,
+                                            qr_code: qrCode,
+                                            status: "confirmed",
+                                            buyer_name: `${firstName.trim()} ${lastName.trim()}`,
+                                            buyer_phone: `+221${whatsapp.trim()}`,
+                                            buyer_email: supaUser?.email || storedUser?.email || null,
+                                            seat_number: `${row}-${seat}`,
+                                            seat_type: zoneLabel
+                                        })
+                                    } catch (err) {
+                                        console.error("Erreur sauvegarde ticket (pré-redirect):", err)
+                                    }
                                     
-                                    // Simulate payment flow
+                                    // Rediriger vers la page tickets pour affichage
                                     router.push(`/mon-compte/tickets?id=${event.id}&qty=${totalTickets}&cat=${mainType?.[0] || 'vip'}`)
                                 }}
                             >
